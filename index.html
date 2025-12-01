@@ -18,19 +18,42 @@
     header {
       background: linear-gradient(135deg, #2563eb, #1d4ed8);
       color: white;
-      padding: 16px 20px;
+      padding: 12px 20px 14px;
       box-shadow: 0 2px 8px rgba(15, 23, 42, 0.4);
       position: sticky;
       top: 0;
       z-index: 10;
     }
-    header h1 {
+    .header-main {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .header-logo {
+      height: 48px;
+      width: 48px;
+      border-radius: 999px;
+      background: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      flex-shrink: 0;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.25);
+    }
+    .header-logo img {
+      max-width: 100%;
+      max-height: 100%;
+      display: block;
+    }
+    .header-text h1 {
       margin: 0;
       font-size: 1.4rem;
       font-weight: 700;
     }
-    header p {
-      margin: 4px 0 0;
+    .header-text p {
+      margin: 2px 0 0;
       font-size: 0.9rem;
       opacity: 0.9;
     }
@@ -342,15 +365,27 @@
       color: #1f2937;
       font-weight: 600;
     }
-    .summary-table tr:nth-child(even) td {
+    .summary-table tr:nth-child(even) td.main-row-cell {
       background: #f9fafb;
     }
-    .row-not-updated td {
-      background: #fff7ed; /* oren lembut */
+    .row-not-updated td.main-row-cell {
+      background: #fff7ed;
     }
     .cell-not-updated {
       font-weight: 600;
       color: #b45309;
+    }
+    .attendance-link {
+      cursor: pointer;
+      text-decoration: underline;
+      color: #111827;
+    }
+    .attendance-link:hover {
+      color: #1d4ed8;
+    }
+    .absent-row td {
+      background: #fefce8;
+      font-size: 0.85rem;
     }
     .summary-footer {
       margin-top: 8px;
@@ -365,7 +400,7 @@
       margin-top: 10px;
     }
     @media (max-width: 640px) {
-      header h1 {
+      .header-text h1 {
         font-size: 1.15rem;
       }
       .students-header, .student-row {
@@ -379,8 +414,16 @@
 </head>
 <body>
   <header>
-    <h1>Rekod Kehadiran Harian Murid SKSA (Tahap 1)</h1>
-    <p>Guru hanya perlu tandakan murid <strong>tidak hadir</strong>. Sistem akan kira kehadiran automatik untuk hari tersebut.</p>
+    <div class="header-main">
+      <div class="header-logo">
+        <!-- tukar src jika ada link gambar lain -->
+        <img src="https://imgur.com/gallery/logo-sksa-KUPIcnJ#wpfWEN4" alt="Logo SKSA" />
+      </div>
+      <div class="header-text">
+        <h1>Rekod Kehadiran Harian Murid SKSA (Tahap 1)</h1>
+        <p>Guru hanya perlu tandakan murid <strong>tidak hadir</strong>. Sistem akan kira kehadiran automatik untuk hari tersebut.</p>
+      </div>
+    </div>
   </header>
 
   <main>
@@ -792,7 +835,7 @@
       { darjah: "D3", kelasLabel: "BESTARI", code: "3B" },
       { darjah: "D3", kelasLabel: "CEMERLANG", code: "3C" },
       { darjah: "D3", kelasLabel: "GEMILANG", code: "3G" }
-    ];
+    };
 
     // =====================================
     // 3. UTILITI TARIKH (format MY)
@@ -842,7 +885,6 @@
     const summaryTableBody = document.getElementById('summaryTableBody');
     const summaryFooter = document.getElementById('summaryFooter');
 
-    // Papar tarikh hari ini
     const todayHuman = getTodayHumanReadable();
     todayDisplay.textContent = "Tarikh: " + todayHuman;
     summaryDateLink.textContent = todayHuman;
@@ -918,7 +960,6 @@
       studentsSection.style.display = 'block';
       countInfo.innerHTML = `👥 Jumlah murid: <strong>${names.length}</strong>`;
 
-      // reset carian bila tukar kelas
       if (searchInput) {
         searchInput.value = "";
       }
@@ -940,7 +981,7 @@
         }
       });
 
-      handleSearch(); // ikut carian semasa
+      handleSearch();
     }
 
     classSelect.addEventListener('change', () => {
@@ -994,7 +1035,7 @@
       }
     }
 
-    // fungsi carian nama
+    // fungsi carian nama murid di tab kelas
     function handleSearch() {
       if (!searchInput) return;
       const q = searchInput.value.trim().toLowerCase();
@@ -1072,7 +1113,7 @@
       const year = new Date().getFullYear();
       summaryTableBody.innerHTML = `
         <tr>
-          <td colspan="4" style="text-align:center; padding:8px; font-size:0.9rem;">
+          <td colspan="4" class="main-row-cell" style="text-align:center; padding:8px; font-size:0.9rem;">
             Memuatkan rekod kehadiran...
           </td>
         </tr>
@@ -1086,13 +1127,16 @@
         const path = `kehadiran/${year}/${item.code}/${todayKey}`;
         return db.ref(path).once('value').then(snap => {
           const data = snap.val();
-          let text, notUpdated = false;
+          let text, notUpdated = false, absentees = [];
 
           if (data && typeof data.presentCount === 'number' && typeof data.totalStudents === 'number') {
             text = `${data.presentCount}/${data.totalStudents}`;
             totalPresent += data.presentCount;
             totalStudents += data.totalStudents;
             anyRecord = true;
+            if (Array.isArray(data.absentees)) {
+              absentees = data.absentees;
+            }
           } else {
             text = "Kehadiran Belum Dikemaskini.";
             notUpdated = true;
@@ -1103,7 +1147,8 @@
             darjah: item.darjah,
             kelasLabel: item.kelasLabel,
             text,
-            notUpdated
+            notUpdated,
+            absentees
           };
         });
       });
@@ -1112,21 +1157,33 @@
         .then(rows => {
           summaryTableBody.innerHTML = "";
           rows.forEach(row => {
+            // row utama
             const tr = document.createElement('tr');
             if (row.notUpdated) tr.classList.add('row-not-updated');
 
             const td1 = document.createElement('td');
+            td1.className = 'main-row-cell';
             td1.textContent = row.bil;
 
             const td2 = document.createElement('td');
+            td2.className = 'main-row-cell';
             td2.textContent = row.darjah;
 
             const td3 = document.createElement('td');
+            td3.className = 'main-row-cell';
             td3.textContent = row.kelasLabel;
 
             const td4 = document.createElement('td');
-            td4.textContent = row.text;
-            if (row.notUpdated) td4.classList.add('cell-not-updated');
+            td4.className = 'main-row-cell';
+            if (row.notUpdated) {
+              td4.textContent = row.text;
+              td4.classList.add('cell-not-updated');
+            } else {
+              const span = document.createElement('span');
+              span.className = 'attendance-link';
+              span.textContent = row.text;
+              td4.appendChild(span);
+            }
 
             tr.appendChild(td1);
             tr.appendChild(td2);
@@ -1134,6 +1191,40 @@
             tr.appendChild(td4);
 
             summaryTableBody.appendChild(tr);
+
+            // row dropdown nama tidak hadir (hanya jika ada rekod)
+            if (!row.notUpdated) {
+              const trDetail = document.createElement('tr');
+              trDetail.className = 'absent-row';
+              trDetail.style.display = 'none';
+
+              const tdDetail = document.createElement('td');
+              tdDetail.colSpan = 4;
+
+              if (!row.absentees || row.absentees.length === 0) {
+                tdDetail.textContent = "Tidak hadir: Tiada. Semua murid hadir untuk kelas ini.";
+              } else {
+                const label = document.createElement('div');
+                label.innerHTML = "<strong>Tidak hadir:</strong>";
+                const ul = document.createElement('ul');
+                row.absentees.forEach((nama, i) => {
+                  const li = document.createElement('li');
+                  li.textContent = (i + 1) + ") " + nama;
+                  ul.appendChild(li);
+                });
+                tdDetail.appendChild(label);
+                tdDetail.appendChild(ul);
+              }
+
+              trDetail.appendChild(tdDetail);
+              summaryTableBody.appendChild(trDetail);
+
+              // klik 23/26 untuk toggle
+              const link = td4.querySelector('.attendance-link');
+              link.addEventListener('click', () => {
+                trDetail.style.display = trDetail.style.display === 'none' ? 'table-row' : 'none';
+              });
+            }
           });
 
           if (!anyRecord) {
@@ -1149,7 +1240,7 @@
           console.error(err);
           summaryTableBody.innerHTML = `
             <tr>
-              <td colspan="4" style="text-align:center; padding:8px; font-size:0.9rem; color:#b91c1c;">
+              <td colspan="4" class="main-row-cell" style="text-align:center; padding:8px; font-size:0.9rem; color:#b91c1c;">
                 Ralat memuatkan rekod kehadiran.
               </td>
             </tr>
