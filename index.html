@@ -1,0 +1,845 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+  <meta charset="UTF-8" />
+  <title>Rekod Kehadiran Murid SKSA Tahap 1</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    * {
+      box-sizing: border-box;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    }
+    body {
+      margin: 0;
+      padding: 0;
+      background: #f3f4f6;
+      color: #111827;
+    }
+    header {
+      background: linear-gradient(135deg, #2563eb, #1d4ed8);
+      color: white;
+      padding: 16px 20px;
+      box-shadow: 0 2px 8px rgba(15, 23, 42, 0.4);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    header h1 {
+      margin: 0;
+      font-size: 1.4rem;
+      font-weight: 700;
+    }
+    header p {
+      margin: 4px 0 0;
+      font-size: 0.9rem;
+      opacity: 0.9;
+    }
+    main {
+      max-width: 1040px;
+      margin: 20px auto;
+      padding: 0 16px 32px;
+    }
+    .card {
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 10px 25px rgba(15, 23, 42, 0.08);
+      padding: 20px;
+      margin-bottom: 20px;
+      border: 1px solid #e5e7eb;
+    }
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+    }
+    .card-header h2 {
+      margin: 0;
+      font-size: 1.1rem;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .badge {
+      display: inline-block;
+      padding: 2px 10px;
+      border-radius: 999px;
+      font-size: 0.75rem;
+      background: #e0f2fe;
+      color: #0369a1;
+      font-weight: 600;
+    }
+    .date-display {
+      font-size: 0.9rem;
+      color: #4b5563;
+    }
+    label {
+      font-size: 0.9rem;
+      color: #374151;
+    }
+    select, button {
+      font-size: 0.9rem;
+    }
+    select {
+      width: 100%;
+      padding: 8px 10px;
+      border-radius: 999px;
+      border: 1px solid #d1d5db;
+      outline: none;
+      background: #f9fafb;
+      transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
+    }
+    select:focus {
+      border-color: #2563eb;
+      box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.25);
+      background: white;
+    }
+    .flex-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 12px;
+    }
+    .btn {
+      border-radius: 999px;
+      border: none;
+      padding: 8px 16px;
+      cursor: pointer;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      box-shadow: 0 8px 16px rgba(15, 23, 42, 0.18);
+      transition: transform 0.1s ease, box-shadow 0.1s ease, background 0.1s ease;
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, #2563eb, #1d4ed8);
+      color: white;
+    }
+    .btn-outline {
+      background: white;
+      color: #1f2937;
+      border: 1px solid #d1d5db;
+      box-shadow: none;
+    }
+    .btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 12px 22px rgba(15, 23, 42, 0.18);
+    }
+    .btn:active {
+      transform: translateY(0);
+      box-shadow: 0 6px 12px rgba(15, 23, 42, 0.18);
+    }
+    .btn-icon {
+      font-size: 1rem;
+    }
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: #f3f4f6;
+      font-size: 0.8rem;
+      color: #374151;
+    }
+    .pill strong {
+      color: #111827;
+    }
+    .students-container {
+      margin-top: 12px;
+      max-height: 420px;
+      overflow-y: auto;
+      border-radius: 12px;
+      border: 1px solid #e5e7eb;
+      background: #f9fafb;
+    }
+    .students-header {
+      display: grid;
+      grid-template-columns: 52px 1fr 90px;
+      padding: 8px 12px;
+      border-bottom: 1px solid #e5e7eb;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: #6b7280;
+      background: #f3f4f6;
+      position: sticky;
+      top: 0;
+      z-index: 2;
+    }
+    .student-row {
+      display: grid;
+      grid-template-columns: 52px 1fr 90px;
+      padding: 7px 12px;
+      align-items: center;
+      font-size: 0.9rem;
+      border-bottom: 1px solid #e5e7eb;
+      background: white;
+    }
+    .student-row:nth-child(even) {
+      background: #f9fafb;
+    }
+    .student-row:hover {
+      background: #eff6ff;
+    }
+    .student-name {
+      font-weight: 500;
+      color: #111827;
+    }
+    .checkbox-wrapper {
+      display: flex;
+      justify-content: center;
+    }
+    .checkbox-wrapper input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      cursor: pointer;
+    }
+    .summary-box {
+      margin-top: 16px;
+      padding: 12px 14px;
+      border-radius: 12px;
+      background: #eff6ff;
+      border: 1px solid #bfdbfe;
+      font-size: 0.9rem;
+      color: #1e3a8a;
+    }
+    .summary-main {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .summary-main strong {
+      font-size: 1rem;
+    }
+    .summary-absent {
+      margin-top: 8px;
+      font-size: 0.9rem;
+    }
+    .summary-absent ul {
+      margin: 4px 0 0 18px;
+      padding: 0;
+    }
+    .summary-absent li {
+      margin: 0;
+    }
+    .status-bar {
+      margin-top: 10px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      font-size: 0.85rem;
+    }
+    .status-pill {
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: #e5f9ed;
+      color: #047857;
+      font-weight: 600;
+    }
+    .status-pill.error {
+      background: #fee2e2;
+      color: #b91c1c;
+    }
+    .status-pill.info {
+      background: #e0f2fe;
+      color: #0369a1;
+    }
+    footer {
+      text-align: center;
+      font-size: 0.75rem;
+      color: #9ca3af;
+      margin-top: 10px;
+    }
+    @media (max-width: 640px) {
+      header h1 {
+        font-size: 1.15rem;
+      }
+      .students-header, .student-row {
+        grid-template-columns: 42px 1fr 80px;
+      }
+      .students-container {
+        max-height: 360px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Rekod Kehadiran Harian Murid SKSA (Tahap 1)</h1>
+    <p>Guru hanya perlu tandakan murid <strong>tidak hadir</strong>. Sistem akan kira kehadiran automatik untuk hari tersebut.</p>
+  </header>
+
+  <main>
+    <section class="card">
+      <div class="card-header">
+        <h2>
+          📚 Rekod Kehadiran
+          <span class="badge">Tahap 1 (2025)</span>
+        </h2>
+        <div class="date-display" id="todayDisplay">Tarikh:</div>
+      </div>
+
+      <div>
+        <label for="classSelect">Pilih kelas:</label>
+        <select id="classSelect">
+          <option value="">— Sila pilih kelas —</option>
+        </select>
+      </div>
+
+      <div class="flex-row">
+        <div class="pill">
+          🔁 <strong>Setiap hari baharu</strong> &nbsp;– kehadiran bermula semula (semua murid dianggap hadir).
+        </div>
+        <div>
+          <button type="button" class="btn btn-outline" id="btnAllPresent">
+            ✅ Semua hadir
+          </button>
+          <button type="button" class="btn btn-outline" id="btnClearTicks">
+            ✖ Reset tanda
+          </button>
+        </div>
+      </div>
+
+      <div id="studentsSection" style="margin-top: 16px; display: none;">
+        <div class="students-container">
+          <div class="students-header">
+            <div>No.</div>
+            <div>Nama Murid</div>
+            <div style="text-align:center;">Tidak hadir</div>
+          </div>
+          <div id="studentsList"></div>
+        </div>
+
+        <div class="flex-row">
+          <div class="pill" id="countInfo">
+            👥 Jumlah murid: <strong>0</strong>
+          </div>
+          <button type="button" class="btn btn-primary" id="btnSave">
+            <span class="btn-icon">💾</span>
+            Simpan kehadiran hari ini
+          </button>
+        </div>
+
+        <div class="summary-box" id="summaryBox" style="display:none;">
+          <div class="summary-main">
+            <div>
+              <strong id="summaryTitle">Kehadiran hari ini:</strong>
+              <div id="summaryRatio">0/0 hadir</div>
+            </div>
+            <div id="summaryMini"></div>
+          </div>
+          <div class="summary-absent" id="summaryAbsent"></div>
+        </div>
+
+        <div class="status-bar" id="statusBar"></div>
+      </div>
+    </section>
+
+    <footer>
+      SK Sri Aman · Modul Kehadiran Harian Tahap 1 (Firebase Realtime Database)
+    </footer>
+  </main>
+
+  <!-- Firebase v8 -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+  <script>
+    // ================================
+    // 1. FIREBASE CONFIG (PROJEK AWAK)
+    // ================================
+    const firebaseConfig = {
+      apiKey: "AIzaSyDbCgDz2vK2BZUpwM3iDWJcPQSptVcNkv4",
+      authDomain: "kehadiran-murid-6ece0.firebaseapp.com",
+      databaseURL: "https://kehadiran-murid-6ece0-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "kehadiran-murid-6ece0",
+      storageBucket: "kehadiran-murid-6ece0.firebasestorage.app",
+      messagingSenderId: "223849234784",
+      appId: "1:223849234784:web:e1471ded7ea17ba60bde05",
+      measurementId: "G-4DY138HKTW"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    // =====================================
+    // 2. DATA NAMA MURID MENGIKUT KELAS
+    //    (diambil terus dari fail Excel awak)
+    // =====================================
+    const classData = {
+      "1B": [
+        "AHMAD ZARIF MIKAEL BIN AHMAD ZULFIKA",
+        "ALISHA HUMAIRA BINTI ZAINOOR ARIFFIN",
+        "AMINAH BINTI MOHAMMAD SYAUQI",
+        "ANGGUN ISABELLA BINTI MOHD HAFIZUL",
+        "MOHAMMAD IMAN IKHSAN BIN ABDUL AZIZ",
+        "MUHAMMAD AL-FATEH BIN ZULKIFLI",
+        "MUHAMMAD EDRUS BIN MUHAMMAD RAFIQ DAS",
+        "MUHAMMAD HARRAZ AL HAKIM BIN ABDUL FARIZUL HELMI",
+        "MUHAMMAD HAZIQ BIN MOHD HELMI",
+        "MUHAMMAD NAFIS BIN MOHAMED ABDULLAH",
+        "MUHAMMAD RIZQ HAFIZH BIN MUHAMMAD HARITH",
+        "MUHAMMAD UWAIS FARRELL BIN MOHAMAD FIRDAUS IZZAT",
+        "MUHAMMAD ZAYDEAN HEDZRA BIN ZAINUDIN",
+        "MUHAMMAD ZAYYAN ISKANDAR BIN ZULHAFIZ",
+        "NAYL NADHIRAH BINTI NASHRU ISMAIL",
+        "NUR ALISHZA ARIANA BINTI MOHD KHAIRUL HAKIM",
+        "NUR ANNA BELLA BINTI HELMI",
+        "NUR ARRISHA QHAIDINA BINTI MOHD AZMI",
+        "NUR AURORA REZALEA BINTI MUHAMMAD AKMAL",
+        "NUR HUMAIRA ELLISYA BINTI ABDURRAHMAN AL FATAH",
+        "NUR IZZ SOFEA BINTI MUSLIM",
+        "NUR MAIRAA DAMIA BINTI ZAINOL AZAM",
+        "NUR SHAZWIN EQPILLA BINTI SHAHRIL NIZAM",
+        "RAIN ARJUNA BIN WAN MUHAMAD HARIZ",
+        "RAYYAN MIKAIL BIN MOHAMAD AZMEEN",
+        "UMMU AISYAH BINTI MOHAMAD HAZAM"
+      ],
+      "1C": [
+        "AHMAD ADAM UWAIS BIN MUHAMMAD FAIZ",
+        "AMMAR DANISH BIN KAMARUL ISLAM",
+        "DANIYAL HADIF BIN AHMAD BADZLY",
+        "MUHAMMAD AKMAL ARIQ BIN MOHAMAD HUSNI",
+        "MUHAMMAD AIRIL HIDAYAT BIN AHMAD BAKRI",
+        "MUHAMMAD ARYAN RAYYAN BIN ZULKARNAEN",
+        "MUHAMMAD DANIAQIL AQASY BIN MOHD SHAHRIL NIZAM",
+        "MUHAMMAD FARID IRFAN BIN ABDUL RAZAK",
+        "MUHAMMAD HASIF BIN FAIZAN",
+        "MUHAMMAD HAZIQ RAHMAT BIN MOHD MUZAFAR",
+        "MUHAMMAD IZQY RAFIQ BIN MOHD AZEEZ",
+        "MUHAMMAD RIFQI IMRAN BIN MOHD ARIF",
+        "MUHAMMAD THARIQ AFNAN BIN MAZLAN",
+        "NAUFAL AQIL BIN MUHAMMAD ARIFFIN",
+        "NOR SYAZWI AQIF BIN NOR SHAHROL AZMIZAM",
+        "NUFAYYADH BIN MUHAMAD HAFIZ ZUHAR",
+        "RAID AFZAL BIN MUHAMAD SYUKRI",
+        "SHAHMI ILHAN BIN HAIRUL",
+        "ADELIA QASEH DAMIA BINTI ROHAIZAD",
+        "ALICIA BALQIS ILYANA BINTI JAMIL",
+        "ALIA FARZANNA BINTI AZIZ",
+        "ARDILLA ATHARAH BINTI RIDZUAN",
+        "AUNI FALISHA BINTI MOHARIZMI",
+        "MONICA RUJANAMI",
+        "NUR ADRA NORAISHA BINTI ROSMAN",
+        "NUR IZZ ZATIL FAREESHA BINTI MOHD AZHAR",
+        "RAYSHA ATHIRAH BINTI MOHD ARIF",
+        "WAN NUR AINUL MARDHIAH BINTI WAN FAKEH ALI"
+      ],
+      "1G": [
+        "AIDAN RIZQI BIN AHMAD AIMULLAH",
+        "AYRA ELIZA BINTI WAN ZAINAL ABIDIN",
+        "MUHAMMAD AQIL AZFHA BIN AZLEY",
+        "MUHAMMAD ARHUM RAYYAN BIN AZMAN",
+        "MUHAMMAD DAUD BIN ZULKIFLI YAAKOP",
+        "MUHAMMAD DAZAIF BIN MOHAMAD ROZALI",
+        "MUHAMMAD IZZ HADIF BIN AZMAN HASHIM",
+        "MUHAMMAD NAZMI HAKEEM BIN BAHAROL ANUAR",
+        "MUHAMMAD RAYYAN DANISH BIN MOHD MISKON",
+        "NUR FAIZA QISTINA BINTI AZLAN",
+        "NUR FALLIZA ADANIA BINTI RIDZUAN",
+        "NUR HANIS QASEH BINTI MOHAMAD RAZIF",
+        "NUR IRDINA QAYYIM BINTI IZWAN",
+        "NUR NAJIHAH BINTI AZAHAR",
+        "NUR SAYYIDAH AISYAH BINTI KHAIRUL ANWAR",
+        "NUR SUHAIRA SITI AISHAH BINTI RUHAIZIAN",
+        "NUR SURAYA AIN BIN HARIDZUL IZWAN",
+        "NUR WAFA' AS SAKINAH BINTI MOHD ZULHAIZAL",
+        "QARISYA NUR ELMA BEYLYNA BINTI SHAHRIL SHAHMI",
+        "NUR RAISHA BINTI MOHD TAKIUDDIN",
+        "THAQIF ARJUNA BIN HAPANDI"
+      ],
+      "2B": [
+        "AHMAD NAZRI NUFAIL BIN NIZAM",
+        "AURIS MIKAEL BIN AHMAD SHAFIIN",
+        "DANIAL RAYYAN BIN RIZAL",
+        "DANISH ZAQWAN BIN MOHD HADZREEN",
+        "JORDAN BIN BURHAN SHAMIL",
+        "MUHAMMAD AHMAD NUFAYL BIN RIDZUAN",
+        "MUHAMMAD ARIQ DAMIA BIN MOHD NOR",
+        "MUHAMMAD ASYRAF HAZIQ BIN ZULKIFLI",
+        "MUHAMMAD DANIAL AIMAN BIN ZABIDI",
+        "MUHAMMAD FAWWAZ AQIL BIN FADZIL",
+        "MUHAMMAD IZZ ISKANDAR BIN MOHD ZULHAZWAN",
+        "MUHAMMAD NAZMI BIN ABDUL RAZAK",
+        "MUHAMMAD RAYYAN ARYAN BIN RAZMAN",
+        "MUHAMMAD RAZIN ZAQWAN BIN ZULZAFRAN",
+        "NUH ZAYYAN BIN MUHAMMAD AFIZ",
+        "ADLINA HANISHA MUHAMAD ARIFIN",
+        "ALIA AQILAH BINTI ABDULLAH",
+        "AMIRA ZARQAH BINTI AZMAN",
+        "FARAH HAZIRAH BINTI MOHD IRZAM",
+        "HANA ILISA NADZIRAH BINTI SYAZWAN SHUKOR",
+        "IREEN SOFIA BINTI HELMI",
+        "NUR AISYAH DANIA BINTI AHMAD ZIKRI",
+        "NUR ARCILLA SYFA BINTI MUHAMAD IZHAM",
+        "NUR ARISYA DAMIA SYAZWANI BINTI ABDULLAH",
+        "NUR HANIS MARDIYAH BINTI MOHD HAFIZ",
+        "SABRENA MARRY NAIDU"
+      ],
+      "2C": [
+        "AFIQ NAUFAL BIN AZRIN",
+        "AQIL RAYYAN BIN JAMALUDDIN",
+        "DANIAL RAYYAN BIN MOHD ZAHRIN",
+        "HARITH DANISH BIN MOHD HALIM",
+        "MOHAMMAD AHMAD FAREES BIN MUHAMMAD SHAHMI",
+        "MOHAMMAD IQFI HAZMAN BIN MOHD HAZMAN",
+        "MUHAMMAD AFIQ HAZIM BIN MOHD ZAFRE",
+        "MUHAMMAD ARYAN BIN SHAHRUL AFFENDY",
+        "MUHAMMAD DANISH HAZIQ BIN FAIRUS",
+        "MUHAMMAD HAZIQ HAKIM BIN AZHAR",
+        "MUHAMMAD IKMAL BIN MOHD FARIDZUL",
+        "MUHAMMAD RAIHAN ADZMAN BIN ROHAIZAD",
+        "MUHAMMAD RAYYAN DARWYSY BIN REDZUAN",
+        "MUHAMMAD RIDHUAN BIN FAISAL",
+        "NAUFAL HAZIQ BIN FAIZAL",
+        "NUR AIMEE NAJLA BINTI AZLAN",
+        "NUR ARYSA NARA BINTI HANIS KHAIRI",
+        "NUR BALQIS SOFEA BINTI BURHAN SHAMIL",
+        "NUR MALAIQA MADINAH BINTI MARZLAN",
+        "NUR ZAHIRA BINTI MOHD HALIM",
+        "NUR AUFA IZZATUNRISSA BINTI MOHARIZMI",
+        "RAFIQ QUSYAIRI BIN RANDY",
+        "WAFA SAFIYYAH BINTI SHUKOR",
+        "WAFIYYAH HUMAIRA BINTI MUHAMAD NORASMAN"
+      ],
+      "2G": [
+        "AFEA IRDINA BINTI MOHD YUSROL",
+        "AHMAD ADAM ALIY BIN AMIR SHARIFUDIN",
+        "ARWISH RIFQI BIN MOHD RADZIF",
+        "DANIES KHALEL BIN MOHAMAD ZAKI",
+        "MUHAMMAD ARYAN BIN HIZZADY",
+        "MUHAMMAD AZHAN ARIEF BIN ABDUL RAZAK",
+        "MUHAMMAD DANISH HAIQAL BIN MOHD SHAFIQ",
+        "MUHAMMAD DARWISY BIN KHAIRUN NAZARI",
+        "MUHAMMAD HARITH BIN NOR IZHAM",
+        "MUHAMMAD RAZIM ADHA BIN AZMAN",
+        "MUHD NAUFAL AUFA BIN AZRIN",
+        "NAUFAL IRFAN BIN MOHD FADLILAH",
+        "NIZAR MUHAIMIN BIN MOHAMAD NAJIB",
+        "NUR AQILAH QISTINA BINTI MOHD RAZMAN",
+        "NUR ARISHA AFIFAH BINTI AKHMAZUL HELMI",
+        "NUR AUNI ARISSA BINTI MOHD AZRIN",
+        "NUR FATHIN AFRINA BINTI NASHZULHAKIM",
+        "NUR HANA ELLEYA BINTI SHAKIRIN",
+        "NUR IZZATI ASIFAH BINTI ROHAIZAT",
+        "NURIZZAH HAKIMAH BINTI MOHD YUSRI",
+        "PUTRI ADRIANA BINTI ROSDI",
+        "RANIA ALEESYA QAISARA BINTI MAZLAN",
+        "SABRINAH ANASTASIA BINTI JOSEPH",
+        "SYAFIYYAH ASYFIAH BINTI AZAMAN HARIS",
+        "WANI NATASHA BINTI ZULKIFLI",
+        "ZERENEY SYAEEDAH BINTI MOHAMAD HUSAINI",
+        "ZUYYIN NAQIYYA BINTI MOHD FAZLY"
+      ],
+      "3B": [
+        "AMMAR AR RAIYAN BIN AZNAL",
+        "FATHIMA MUNEERA BINTI ABDUL MUNAF",
+        "MUHAMMAD AADAM IMRAN BIN MUHAMMAD FAREEZ",
+        "MUHAMMAD AMAR AFIQ BIN ZURHAINIZAM",
+        "MUHAMMAD ARTHUR FAYED BIN DZWIGOR",
+        "MUHAMMAD ASHRAF DANISH BIN MOHD KAMAL",
+        "MUHAMMAD EIDRIS BIN MOHD AZMI",
+        "MUHAMMAD HAZIQ AHMAD BIN AHMAD AFIF",
+        "MUHAMMAD NUR ZAYYAN BIN MOHD FIRDAUS",
+        "MUHAMMAD RAAEI MIKAIL BIN RASID",
+        "MUHAMMAD THAQIF MAISAL BIN MOHD FAHMI",
+        "MUHAMMAD YUSUF BIN HIZAM",
+        "MUHAMMAD ZACHARY BIN AJIS",
+        "NUR SHARIFAH BATRISYIAH BINTI SUBRATA",
+        "QHALEED AFZAN BIN ASWADI",
+        "SHAHZAIN BIN HIZAM",
+        "AMANI ADEEQA BINTI ABG MAHADI",
+        "AYLA SIRAH BINTI MUHAMMAD SHAHRUL IZWAN",
+        "FARAH DAMIA HUSNAA BINTI ADZWAN",
+        "MOHAMAD NAZIHATUL HABIBAH BINTI TAQN ADDIN",
+        "NABILA KHADIJAH BINTI MOHAMAD TAQIF",
+        "NURUL ALISYA BINTI MOHD FITRI"
+      ],
+      "3C": [
+        "ABU KHAISAMAH BIN AZIZUL",
+        "MUHAMMAD ADIB LUTHFI BIN MUHAMAD YUSOF",
+        "MUHAMMAD AMMAR BIN MOHD ARIFFIN",
+        "MUHAMMAD IZZUL HADI BIN MOHD HAFAIZI",
+        "MUHAMMAD RAFEEQ DANISH BIN ERWAN",
+        "MUHAMMAD ZAQIY BIN MOHD NAJIB",
+        "MUHD RAYYAN SYAKIR BIN HAFIZ",
+        "NAUFAL ZIQRI ADLEY BIN MOHD FUHD BIN RASHID MEOR",
+        "AQEELA MARISSA BINTI MARZUKI",
+        "AQIDAH WISDAH BINTI MOHAMMAD ZAMRI",
+        "FARISYA QHAIRUNNISA BINTI ABDUL RAZAK",
+        "NIL CROSS REEF",
+        "NUR AAISHA ARIQAH BINTI MOHAMMAD ZAIDI",
+        "NUR AQILAH SOFEA BINTI AMIRUDDIN",
+        "NUR ARWANI AQEELA BINTI HASNIN HARIDZHEN",
+        "NUR ASMA MARIAM BINTI MOHD HAFIZ",
+        "NUR BALQIS SHAQIRA BINTI ABDULLAH",
+        "NURJIHAD DAMIA QHAISARA BINTI MOHAMAD FAUZI",
+        "NUR MEYSARA HAZIEQA BINTI MOHAMMAD AL FARUQI",
+        "NUR MAISARAH BINTI ABU BAKAR",
+        "NUR NAJWA NAJIHIN BINTI ABDUL SANI",
+        "NUR RANIA RIZQAA BINTI MOHD SAHIDAN",
+        "NUR INARAH BINTI ABU BAKAR",
+        "NUR QEISHA AZ-ZAHRA BINTI ZULKIFLI"
+      ],
+      "3G": [
+        "AISYAH RANIA BINTI ABU BAKAR",
+        "ALIA MAISARAH BINTI ROSCIDI",
+        "ALIF ZAFWAN BIN AZHAR",
+        "DANISH AIMAN BIN MOHD SHAFIQ",
+        "HAZIQ DANIAL BIN FADZIL",
+        "HILMY ADIFA BIN WAN MUHAMMAD FAIZULKHALID",
+        "MUHAMMAD AIMAN HAZIQ BIN HAIKAL",
+        "MUHAMMAD AMIR AIMAN BIN AZMI",
+        "MUHAMMAD ARIF RAYYAN BIN MUHAMMAD HAFIZ",
+        "MUHAMMAD DANIAL NAJMI BIN MOHD FIRDAUS",
+        "MUHAMMAD FAREES BIN AZURRAZI",
+        "MUHAMMAD IRFAN AKMAL BIN MOHD NAJIB",
+        "MUHAMMAD NAUFAL FIQRI BIN FAIZUL",
+        "MUHAMMAD RAYYAN HAZIM BIN HAFIZ",
+        "SYAFIQ HAZIM BIN ROSDI",
+        "AFIQAH DAMIA BINTI ABDULLAH",
+        "AUNI ADRIANA BINTI MOHD FAIZUL",
+        "AZAHARA SYIFA BINTI MUHAMMAD IMRAN",
+        "FATIHAH ERYNA BINTI RIZAL",
+        "NUR ADLINA BALQIS BINTI MOHAMAD ZAKI",
+        "NUR ALEESYA DAMIA BINTI SHAHRUL ZAMAN",
+        "NUR ANIS BINTI MOHAMAD SAHIDAN",
+        "NUR AUNI MAISARAH BINTI MOHAMAD ZULKIFLI",
+        "NUR IZZAH ISMIRA BINTI NIZAMUDIN",
+        "NUR NAYLI QASEH BINTI MOHD HAFIZ",
+        "NURUL ARISYA DAMIA BINTI ABDULLAH",
+        "NURUL BALQIS MARDHIAH BINTI RUSHDAN",
+        "NURUL HASYIMAH DAMIA BINTI MOHD RIDZUAN",
+        "NURUL IZZAH DAMIA BINTI ABU HASSAN",
+        "NUR QIRAH BINTI ABDULLAH",
+        "NUR ARISHA SAFIYA BINTI MOHD AZLAN",
+        "NUR DARWISYAH QAISARA BINTI MOHAMAD REDZUAN",
+        "NUR ELMIRA AMANI BINTI MUHAMMAD SIDDIQ",
+        "NUR WARDAH BINTI MOHD NOORADDLY",
+        "SHAZMIA ELLYSYA BINTI SHAHRIL HAZRIE",
+        "ZAYYAN AYDEN BIN MOHAMAD ZULHUSNI"
+      ]
+    };
+
+    // =====================================
+    // 3. UTILITI TARIKH (format MY)
+    // =====================================
+    function getTodayKey() {
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = String(now.getMonth() + 1).padStart(2, '0');
+      const day = String(now.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    }
+
+    function getTodayHumanReadable() {
+      const now = new Date();
+      const day = String(now.getDate()).padStart(2, '0');
+      const monthIndex = now.getMonth();
+      const year = now.getFullYear();
+      const monthNames = [
+        "Januari","Februari","Mac","April","Mei","Jun",
+        "Julai","Ogos","September","Oktober","November","Disember"
+      ];
+      return `${day} ${monthNames[monthIndex]} ${year}`;
+    }
+
+    // =====================================
+    // 4. LOGIK UI
+    // =====================================
+    const classSelect = document.getElementById('classSelect');
+    const studentsSection = document.getElementById('studentsSection');
+    const studentsList = document.getElementById('studentsList');
+    const countInfo = document.getElementById('countInfo');
+    const btnAllPresent = document.getElementById('btnAllPresent');
+    const btnClearTicks = document.getElementById('btnClearTicks');
+    const btnSave = document.getElementById('btnSave');
+    const summaryBox = document.getElementById('summaryBox');
+    const summaryRatio = document.getElementById('summaryRatio');
+    const summaryMini = document.getElementById('summaryMini');
+    const summaryAbsent = document.getElementById('summaryAbsent');
+    const statusBar = document.getElementById('statusBar');
+    const todayDisplay = document.getElementById('todayDisplay');
+
+    todayDisplay.textContent = "Tarikh: " + getTodayHumanReadable();
+
+    function populateClassDropdown() {
+      const classNames = Object.keys(classData).sort();
+      classNames.forEach(kelas => {
+        const opt = document.createElement('option');
+        opt.value = kelas;
+        opt.textContent = kelas;
+        classSelect.appendChild(opt);
+      });
+    }
+
+    populateClassDropdown();
+
+    function renderStudentsForClass(kelas) {
+      studentsList.innerHTML = "";
+      summaryBox.style.display = 'none';
+      statusBar.innerHTML = "";
+
+      if (!kelas || !classData[kelas] || classData[kelas].length === 0) {
+        studentsSection.style.display = 'none';
+        return;
+      }
+
+      const names = classData[kelas];
+      names.forEach((nama, index) => {
+        const row = document.createElement('div');
+        row.className = 'student-row';
+
+        const colNo = document.createElement('div');
+        colNo.textContent = index + 1;
+
+        const colName = document.createElement('div');
+        colName.className = 'student-name';
+        colName.textContent = nama;
+
+        const colCheckbox = document.createElement('div');
+        colCheckbox.className = 'checkbox-wrapper';
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.className = 'student-checkbox';
+        checkbox.dataset.name = nama;
+        colCheckbox.appendChild(checkbox);
+
+        row.appendChild(colNo);
+        row.appendChild(colName);
+        row.appendChild(colCheckbox);
+
+        studentsList.appendChild(row);
+      });
+
+      studentsSection.style.display = 'block';
+      countInfo.innerHTML = `👥 Jumlah murid: <strong>${names.length}</strong>`;
+
+      const todayKey = getTodayKey();
+      const year = new Date().getFullYear();
+      const path = `kehadiran/${year}/${kelas}/${todayKey}`;
+      db.ref(path).once('value').then(snap => {
+        const data = snap.val();
+        if (data && Array.isArray(data.absentees)) {
+          const absentees = data.absentees;
+          document.querySelectorAll('.student-checkbox').forEach(cb => {
+            cb.checked = absentees.includes(cb.dataset.name);
+          });
+          updateSummaryUI(kelas, names.length, names.length - absentees.length, absentees);
+          setStatus("Data kehadiran hari ini telah direkod sebelum ini. Anda boleh kemaskini semula dan simpan.", "info");
+        } else {
+          setStatus("Semua murid ditanda hadir secara default. Tanda sahaja murid yang tidak hadir.", "info");
+        }
+      });
+    }
+
+    classSelect.addEventListener('change', () => {
+      const kelas = classSelect.value;
+      if (!kelas) {
+        studentsSection.style.display = 'none';
+        return;
+      }
+      renderStudentsForClass(kelas);
+    });
+
+    function setAllPresent() {
+      document.querySelectorAll('.student-checkbox').forEach(cb => {
+        cb.checked = false;
+      });
+      setStatus("Semua murid ditanda hadir.", "success");
+    }
+
+    function clearTicks() {
+      document.querySelectorAll('.student-checkbox').forEach(cb => {
+        cb.checked = false;
+      });
+      summaryBox.style.display = 'none';
+      setStatus("Semua tanda tidak hadir telah di-reset.", "info");
+    }
+
+    btnAllPresent.addEventListener('click', setAllPresent);
+    btnClearTicks.addEventListener('click', clearTicks);
+
+    function setStatus(message, type) {
+      statusBar.innerHTML = "";
+      const span = document.createElement('span');
+      span.className = 'status-pill';
+      if (type === 'error') span.classList.add('error');
+      if (type === 'info') span.classList.add('info');
+      span.textContent = message;
+      statusBar.appendChild(span);
+    }
+
+    function updateSummaryUI(kelas, total, presentCount, absentees) {
+      const todayText = getTodayHumanReadable();
+      summaryBox.style.display = 'block';
+      summaryRatio.textContent = `${presentCount}/${total} hadir`;
+      summaryMini.textContent = `Kelas ${kelas} · ${todayText}`;
+
+      if (absentees.length === 0) {
+        summaryAbsent.innerHTML = "<strong>Tidak hadir:</strong> Tiada. Semua murid hadir hari ini. 🎉";
+      } else {
+        const parts = absentees.map((nama, index) => `${index + 1}) ${nama}`);
+        summaryAbsent.innerHTML = "<strong>Tidak hadir:</strong> " + parts.join(" · ");
+      }
+    }
+
+    btnSave.addEventListener('click', () => {
+      const kelas = classSelect.value;
+      if (!kelas) {
+        setStatus("Sila pilih kelas dahulu.", "error");
+        alert("Sila pilih kelas dahulu.");
+        return;
+      }
+
+      const names = classData[kelas] || [];
+      const total = names.length;
+      const checkboxes = document.querySelectorAll('.student-checkbox');
+      const absentees = [];
+      checkboxes.forEach(cb => {
+        if (cb.checked) absentees.push(cb.dataset.name);
+      });
+      const presentCount = total - absentees.length;
+
+      const todayKey = getTodayKey();
+      const year = new Date().getFullYear();
+      const path = `kehadiran/${year}/${kelas}/${todayKey}`;
+
+      const studentStatus = {};
+      names.forEach(nama => {
+        studentStatus[nama] = !absentees.includes(nama);
+      });
+
+      const attendanceData = {
+        class: kelas,
+        dateKey: todayKey,
+        humanDate: getTodayHumanReadable(),
+        totalStudents: total,
+        presentCount: presentCount,
+        absentCount: absentees.length,
+        absentees: absentees,
+        studentStatus: studentStatus,
+        savedAt: new Date().toISOString()
+      };
+
+      db.ref(path).set(attendanceData)
+        .then(() => {
+          updateSummaryUI(kelas, total, presentCount, absentees);
+          setStatus("Kehadiran hari ini berjaya disimpan ke dalam Firebase.", "success");
+        })
+        .catch(err => {
+          console.error(err);
+          setStatus("Ralat semasa menyimpan kehadiran. Sila cuba lagi.", "error");
+          alert("Ralat semasa menyimpan kehadiran: " + err.message);
+        });
+    });
+  </script>
+</body>
+</html>
