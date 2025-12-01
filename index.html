@@ -174,7 +174,7 @@
       color: #111827;
     }
 
-    /* Tabs */
+    /* Tabs utama */
     .tabs {
       margin-top: 4px;
       display: flex;
@@ -205,6 +205,37 @@
     }
     .tab-panel {
       margin-top: 12px;
+    }
+
+    /* Sub-tab dalam Ringkasan Semua Kelas */
+    .subtabs {
+      margin-top: 8px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .subtab-btn {
+      border-radius: 999px;
+      border: 1px solid #e5e7eb;
+      background: #f9fafb;
+      padding: 4px 12px;
+      font-size: 0.85rem;
+      cursor: pointer;
+      color: #4b5563;
+      transition: background 0.15s, color 0.15s, box-shadow 0.15s, border-color 0.15s;
+    }
+    .subtab-btn:hover {
+      background: #eef2ff;
+    }
+    .subtab-btn.active {
+      background: #ffffff;
+      color: #2563eb;
+      font-weight: 600;
+      border-color: #bfdbfe;
+      box-shadow: 0 1px 4px rgba(15, 23, 42, 0.2);
+    }
+    .subtab-panel {
+      margin-top: 8px;
     }
 
     /* carian nama */
@@ -528,29 +559,97 @@
 
       <!-- TAB 2: Ringkasan semua kelas -->
       <div id="tab-summary" class="tab-panel" style="display:none;">
-        <div class="summary-header-row">
-          Rekod Kehadiran Pada <span id="summaryDateLink" class="summary-date-link"></span>
+
+        <!-- Sub-tab Harian / Mingguan / Bulanan -->
+        <div class="subtabs">
+          <button class="subtab-btn active" data-subtab="daily">Harian</button>
+          <button class="subtab-btn" data-subtab="weekly">Mingguan</button>
+          <button class="subtab-btn" data-subtab="monthly">Bulanan</button>
         </div>
 
-        <div class="summary-table-wrapper">
-          <table class="summary-table">
-            <thead>
-              <tr>
-                <th>Bil</th>
-                <th class="darjah-col">Darjah</th>
-                <th>Kelas</th>
-                <th>Kehadiran</th>
-              </tr>
-            </thead>
-            <tbody id="summaryTableBody">
-              <!-- Diisi melalui JS -->
-            </tbody>
-          </table>
+        <!-- Panel HARIAN (default) -->
+        <div id="summaryDailyPanel" class="subtab-panel" style="display:block;">
+          <div class="summary-header-row">
+            Rekod Kehadiran Pada <span id="summaryDateLink" class="summary-date-link"></span>
+          </div>
+
+          <div class="summary-table-wrapper">
+            <table class="summary-table">
+              <thead>
+                <tr>
+                  <th>Bil</th>
+                  <th class="darjah-col">Darjah</th>
+                  <th>Kelas</th>
+                  <th>Kehadiran</th>
+                </tr>
+              </thead>
+              <tbody id="summaryTableBody">
+                <!-- Diisi melalui JS -->
+              </tbody>
+            </table>
+          </div>
+
+          <div class="summary-footer" id="summaryFooter">
+            Kehadiran : Tiada rekod kehadiran<br />
+            Peratus Kehadiran : Tiada rekod kehadiran
+          </div>
         </div>
 
-        <div class="summary-footer" id="summaryFooter">
-          Kehadiran : Tiada rekod kehadiran<br />
-          Peratus Kehadiran : Tiada rekod kehadiran
+        <!-- Panel MINGGUAN -->
+        <div id="summaryWeeklyPanel" class="subtab-panel" style="display:none;">
+          <div class="summary-header-row">
+            Ringkasan Mingguan: <span id="weeklyRangeLabel"></span>
+          </div>
+
+          <div class="summary-table-wrapper">
+            <table class="summary-table">
+              <thead>
+                <tr>
+                  <th>Bil</th>
+                  <th>Tarikh</th>
+                  <th>Kehadiran</th>
+                  <th>Peratus</th>
+                </tr>
+              </thead>
+              <tbody id="weeklyTableBody">
+                <!-- Diisi melalui JS -->
+              </tbody>
+            </table>
+          </div>
+
+          <div class="summary-footer" id="weeklyInfo">
+            Tiada rekod kehadiran untuk minggu ini.
+          </div>
+        </div>
+
+        <!-- Panel BULANAN -->
+        <div id="summaryMonthlyPanel" class="subtab-panel" style="display:none;">
+          <div class="summary-header-row" style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;">
+            <span>Ringkasan Bulanan: <span id="monthlyLabel"></span></span>
+            <button type="button" class="btn btn-outline" id="btnPrintMonthly">
+              🖨 Cetak
+            </button>
+          </div>
+
+          <div class="summary-table-wrapper">
+            <table class="summary-table">
+              <thead>
+                <tr>
+                  <th>Bil</th>
+                  <th>Tarikh</th>
+                  <th>Kehadiran</th>
+                  <th>Peratus</th>
+                </tr>
+              </thead>
+              <tbody id="monthlyTableBody">
+                <!-- Diisi melalui JS -->
+              </tbody>
+            </table>
+          </div>
+
+          <div class="summary-footer" id="monthlyInfo">
+            Tiada rekod kehadiran untuk bulan ini.
+          </div>
         </div>
       </div>
     </section>
@@ -583,7 +682,34 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    // DATA NAMA MURID
+    const MONTH_NAMES_MS = [
+      "Januari","Februari","Mac","April","Mei","Jun",
+      "Julai","Ogos","September","Oktober","November","Disember"
+    ];
+
+    function formatDateKey(date) {
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      return year + "-" + month + "-" + day;
+    }
+
+    function formatHumanDate(date) {
+      const day = String(date.getDate()).padStart(2, '0');
+      const monthIndex = date.getMonth();
+      const year = date.getFullYear();
+      return day + " " + MONTH_NAMES_MS[monthIndex] + " " + year;
+    }
+
+    function getTodayKey() {
+      return formatDateKey(new Date());
+    }
+
+    function getTodayHumanReadable() {
+      return formatHumanDate(new Date());
+    }
+
+    // DATA NAMA MURID (ikut kelas)
     const classData = {
       "1B": [
         "AHMAD ZARIF MIKAEL BIN AHMAD ZULFIKA",
@@ -839,7 +965,7 @@
       ]
     };
 
-    // mapping untuk ringkasan
+    // mapping untuk ringkasan harian kelas
     const summaryConfig = [
       { darjah: "D1", kelasLabel: "BESTARI", code: "1B" },
       { darjah: "D1", kelasLabel: "CEMERLANG", code: "1C" },
@@ -851,26 +977,6 @@
       { darjah: "D3", kelasLabel: "CEMERLANG", code: "3C" },
       { darjah: "D3", kelasLabel: "GEMILANG", code: "3G" }
     ];
-
-    function getTodayKey() {
-      const now = new Date();
-      const y = now.getFullYear();
-      const m = String(now.getMonth() + 1).padStart(2, '0');
-      const d = String(now.getDate()).padStart(2, '0');
-      return y + '-' + m + '-' + d;
-    }
-
-    function getTodayHumanReadable() {
-      const now = new Date();
-      const d = String(now.getDate()).padStart(2, '0');
-      const m = now.getMonth();
-      const y = now.getFullYear();
-      const monthNames = [
-        "Januari","Februari","Mac","April","Mei","Jun",
-        "Julai","Ogos","September","Oktober","November","Disember"
-      ];
-      return d + ' ' + monthNames[m] + ' ' + y;
-    }
 
     // DOM refs
     const classSelect = document.getElementById('classSelect');
@@ -895,11 +1001,26 @@
     const summaryTableBody = document.getElementById('summaryTableBody');
     const summaryFooter = document.getElementById('summaryFooter');
 
+    // sub-tab ringkasan
+    const subtabButtons = document.querySelectorAll('.subtab-btn');
+    const dailyPanel = document.getElementById('summaryDailyPanel');
+    const weeklyPanel = document.getElementById('summaryWeeklyPanel');
+    const monthlyPanel = document.getElementById('summaryMonthlyPanel');
+
+    const weeklyRangeLabel = document.getElementById('weeklyRangeLabel');
+    const weeklyTableBody = document.getElementById('weeklyTableBody');
+    const weeklyInfo = document.getElementById('weeklyInfo');
+
+    const monthlyLabel = document.getElementById('monthlyLabel');
+    const monthlyTableBody = document.getElementById('monthlyTableBody');
+    const monthlyInfo = document.getElementById('monthlyInfo');
+    const btnPrintMonthly = document.getElementById('btnPrintMonthly');
+
     const todayHuman = getTodayHumanReadable();
     todayDisplay.textContent = 'Tarikh: ' + todayHuman;
     summaryDateLink.textContent = todayHuman;
 
-    // Tabs
+    // TABS utama
     tabButtons.forEach(function(btn){
       btn.addEventListener('click', function(){
         tabButtons.forEach(function(b){ b.classList.remove('active'); });
@@ -911,10 +1032,45 @@
         } else {
           tabPanelByClass.style.display = 'none';
           tabPanelSummary.style.display = 'block';
-          loadSummaryTable();
+          activateSubtab('daily'); // default bila buka Ringkasan Semua Kelas
         }
       });
     });
+
+    // Sub-tab Ringkasan (harian/mingguan/bulanan)
+    function activateSubtab(name) {
+      subtabButtons.forEach(function(b){
+        if (b.getAttribute('data-subtab') === name) {
+          b.classList.add('active');
+        } else {
+          b.classList.remove('active');
+        }
+      });
+
+      dailyPanel.style.display = (name === 'daily') ? 'block' : 'none';
+      weeklyPanel.style.display = (name === 'weekly') ? 'block' : 'none';
+      monthlyPanel.style.display = (name === 'monthly') ? 'block' : 'none';
+
+      if (name === 'daily') {
+        loadSummaryTable();
+      } else if (name === 'weekly') {
+        loadWeeklySummary();
+      } else if (name === 'monthly') {
+        loadMonthlySummary();
+      }
+    }
+
+    subtabButtons.forEach(function(btn){
+      btn.addEventListener('click', function(){
+        activateSubtab(btn.getAttribute('data-subtab'));
+      });
+    });
+
+    if (btnPrintMonthly) {
+      btnPrintMonthly.addEventListener('click', function () {
+        window.print();
+      });
+    }
 
     // isi dropdown kelas
     function populateClassDropdown() {
@@ -1064,7 +1220,7 @@
 
       const todayKey = getTodayKey();
       const year = new Date().getFullYear();
-      const path = 'kehadiran/' + year + '/' + kelas + '/' + todayKey;
+      const path = 'kehadiran/' + year + '/' + kelas + '/' + todayKey';
 
       const studentStatus = {};
       names.forEach(function(nama){
@@ -1093,7 +1249,7 @@
       });
     });
 
-    // RINGKASAN SEMUA KELAS
+    // --------- RINGKASAN HARIAN (mengikut kelas) -----------
     function loadSummaryTable() {
       const todayKey = getTodayKey();
       const year = new Date().getFullYear();
@@ -1135,7 +1291,6 @@
         summaryTableBody.innerHTML = '';
 
         rows.forEach(function(row){
-          // baris utama
           const tr = document.createElement('tr');
           if (row.notUpdated) tr.classList.add('row-not-updated');
 
@@ -1170,7 +1325,6 @@
           tr.appendChild(td4);
           summaryTableBody.appendChild(tr);
 
-          // baris butiran tidak hadir
           if (!row.notUpdated) {
             const trDetail = document.createElement('tr');
             trDetail.className = 'absent-row';
@@ -1219,6 +1373,214 @@
           '<tr><td colspan="4" class="main-row-cell" style="text-align:center; padding:8px; font-size:0.9rem; color:#b91c1c;">Ralat memuatkan rekod kehadiran.</td></tr>';
         summaryFooter.innerHTML =
           'Kehadiran : Tiada rekod kehadiran<br>Peratus Kehadiran : Tiada rekod kehadiran';
+      });
+    }
+
+    // ---------- RINGKASAN MINGGUAN ----------
+    function loadWeeklySummary() {
+      const today = new Date();
+      const year = today.getFullYear();
+
+      // cari hari Isnin untuk minggu ini
+      const jsDay = today.getDay(); // 0=Ahad
+      const offsetToMonday = (jsDay + 6) % 7;
+      const start = new Date(today);
+      start.setDate(today.getDate() - offsetToMonday);
+      const end = new Date(start);
+      end.setDate(start.getDate() + 6);
+
+      weeklyRangeLabel.textContent =
+        formatHumanDate(start) + " - " + formatHumanDate(end);
+
+      weeklyTableBody.innerHTML =
+        '<tr><td colspan="4" style="text-align:center; padding:8px; font-size:0.9rem;">Memuatkan rekod mingguan...</td></tr>';
+
+      const dates = [];
+      for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+        dates.push(new Date(d));
+      }
+
+      const perDayPromises = dates.map(function(date, idx){
+        const dateKey = formatDateKey(date);
+        let totalPresent = 0;
+        let totalStudents = 0;
+        let any = false;
+
+        const classPromises = summaryConfig.map(function(item){
+          const path = 'kehadiran/' + year + '/' + item.code + '/' + dateKey;
+          return db.ref(path).once('value').then(function(snap){
+            const data = snap.val();
+            if (data && typeof data.presentCount === 'number' && typeof data.totalStudents === 'number') {
+              totalPresent += data.presentCount;
+              totalStudents += data.totalStudents;
+              any = true;
+            }
+          });
+        });
+
+        return Promise.all(classPromises).then(function(){
+          return {
+            index: idx + 1,
+            date: new Date(date),
+            totalPresent: totalPresent,
+            totalStudents: totalStudents,
+            any: any
+          };
+        });
+      });
+
+      Promise.all(perDayPromises).then(function(rows){
+        weeklyTableBody.innerHTML = '';
+        let grandPresent = 0;
+        let grandTotal = 0;
+        let anyRecord = false;
+
+        rows.forEach(function(row){
+          const tr = document.createElement('tr');
+
+          const td1 = document.createElement('td');
+          td1.textContent = row.index;
+
+          const td2 = document.createElement('td');
+          td2.textContent = formatHumanDate(row.date);
+
+          const td3 = document.createElement('td');
+          const td4 = document.createElement('td');
+
+          if (!row.any || row.totalStudents === 0) {
+            td3.textContent = 'Tiada rekod';
+            td4.textContent = '-';
+          } else {
+            anyRecord = true;
+            grandPresent += row.totalPresent;
+            grandTotal += row.totalStudents;
+            const pct = ((row.totalPresent / row.totalStudents) * 100).toFixed(1);
+            td3.textContent = row.totalPresent + '/' + row.totalStudents;
+            td4.textContent = pct + '%';
+          }
+
+          tr.appendChild(td1);
+          tr.appendChild(td2);
+          tr.appendChild(td3);
+          tr.appendChild(td4);
+          weeklyTableBody.appendChild(tr);
+        });
+
+        if (!anyRecord) {
+          weeklyInfo.textContent = 'Tiada rekod kehadiran untuk minggu ini.';
+        } else {
+          const pct = grandTotal > 0 ? ((grandPresent / grandTotal) * 100).toFixed(1) : 0;
+          weeklyInfo.textContent =
+            'Jumlah keseluruhan minggu ini: ' +
+            grandPresent + '/' + grandTotal + ' (' + pct + '%).';
+        }
+      }).catch(function(err){
+        console.error(err);
+        weeklyTableBody.innerHTML =
+          '<tr><td colspan="4" style="text-align:center; padding:8px; font-size:0.9rem; color:#b91c1c;">Ralat memuatkan rekod mingguan.</td></tr>';
+        weeklyInfo.textContent = 'Tiada rekod kehadiran untuk minggu ini.';
+      });
+    }
+
+    // ---------- RINGKASAN BULANAN ----------
+    function loadMonthlySummary() {
+      const today = new Date();
+      const year = today.getFullYear();
+      const monthIndex = today.getMonth();
+
+      const firstDay = new Date(year, monthIndex, 1);
+      const lastDay = new Date(year, monthIndex + 1, 0);
+
+      monthlyLabel.textContent =
+        MONTH_NAMES_MS[monthIndex] + " " + year;
+
+      monthlyTableBody.innerHTML =
+        '<tr><td colspan="4" style="text-align:center; padding:8px; font-size:0.9rem;">Memuatkan rekod bulanan...</td></tr>';
+
+      const dates = [];
+      for (let d = new Date(firstDay); d <= lastDay; d.setDate(d.getDate() + 1)) {
+        dates.push(new Date(d));
+      }
+
+      const perDayPromises = dates.map(function(date, idx){
+        const dateKey = formatDateKey(date);
+        let totalPresent = 0;
+        let totalStudents = 0;
+        let any = false;
+
+        const classPromises = summaryConfig.map(function(item){
+          const path = 'kehadiran/' + year + '/' + item.code + '/' + dateKey;
+          return db.ref(path).once('value').then(function(snap){
+            const data = snap.val();
+            if (data && typeof data.presentCount === 'number' && typeof data.totalStudents === 'number') {
+              totalPresent += data.presentCount;
+              totalStudents += data.totalStudents;
+              any = true;
+            }
+          });
+        });
+
+        return Promise.all(classPromises).then(function(){
+          return {
+            index: idx + 1,
+            date: new Date(date),
+            totalPresent: totalPresent,
+            totalStudents: totalStudents,
+            any: any
+          };
+        });
+      });
+
+      Promise.all(perDayPromises).then(function(rows){
+        monthlyTableBody.innerHTML = '';
+        let grandPresent = 0;
+        let grandTotal = 0;
+        let anyRecord = false;
+
+        rows.forEach(function(row){
+          const tr = document.createElement('tr');
+
+          const td1 = document.createElement('td');
+          td1.textContent = row.index;
+
+          const td2 = document.createElement('td');
+          td2.textContent = formatHumanDate(row.date);
+
+          const td3 = document.createElement('td');
+          const td4 = document.createElement('td');
+
+          if (!row.any || row.totalStudents === 0) {
+            td3.textContent = 'Tiada rekod';
+            td4.textContent = '-';
+          } else {
+            anyRecord = true;
+            grandPresent += row.totalPresent;
+            grandTotal += row.totalStudents;
+            const pct = ((row.totalPresent / row.totalStudents) * 100).toFixed(1);
+            td3.textContent = row.totalPresent + '/' + row.totalStudents;
+            td4.textContent = pct + '%';
+          }
+
+          tr.appendChild(td1);
+          tr.appendChild(td2);
+          tr.appendChild(td3);
+          tr.appendChild(td4);
+          monthlyTableBody.appendChild(tr);
+        });
+
+        if (!anyRecord) {
+          monthlyInfo.textContent = 'Tiada rekod kehadiran untuk bulan ini.';
+        } else {
+          const pct = grandTotal > 0 ? ((grandPresent / grandTotal) * 100).toFixed(1) : 0;
+          monthlyInfo.textContent =
+            'Jumlah keseluruhan bulan ini: ' +
+            grandPresent + '/' + grandTotal + ' (' + pct + '%).';
+        }
+      }).catch(function(err){
+        console.error(err);
+        monthlyTableBody.innerHTML =
+          '<tr><td colspan="4" style="text-align:center; padding:8px; font-size:0.9rem; color:#b91c1c;">Ralat memuatkan rekod bulanan.</td></tr>';
+        monthlyInfo.textContent = 'Tiada rekod kehadiran untuk bulan ini.';
       });
     }
 
