@@ -150,6 +150,36 @@
     .pill strong {
       color: #111827;
     }
+
+    /* carian nama */
+    .search-row {
+      margin-top: 14px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .search-row label {
+      font-size: 0.85rem;
+      white-space: nowrap;
+    }
+    .search-row input[type="text"] {
+      flex: 1 1 220px;
+      padding: 8px 10px;
+      border-radius: 999px;
+      border: 1px solid #d1d5db;
+      background: #f9fafb;
+      font-size: 0.9rem;
+      outline: none;
+      transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
+    }
+    .search-row input[type="text"]:focus {
+      border-color: #2563eb;
+      box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.25);
+      background: white;
+    }
+
     .students-container {
       margin-top: 12px;
       max-height: 420px;
@@ -308,6 +338,17 @@
       </div>
 
       <div id="studentsSection" style="margin-top: 16px; display: none;">
+
+        <!-- carian nama murid -->
+        <div class="search-row">
+          <label for="searchInput">Carian nama murid:</label>
+          <input
+            type="text"
+            id="searchInput"
+            placeholder='Taip nama atau sebahagian nama, contoh: "adra"'
+          />
+        </div>
+
         <div class="students-container">
           <div class="students-header">
             <div>No.</div>
@@ -371,7 +412,6 @@
 
     // =====================================
     // 2. DATA NAMA MURID MENGIKUT KELAS
-    //    (diambil terus dari fail Excel awak)
     // =====================================
     const classData = {
       "1B": [
@@ -667,9 +707,12 @@
     const summaryAbsent = document.getElementById('summaryAbsent');
     const statusBar = document.getElementById('statusBar');
     const todayDisplay = document.getElementById('todayDisplay');
+    const searchInput = document.getElementById('searchInput');
 
+    // Papar tarikh hari ini
     todayDisplay.textContent = "Tarikh: " + getTodayHumanReadable();
 
+    // Isi dropdown kelas
     function populateClassDropdown() {
       const classNames = Object.keys(classData).sort();
       classNames.forEach(kelas => {
@@ -696,6 +739,7 @@
       names.forEach((nama, index) => {
         const row = document.createElement('div');
         row.className = 'student-row';
+        row.dataset.namelower = nama.toLowerCase();
 
         const colNo = document.createElement('div');
         colNo.textContent = index + 1;
@@ -722,6 +766,11 @@
       studentsSection.style.display = 'block';
       countInfo.innerHTML = `👥 Jumlah murid: <strong>${names.length}</strong>`;
 
+      // reset carian bila tukar kelas
+      if (searchInput) {
+        searchInput.value = "";
+      }
+
       const todayKey = getTodayKey();
       const year = new Date().getFullYear();
       const path = `kehadiran/${year}/${kelas}/${todayKey}`;
@@ -738,6 +787,9 @@
           setStatus("Semua murid ditanda hadir secara default. Tanda sahaja murid yang tidak hadir.", "info");
         }
       });
+
+      // pastikan filter ikut carian semasa (kalau ada)
+      handleSearch();
     }
 
     classSelect.addEventListener('change', () => {
@@ -789,6 +841,25 @@
         const parts = absentees.map((nama, index) => `${index + 1}) ${nama}`);
         summaryAbsent.innerHTML = "<strong>Tidak hadir:</strong> " + parts.join(" · ");
       }
+    }
+
+    // fungsi carian
+    function handleSearch() {
+      if (!searchInput) return;
+      const q = searchInput.value.trim().toLowerCase();
+      const rows = document.querySelectorAll('#studentsList .student-row');
+      rows.forEach(row => {
+        const nameLower = row.dataset.namelower || "";
+        if (!q || nameLower.includes(q)) {
+          row.style.display = 'grid';
+        } else {
+          row.style.display = 'none';
+        }
+      });
+    }
+
+    if (searchInput) {
+      searchInput.addEventListener('input', handleSearch);
     }
 
     btnSave.addEventListener('click', () => {
