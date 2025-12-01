@@ -402,6 +402,13 @@
       color: #374151;
     }
 
+    /* kolum darjah lebih sempit */
+    .darjah-col {
+      width: 70px;
+      text-align: center;
+      white-space: nowrap;
+    }
+
     footer {
       text-align: center;
       font-size: 0.75rem;
@@ -425,8 +432,8 @@
   <header>
     <div class="header-main">
       <div class="header-logo">
-        <!-- Logo SKSA -->
-        <img src="https://i.imgur.com/KUPIcnJ.png" alt="Logo SKSA" />
+        <!-- Logo SKSA terkini -->
+        <img src="https://i.imgur.com/AfsVtVG.png" alt="Logo SKSA" />
       </div>
       <div class="header-text">
         <h1>Rekod Kehadiran Harian Murid SKSA (Tahap 1)</h1>
@@ -530,7 +537,7 @@
             <thead>
               <tr>
                 <th>Bil</th>
-                <th>Darjah/Tingkatan</th>
+                <th class="darjah-col">Darjah</th>
                 <th>Kelas</th>
                 <th>Kehadiran</th>
               </tr>
@@ -561,9 +568,7 @@
   (function () {
     'use strict';
 
-    // ================================
-    // 1. FIREBASE CONFIG (PROJEK AWAK)
-    // ================================
+    // FIREBASE CONFIG
     const firebaseConfig = {
       apiKey: "AIzaSyDbCgDz2vK2BZUpwM3iDWJcPQSptVcNkv4",
       authDomain: "kehadiran-murid-6ece0.firebaseapp.com",
@@ -578,9 +583,7 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    // =====================================
-    // 2. DATA NAMA MURID MENGIKUT KELAS
-    // =====================================
+    // DATA NAMA MURID
     const classData = {
       "1B": [
         "AHMAD ZARIF MIKAEL BIN AHMAD ZULFIKA",
@@ -836,7 +839,7 @@
       ]
     };
 
-    // konfigurasi ringkasan (mapping darjah/kelas → kod kelas)
+    // mapping untuk ringkasan
     const summaryConfig = [
       { darjah: "D1", kelasLabel: "BESTARI", code: "1B" },
       { darjah: "D1", kelasLabel: "CEMERLANG", code: "1C" },
@@ -849,32 +852,27 @@
       { darjah: "D3", kelasLabel: "GEMILANG", code: "3G" }
     ];
 
-    // =====================================
-    // 3. UTILITI TARIKH (format MY)
-    // =====================================
     function getTodayKey() {
       const now = new Date();
-      const year = now.getFullYear();
-      const month = String(now.getMonth() + 1).padStart(2, '0');
-      const day = String(now.getDate()).padStart(2, '0');
-      return year + "-" + month + "-" + day;
+      const y = now.getFullYear();
+      const m = String(now.getMonth() + 1).padStart(2, '0');
+      const d = String(now.getDate()).padStart(2, '0');
+      return y + '-' + m + '-' + d;
     }
 
     function getTodayHumanReadable() {
       const now = new Date();
-      const day = String(now.getDate()).padStart(2, '0');
-      const monthIndex = now.getMonth();
-      const year = now.getFullYear();
+      const d = String(now.getDate()).padStart(2, '0');
+      const m = now.getMonth();
+      const y = now.getFullYear();
       const monthNames = [
         "Januari","Februari","Mac","April","Mei","Jun",
         "Julai","Ogos","September","Oktober","November","Disember"
       ];
-      return day + " " + monthNames[monthIndex] + " " + year;
+      return d + ' ' + monthNames[m] + ' ' + y;
     }
 
-    // =====================================
-    // 4. LOGIK UI
-    // =====================================
+    // DOM refs
     const classSelect = document.getElementById('classSelect');
     const studentsSection = document.getElementById('studentsSection');
     const studentsList = document.getElementById('studentsList');
@@ -898,34 +896,29 @@
     const summaryFooter = document.getElementById('summaryFooter');
 
     const todayHuman = getTodayHumanReadable();
-    todayDisplay.textContent = "Tarikh: " + todayHuman;
+    todayDisplay.textContent = 'Tarikh: ' + todayHuman;
     summaryDateLink.textContent = todayHuman;
 
-    function switchTab(target) {
-      if (target === 'byClass') {
-        tabPanelByClass.style.display = 'block';
-        tabPanelSummary.style.display = 'none';
-      } else {
-        tabPanelByClass.style.display = 'none';
-        tabPanelSummary.style.display = 'block';
-        loadSummaryTable();
-      }
-    }
-
-    tabButtons.forEach(function (btn) {
-      btn.addEventListener('click', function () {
-        tabButtons.forEach(function (b) {
-          b.classList.remove('active');
-        });
+    // Tabs
+    tabButtons.forEach(function(btn){
+      btn.addEventListener('click', function(){
+        tabButtons.forEach(function(b){ b.classList.remove('active'); });
         btn.classList.add('active');
-        switchTab(btn.getAttribute('data-tab'));
+        const target = btn.getAttribute('data-tab');
+        if (target === 'byClass') {
+          tabPanelByClass.style.display = 'block';
+          tabPanelSummary.style.display = 'none';
+        } else {
+          tabPanelByClass.style.display = 'none';
+          tabPanelSummary.style.display = 'block';
+          loadSummaryTable();
+        }
       });
     });
 
-    // Isi dropdown kelas
+    // isi dropdown kelas
     function populateClassDropdown() {
-      const classNames = Object.keys(classData).sort();
-      classNames.forEach(function (kelas) {
+      Object.keys(classData).sort().forEach(function(kelas){
         const opt = document.createElement('option');
         opt.value = kelas;
         opt.textContent = kelas;
@@ -934,32 +927,26 @@
     }
     populateClassDropdown();
 
-    function setStatus(message, type) {
-      statusBar.innerHTML = "";
+    function setStatus(msg, type) {
+      statusBar.innerHTML = '';
       const span = document.createElement('span');
       span.className = 'status-pill';
-      if (type === 'error') {
-        span.classList.add('error');
-      } else if (type === 'info') {
-        span.classList.add('info');
-      }
-      span.textContent = message;
+      if (type === 'error') span.classList.add('error');
+      if (type === 'info') span.classList.add('info');
+      span.textContent = msg;
       statusBar.appendChild(span);
     }
 
-    function updateSummaryUI(kelas, total, presentCount, absentees) {
-      const todayText = getTodayHumanReadable();
+    function updateSummaryUI(kelas, total, present, absentees) {
       summaryBox.style.display = 'block';
-      summaryRatio.textContent = presentCount + "/" + total + " hadir";
-      summaryMini.textContent = "Kelas " + kelas + " · " + todayText;
+      summaryRatio.textContent = present + '/' + total + ' hadir';
+      summaryMini.textContent = 'Kelas ' + kelas + ' · ' + getTodayHumanReadable();
 
       if (!absentees || absentees.length === 0) {
-        summaryAbsent.innerHTML = "<strong>Tidak hadir:</strong> Tiada. Semua murid hadir hari ini. 🎉";
+        summaryAbsent.innerHTML = '<strong>Tidak hadir:</strong> Tiada. Semua murid hadir hari ini. 🎉';
       } else {
-        const parts = absentees.map(function (nama, index) {
-          return (index + 1) + ") " + nama;
-        });
-        summaryAbsent.innerHTML = "<strong>Tidak hadir:</strong> " + parts.join(" · ");
+        const parts = absentees.map(function(n, i){ return (i+1) + ') ' + n; });
+        summaryAbsent.innerHTML = '<strong>Tidak hadir:</strong> ' + parts.join(' · ');
       }
     }
 
@@ -967,24 +954,19 @@
       if (!searchInput) return;
       const q = searchInput.value.trim().toLowerCase();
       const rows = document.querySelectorAll('#studentsList .student-row');
-      rows.forEach(function (row) {
-        const nameLower = row.getAttribute('data-namelower') || "";
-        if (!q || nameLower.indexOf(q) !== -1) {
-          row.style.display = 'grid';
-        } else {
-          row.style.display = 'none';
-        }
+      rows.forEach(function(row){
+        const nameLower = row.getAttribute('data-namelower') || '';
+        row.style.display = (!q || nameLower.indexOf(q) !== -1) ? 'grid' : 'none';
       });
     }
-
     if (searchInput) {
       searchInput.addEventListener('input', handleSearch);
     }
 
     function renderStudentsForClass(kelas) {
-      studentsList.innerHTML = "";
+      studentsList.innerHTML = '';
       summaryBox.style.display = 'none';
-      statusBar.innerHTML = "";
+      statusBar.innerHTML = '';
 
       if (!kelas || !classData[kelas] || classData[kelas].length === 0) {
         studentsSection.style.display = 'none';
@@ -992,7 +974,8 @@
       }
 
       const names = classData[kelas];
-      names.forEach(function (nama, index) {
+
+      names.forEach(function(nama, index){
         const row = document.createElement('div');
         row.className = 'student-row';
         row.setAttribute('data-namelower', nama.toLowerCase());
@@ -1004,54 +987,46 @@
         colName.className = 'student-name';
         colName.textContent = nama;
 
-        const colCheckbox = document.createElement('div');
-        colCheckbox.className = 'checkbox-wrapper';
-        const checkbox = document.createElement('input');
-        checkbox.type = 'checkbox';
-        checkbox.className = 'student-checkbox';
-        checkbox.setAttribute('data-name', nama);
-        colCheckbox.appendChild(checkbox);
+        const colChk = document.createElement('div');
+        colChk.className = 'checkbox-wrapper';
+        const cb = document.createElement('input');
+        cb.type = 'checkbox';
+        cb.className = 'student-checkbox';
+        cb.setAttribute('data-name', nama);
+        colChk.appendChild(cb);
 
         row.appendChild(colNo);
         row.appendChild(colName);
-        row.appendChild(colCheckbox);
-
+        row.appendChild(colChk);
         studentsList.appendChild(row);
       });
 
       studentsSection.style.display = 'block';
-      countInfo.innerHTML = "👥 Jumlah murid: <strong>" + names.length + "</strong>";
+      countInfo.innerHTML = '👥 Jumlah murid: <strong>' + names.length + '</strong>';
 
-      if (searchInput) {
-        searchInput.value = "";
-      }
+      if (searchInput) searchInput.value = '';
+      handleSearch();
 
       const todayKey = getTodayKey();
       const year = new Date().getFullYear();
-      const path = "kehadiran/" + year + "/" + kelas + "/" + todayKey;
+      const path = 'kehadiran/' + year + '/' + kelas + '/' + todayKey;
 
-      db.ref(path).once('value').then(function (snap) {
+      db.ref(path).once('value').then(function(snap){
         const data = snap.val();
         if (data && Array.isArray(data.absentees)) {
-          const absentees = data.absentees;
-          document.querySelectorAll('.student-checkbox').forEach(function (cb) {
-            if (absentees.indexOf(cb.getAttribute('data-name')) !== -1) {
-              cb.checked = true;
-            } else {
-              cb.checked = false;
-            }
+          const abs = data.absentees;
+          document.querySelectorAll('.student-checkbox').forEach(function(cb){
+            cb.checked = abs.indexOf(cb.getAttribute('data-name')) !== -1;
           });
-          updateSummaryUI(kelas, names.length, names.length - absentees.length, absentees);
-          setStatus("Data kehadiran hari ini telah direkod sebelum ini. Anda boleh kemaskini semula dan simpan.", "info");
+          updateSummaryUI(kelas, names.length, names.length - abs.length, abs);
+          setStatus('Data kehadiran hari ini telah direkod sebelum ini. Anda boleh kemaskini semula dan simpan.', 'info');
         } else {
-          setStatus("Semua murid ditanda hadir secara default. Tanda sahaja murid yang tidak hadir.", "info");
+          setStatus('Semua murid ditanda hadir secara default. Tanda sahaja murid yang tidak hadir.', 'info');
         }
       });
-
-      handleSearch();
     }
 
-    classSelect.addEventListener('change', function () {
+    classSelect.addEventListener('change', function(){
       const kelas = classSelect.value;
       if (!kelas) {
         studentsSection.style.display = 'none';
@@ -1060,79 +1035,65 @@
       renderStudentsForClass(kelas);
     });
 
-    function setAllPresent() {
-      document.querySelectorAll('.student-checkbox').forEach(function (cb) {
-        cb.checked = false;
-      });
-      setStatus("Semua murid ditanda hadir.", "success");
-    }
+    btnAllPresent.addEventListener('click', function(){
+      document.querySelectorAll('.student-checkbox').forEach(function(cb){ cb.checked = false; });
+      setStatus('Semua murid ditanda hadir.', 'success');
+    });
 
-    function clearTicks() {
-      document.querySelectorAll('.student-checkbox').forEach(function (cb) {
-        cb.checked = false;
-      });
+    btnClearTicks.addEventListener('click', function(){
+      document.querySelectorAll('.student-checkbox').forEach(function(cb){ cb.checked = false; });
       summaryBox.style.display = 'none';
-      setStatus("Semua tanda tidak hadir telah di-reset.", "info");
-    }
+      setStatus('Semua tanda tidak hadir telah di-reset.', 'info');
+    });
 
-    btnAllPresent.addEventListener('click', setAllPresent);
-    btnClearTicks.addEventListener('click', clearTicks);
-
-    btnSave.addEventListener('click', function () {
+    btnSave.addEventListener('click', function(){
       const kelas = classSelect.value;
       if (!kelas) {
-        setStatus("Sila pilih kelas dahulu.", "error");
-        alert("Sila pilih kelas dahulu.");
+        setStatus('Sila pilih kelas dahulu.', 'error');
+        alert('Sila pilih kelas dahulu.');
         return;
       }
 
       const names = classData[kelas] || [];
       const total = names.length;
-      const checkboxes = document.querySelectorAll('.student-checkbox');
-      const absentees = [];
-      checkboxes.forEach(function (cb) {
-        if (cb.checked) {
-          absentees.push(cb.getAttribute('data-name'));
-        }
+      const abs = [];
+      document.querySelectorAll('.student-checkbox').forEach(function(cb){
+        if (cb.checked) abs.push(cb.getAttribute('data-name'));
       });
-      const presentCount = total - absentees.length;
+      const present = total - abs.length;
 
       const todayKey = getTodayKey();
       const year = new Date().getFullYear();
-      const path = "kehadiran/" + year + "/" + kelas + "/" + todayKey;
+      const path = 'kehadiran/' + year + '/' + kelas + '/' + todayKey;
 
       const studentStatus = {};
-      names.forEach(function (nama) {
-        studentStatus[nama] = absentees.indexOf(nama) === -1;
+      names.forEach(function(nama){
+        studentStatus[nama] = abs.indexOf(nama) === -1;
       });
 
-      const attendanceData = {
+      const data = {
         class: kelas,
         dateKey: todayKey,
         humanDate: getTodayHumanReadable(),
         totalStudents: total,
-        presentCount: presentCount,
-        absentCount: absentees.length,
-        absentees: absentees,
+        presentCount: present,
+        absentCount: abs.length,
+        absentees: abs,
         studentStatus: studentStatus,
         savedAt: new Date().toISOString()
       };
 
-      db.ref(path).set(attendanceData)
-        .then(function () {
-          updateSummaryUI(kelas, total, presentCount, absentees);
-          setStatus("Kehadiran hari ini berjaya disimpan ke dalam Firebase.", "success");
-        })
-        .catch(function (err) {
-          console.error(err);
-          setStatus("Ralat semasa menyimpan kehadiran. Sila cuba lagi.", "error");
-          alert("Ralat semasa menyimpan kehadiran: " + err.message);
-        });
+      db.ref(path).set(data).then(function(){
+        updateSummaryUI(kelas, total, present, abs);
+        setStatus('Kehadiran hari ini berjaya disimpan ke dalam Firebase.', 'success');
+      }).catch(function(err){
+        console.error(err);
+        setStatus('Ralat semasa menyimpan kehadiran. Sila cuba lagi.', 'error');
+        alert('Ralat semasa menyimpan kehadiran: ' + err.message);
+      });
     });
 
-    // =====================================
-    // 5. RINGKASAN SEMUA KELAS UNTUK HARI INI
-    // =====================================
+    // RINGKASAN SEMUA KELAS
     function loadSummaryTable() {
       const todayKey = getTodayKey();
       const year = new Date().getFullYear();
@@ -1144,54 +1105,46 @@
       let totalStudents = 0;
       let anyRecord = false;
 
-      const promises = summaryConfig.map(function (item, index) {
-        const path = "kehadiran/" + year + "/" + item.code + "/" + todayKey;
-        return db.ref(path).once('value').then(function (snap) {
-          const data = snap.val();
-          let text;
-          let notUpdated = false;
-          let absentees = [];
-
-          if (data && typeof data.presentCount === 'number' && typeof data.totalStudents === 'number') {
-            text = data.presentCount + "/" + data.totalStudents;
-            totalPresent += data.presentCount;
-            totalStudents += data.totalStudents;
+      const promises = summaryConfig.map(function(item, idx){
+        const path = 'kehadiran/' + year + '/' + item.code + '/' + todayKey;
+        return db.ref(path).once('value').then(function(snap){
+          const d = snap.val();
+          let text, notUpdated = false, abs = [];
+          if (d && typeof d.presentCount === 'number' && typeof d.totalStudents === 'number') {
+            text = d.presentCount + '/' + d.totalStudents;
+            totalPresent += d.presentCount;
+            totalStudents += d.totalStudents;
             anyRecord = true;
-            if (Array.isArray(data.absentees)) {
-              absentees = data.absentees;
-            }
+            if (Array.isArray(d.absentees)) abs = d.absentees;
           } else {
-            text = "Kehadiran Belum Dikemaskini.";
+            text = 'Kehadiran Belum Dikemaskini.';
             notUpdated = true;
           }
-
           return {
-            bil: index + 1,
+            bil: idx + 1,
             darjah: item.darjah,
             kelasLabel: item.kelasLabel,
             text: text,
             notUpdated: notUpdated,
-            absentees: absentees
+            absentees: abs
           };
         });
       });
 
-      Promise.all(promises).then(function (rows) {
-        summaryTableBody.innerHTML = "";
+      Promise.all(promises).then(function(rows){
+        summaryTableBody.innerHTML = '';
 
-        rows.forEach(function (row) {
-          // row utama
+        rows.forEach(function(row){
+          // baris utama
           const tr = document.createElement('tr');
-          if (row.notUpdated) {
-            tr.classList.add('row-not-updated');
-          }
+          if (row.notUpdated) tr.classList.add('row-not-updated');
 
           const td1 = document.createElement('td');
           td1.className = 'main-row-cell';
           td1.textContent = row.bil;
 
           const td2 = document.createElement('td');
-          td2.className = 'main-row-cell';
+          td2.className = 'main-row-cell darjah-col';
           td2.textContent = row.darjah;
 
           const td3 = document.createElement('td');
@@ -1215,10 +1168,9 @@
           tr.appendChild(td2);
           tr.appendChild(td3);
           tr.appendChild(td4);
-
           summaryTableBody.appendChild(tr);
 
-          // row dropdown nama tidak hadir (hanya jika ada rekod)
+          // baris butiran tidak hadir
           if (!row.notUpdated) {
             const trDetail = document.createElement('tr');
             trDetail.className = 'absent-row';
@@ -1228,14 +1180,14 @@
             tdDetail.colSpan = 4;
 
             if (!row.absentees || row.absentees.length === 0) {
-              tdDetail.textContent = "Tidak hadir: Tiada. Semua murid hadir untuk kelas ini.";
+              tdDetail.textContent = 'Tidak hadir: Tiada. Semua murid hadir untuk kelas ini.';
             } else {
               const label = document.createElement('div');
-              label.innerHTML = "<strong>Tidak hadir:</strong>";
+              label.innerHTML = '<strong>Tidak hadir:</strong>';
               const ul = document.createElement('ul');
-              row.absentees.forEach(function (nama, i) {
+              row.absentees.forEach(function(nama, i){
                 const li = document.createElement('li');
-                li.textContent = (i + 1) + ") " + nama;
+                li.textContent = (i+1) + ') ' + nama;
                 ul.appendChild(li);
               });
               tdDetail.appendChild(label);
@@ -1246,7 +1198,7 @@
             summaryTableBody.appendChild(trDetail);
 
             const link = td4.querySelector('.attendance-link');
-            link.addEventListener('click', function () {
+            link.addEventListener('click', function(){
               trDetail.style.display = (trDetail.style.display === 'none') ? 'table-row' : 'none';
             });
           }
@@ -1254,19 +1206,19 @@
 
         if (!anyRecord) {
           summaryFooter.innerHTML =
-            "Kehadiran : Tiada rekod kehadiran<br>Peratus Kehadiran : Tiada rekod kehadiran";
+            'Kehadiran : Tiada rekod kehadiran<br>Peratus Kehadiran : Tiada rekod kehadiran';
         } else {
           const percent = totalStudents > 0 ? ((totalPresent / totalStudents) * 100).toFixed(1) : 0;
           summaryFooter.innerHTML =
-            "Kehadiran : " + totalPresent + "/" + totalStudents +
-            "<br>Peratus Kehadiran : " + percent + "%";
+            'Kehadiran : ' + totalPresent + '/' + totalStudents +
+            '<br>Peratus Kehadiran : ' + percent + '%';
         }
-      }).catch(function (err) {
+      }).catch(function(err){
         console.error(err);
         summaryTableBody.innerHTML =
           '<tr><td colspan="4" class="main-row-cell" style="text-align:center; padding:8px; font-size:0.9rem; color:#b91c1c;">Ralat memuatkan rekod kehadiran.</td></tr>';
         summaryFooter.innerHTML =
-          "Kehadiran : Tiada rekod kehadiran<br>Peratus Kehadiran : Tiada rekod kehadiran";
+          'Kehadiran : Tiada rekod kehadiran<br>Peratus Kehadiran : Tiada rekod kehadiran';
       });
     }
 
