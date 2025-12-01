@@ -151,6 +151,33 @@
       color: #111827;
     }
 
+    /* Tabs */
+    .tabs {
+      margin-top: 4px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      border-bottom: 1px solid #e5e7eb;
+      padding-bottom: 4px;
+    }
+    .tab-btn {
+      border: none;
+      background: transparent;
+      padding: 6px 12px;
+      border-radius: 999px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      color: #4b5563;
+    }
+    .tab-btn.active {
+      background: #eff6ff;
+      color: #1d4ed8;
+      font-weight: 600;
+    }
+    .tab-panel {
+      margin-top: 12px;
+    }
+
     /* carian nama */
     .search-row {
       margin-top: 14px;
@@ -281,6 +308,56 @@
       background: #e0f2fe;
       color: #0369a1;
     }
+
+    /* Jadual ringkasan semua kelas */
+    .summary-header-row {
+      font-size: 0.95rem;
+      margin-top: 4px;
+    }
+    .summary-date-link {
+      color: #2563eb;
+      text-decoration: underline;
+    }
+    .summary-table-wrapper {
+      margin-top: 10px;
+      overflow-x: auto;
+      border-radius: 8px;
+      border: 1px solid #cbd5e1;
+      background: #f9fafb;
+    }
+    .summary-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.9rem;
+      background: white;
+    }
+    .summary-table th,
+    .summary-table td {
+      border: 1px solid #cbd5e1;
+      padding: 6px 8px;
+      text-align: left;
+    }
+    .summary-table th {
+      background: #e5f0ff;
+      color: #1f2937;
+      font-weight: 600;
+    }
+    .summary-table tr:nth-child(even) td {
+      background: #f9fafb;
+    }
+    .row-not-updated td {
+      background: #fff7ed; /* oren lembut */
+    }
+    .cell-not-updated {
+      font-weight: 600;
+      color: #b45309;
+    }
+    .summary-footer {
+      margin-top: 8px;
+      font-size: 0.85rem;
+      color: #374151;
+    }
+
     footer {
       text-align: center;
       font-size: 0.75rem;
@@ -316,70 +393,106 @@
         <div class="date-display" id="todayDisplay">Tarikh:</div>
       </div>
 
-      <div>
-        <label for="classSelect">Pilih kelas:</label>
-        <select id="classSelect">
-          <option value="">— Sila pilih kelas —</option>
-        </select>
+      <div class="tabs">
+        <button class="tab-btn active" data-tab="byClass">Rekod Mengikut Kelas</button>
+        <button class="tab-btn" data-tab="summary">Ringkasan Semua Kelas</button>
       </div>
 
-      <div class="flex-row">
-        <div class="pill">
-          🔁 <strong>Setiap hari baharu</strong> &nbsp;– kehadiran bermula semula (semua murid dianggap hadir).
-        </div>
+      <!-- TAB 1: Rekod mengikut kelas -->
+      <div id="tab-byClass" class="tab-panel" style="display:block;">
         <div>
-          <button type="button" class="btn btn-outline" id="btnAllPresent">
-            ✅ Semua hadir
-          </button>
-          <button type="button" class="btn btn-outline" id="btnClearTicks">
-            ✖ Reset tanda
-          </button>
-        </div>
-      </div>
-
-      <div id="studentsSection" style="margin-top: 16px; display: none;">
-
-        <!-- carian nama murid -->
-        <div class="search-row">
-          <label for="searchInput">Carian nama murid:</label>
-          <input
-            type="text"
-            id="searchInput"
-            placeholder='Taip nama atau sebahagian nama, contoh: "adra"'
-          />
-        </div>
-
-        <div class="students-container">
-          <div class="students-header">
-            <div>No.</div>
-            <div>Nama Murid</div>
-            <div style="text-align:center;">Tidak hadir</div>
-          </div>
-          <div id="studentsList"></div>
+          <label for="classSelect">Pilih kelas:</label>
+          <select id="classSelect">
+            <option value="">— Sila pilih kelas —</option>
+          </select>
         </div>
 
         <div class="flex-row">
-          <div class="pill" id="countInfo">
-            👥 Jumlah murid: <strong>0</strong>
+          <div class="pill">
+            🔁 <strong>Setiap hari baharu</strong> &nbsp;– kehadiran bermula semula (semua murid dianggap hadir).
           </div>
-          <button type="button" class="btn btn-primary" id="btnSave">
-            <span class="btn-icon">💾</span>
-            Simpan kehadiran hari ini
-          </button>
+          <div>
+            <button type="button" class="btn btn-outline" id="btnAllPresent">
+              ✅ Semua hadir
+            </button>
+            <button type="button" class="btn btn-outline" id="btnClearTicks">
+              ✖ Reset tanda
+            </button>
+          </div>
         </div>
 
-        <div class="summary-box" id="summaryBox" style="display:none;">
-          <div class="summary-main">
-            <div>
-              <strong id="summaryTitle">Kehadiran hari ini:</strong>
-              <div id="summaryRatio">0/0 hadir</div>
+        <div id="studentsSection" style="margin-top: 16px; display: none;">
+
+          <!-- carian nama murid -->
+          <div class="search-row">
+            <label for="searchInput">Carian nama murid:</label>
+            <input
+              type="text"
+              id="searchInput"
+              placeholder='Taip nama atau sebahagian nama, contoh: "adra"'
+            />
+          </div>
+
+          <div class="students-container">
+            <div class="students-header">
+              <div>No.</div>
+              <div>Nama Murid</div>
+              <div style="text-align:center;">Tidak hadir</div>
             </div>
-            <div id="summaryMini"></div>
+            <div id="studentsList"></div>
           </div>
-          <div class="summary-absent" id="summaryAbsent"></div>
+
+          <div class="flex-row">
+            <div class="pill" id="countInfo">
+              👥 Jumlah murid: <strong>0</strong>
+            </div>
+            <button type="button" class="btn btn-primary" id="btnSave">
+              <span class="btn-icon">💾</span>
+              Simpan kehadiran hari ini
+            </button>
+          </div>
+
+          <div class="summary-box" id="summaryBox" style="display:none;">
+            <div class="summary-main">
+              <div>
+                <strong id="summaryTitle">Kehadiran hari ini:</strong>
+                <div id="summaryRatio">0/0 hadir</div>
+              </div>
+              <div id="summaryMini"></div>
+            </div>
+            <div class="summary-absent" id="summaryAbsent"></div>
+          </div>
+
+          <div class="status-bar" id="statusBar"></div>
+        </div>
+      </div>
+
+      <!-- TAB 2: Ringkasan semua kelas -->
+      <div id="tab-summary" class="tab-panel" style="display:none;">
+        <div class="summary-header-row">
+          Rekod Kehadiran Pada <span id="summaryDateLink" class="summary-date-link"></span>
         </div>
 
-        <div class="status-bar" id="statusBar"></div>
+        <div class="summary-table-wrapper">
+          <table class="summary-table">
+            <thead>
+              <tr>
+                <th>Bil</th>
+                <th>Darjah/Tingkatan</th>
+                <th>Kelas</th>
+                <th>Kehadiran</th>
+              </tr>
+            </thead>
+            <tbody id="summaryTableBody">
+              <!-- Diisi melalui JS -->
+            </tbody>
+          </table>
+        </div>
+
+        <div class="summary-footer" id="summaryFooter">
+          Kehadiran : Tiada rekod kehadiran<br />
+          Peratus Kehadiran : Tiada rekod kehadiran
+        </div>
       </div>
     </section>
 
@@ -668,6 +781,19 @@
       ]
     };
 
+    // konfigurasi ringkasan (mapping darjah/kelas → kod kelas)
+    const summaryConfig = [
+      { darjah: "D1", kelasLabel: "BESTARI", code: "1B" },
+      { darjah: "D1", kelasLabel: "CEMERLANG", code: "1C" },
+      { darjah: "D1", kelasLabel: "GEMILANG", code: "1G" },
+      { darjah: "D2", kelasLabel: "BESTARI", code: "2B" },
+      { darjah: "D2", kelasLabel: "CEMERLANG", code: "2C" },
+      { darjah: "D2", kelasLabel: "GEMILANG", code: "2G" },
+      { darjah: "D3", kelasLabel: "BESTARI", code: "3B" },
+      { darjah: "D3", kelasLabel: "CEMERLANG", code: "3C" },
+      { darjah: "D3", kelasLabel: "GEMILANG", code: "3G" }
+    ];
+
     // =====================================
     // 3. UTILITI TARIKH (format MY)
     // =====================================
@@ -709,8 +835,34 @@
     const todayDisplay = document.getElementById('todayDisplay');
     const searchInput = document.getElementById('searchInput');
 
+    const tabButtons = document.querySelectorAll('.tab-btn');
+    const tabPanelByClass = document.getElementById('tab-byClass');
+    const tabPanelSummary = document.getElementById('tab-summary');
+    const summaryDateLink = document.getElementById('summaryDateLink');
+    const summaryTableBody = document.getElementById('summaryTableBody');
+    const summaryFooter = document.getElementById('summaryFooter');
+
     // Papar tarikh hari ini
-    todayDisplay.textContent = "Tarikh: " + getTodayHumanReadable();
+    const todayHuman = getTodayHumanReadable();
+    todayDisplay.textContent = "Tarikh: " + todayHuman;
+    summaryDateLink.textContent = todayHuman;
+
+    // Tab switching
+    tabButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        tabButtons.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        const target = btn.dataset.tab;
+        if (target === 'byClass') {
+          tabPanelByClass.style.display = 'block';
+          tabPanelSummary.style.display = 'none';
+        } else {
+          tabPanelByClass.style.display = 'none';
+          tabPanelSummary.style.display = 'block';
+          loadSummaryTable();
+        }
+      });
+    });
 
     // Isi dropdown kelas
     function populateClassDropdown() {
@@ -788,8 +940,7 @@
         }
       });
 
-      // pastikan filter ikut carian semasa (kalau ada)
-      handleSearch();
+      handleSearch(); // ikut carian semasa
     }
 
     classSelect.addEventListener('change', () => {
@@ -843,7 +994,7 @@
       }
     }
 
-    // fungsi carian
+    // fungsi carian nama
     function handleSearch() {
       if (!searchInput) return;
       const q = searchInput.value.trim().toLowerCase();
@@ -862,6 +1013,7 @@
       searchInput.addEventListener('input', handleSearch);
     }
 
+    // Simpan kehadiran sebuah kelas
     btnSave.addEventListener('click', () => {
       const kelas = classSelect.value;
       if (!kelas) {
@@ -911,6 +1063,101 @@
           alert("Ralat semasa menyimpan kehadiran: " + err.message);
         });
     });
+
+    // =====================================
+    // 5. RINGKASAN SEMUA KELAS UNTUK HARI INI
+    // =====================================
+    function loadSummaryTable() {
+      const todayKey = getTodayKey();
+      const year = new Date().getFullYear();
+      summaryTableBody.innerHTML = `
+        <tr>
+          <td colspan="4" style="text-align:center; padding:8px; font-size:0.9rem;">
+            Memuatkan rekod kehadiran...
+          </td>
+        </tr>
+      `;
+
+      let totalPresent = 0;
+      let totalStudents = 0;
+      let anyRecord = false;
+
+      const promises = summaryConfig.map((item, index) => {
+        const path = `kehadiran/${year}/${item.code}/${todayKey}`;
+        return db.ref(path).once('value').then(snap => {
+          const data = snap.val();
+          let text, notUpdated = false;
+
+          if (data && typeof data.presentCount === 'number' && typeof data.totalStudents === 'number') {
+            text = `${data.presentCount}/${data.totalStudents}`;
+            totalPresent += data.presentCount;
+            totalStudents += data.totalStudents;
+            anyRecord = true;
+          } else {
+            text = "Kehadiran Belum Dikemaskini.";
+            notUpdated = true;
+          }
+
+          return {
+            bil: index + 1,
+            darjah: item.darjah,
+            kelasLabel: item.kelasLabel,
+            text,
+            notUpdated
+          };
+        });
+      });
+
+      Promise.all(promises)
+        .then(rows => {
+          summaryTableBody.innerHTML = "";
+          rows.forEach(row => {
+            const tr = document.createElement('tr');
+            if (row.notUpdated) tr.classList.add('row-not-updated');
+
+            const td1 = document.createElement('td');
+            td1.textContent = row.bil;
+
+            const td2 = document.createElement('td');
+            td2.textContent = row.darjah;
+
+            const td3 = document.createElement('td');
+            td3.textContent = row.kelasLabel;
+
+            const td4 = document.createElement('td');
+            td4.textContent = row.text;
+            if (row.notUpdated) td4.classList.add('cell-not-updated');
+
+            tr.appendChild(td1);
+            tr.appendChild(td2);
+            tr.appendChild(td3);
+            tr.appendChild(td4);
+
+            summaryTableBody.appendChild(tr);
+          });
+
+          if (!anyRecord) {
+            summaryFooter.innerHTML =
+              "Kehadiran : Tiada rekod kehadiran<br>Peratus Kehadiran : Tiada rekod kehadiran";
+          } else {
+            const percent = totalStudents > 0 ? ((totalPresent / totalStudents) * 100).toFixed(1) : 0;
+            summaryFooter.innerHTML =
+              `Kehadiran : ${totalPresent}/${totalStudents}<br>Peratus Kehadiran : ${percent}%`;
+          }
+        })
+        .catch(err => {
+          console.error(err);
+          summaryTableBody.innerHTML = `
+            <tr>
+              <td colspan="4" style="text-align:center; padding:8px; font-size:0.9rem; color:#b91c1c;">
+                Ralat memuatkan rekod kehadiran.
+              </td>
+            </tr>
+          `;
+          summaryFooter.innerHTML =
+            "Kehadiran : Tiada rekod kehadiran<br>Peratus Kehadiran : Tiada rekod kehadiran";
+        });
+    }
   </script>
 </body>
 </html>
