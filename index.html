@@ -25,8 +25,26 @@
       overflow:hidden; flex-shrink:0;
       box-shadow:0 2px 6px rgba(0,0,0,.25);
       cursor:pointer;
+      position:relative;
     }
     .header-logo img { max-width:100%; max-height:100%; display:block; }
+    .notification-badge {
+      position:absolute;
+      top:-4px;
+      right:-4px;
+      background:#ef4444;
+      color:#fff;
+      font-size:.65rem;
+      min-width:18px;
+      height:18px;
+      padding:0 4px;
+      border-radius:999px;
+      display:none;
+      align-items:center;
+      justify-content:center;
+      font-weight:700;
+      box-shadow:0 0 0 2px #1d4ed8;
+    }
     .header-text h1 { margin:0; font-size:1.4rem; font-weight:700; }
     .header-text p { margin:2px 0 0; font-size:.9rem; opacity:.9; }
 
@@ -236,6 +254,7 @@
   <div class="header-main">
     <div class="header-logo" id="adminLogoBtn" title="Klik untuk log masuk admin">
       <img src="https://i.imgur.com/AfsVtVG.png" alt="Logo SKSA" />
+      <span id="notificationBadge" class="notification-badge"></span>
     </div>
     <div class="header-text">
       <h1>Rekod Kehadiran Harian Murid SKSA</h1>
@@ -431,6 +450,29 @@
         </div>
       </div>
 
+      <!-- Notifikasi kehadiran -->
+      <div id="adminNotificationSection" style="margin-top:16px;">
+        <h3 style="margin:0 0 6px;font-size:1rem;">Notifikasi Kehadiran Murid</h3>
+        <div class="summary-table-wrapper">
+          <table class="summary-table">
+            <thead>
+              <tr>
+                <th>Bil</th>
+                <th>Nama Murid</th>
+                <th>Kelas</th>
+                <th>Jenis</th>
+                <th>Butiran Hari</th>
+                <th>Cadangan Surat</th>
+              </tr>
+            </thead>
+            <tbody id="adminNotificationBody"></tbody>
+          </table>
+        </div>
+        <div class="summary-footer" id="adminNotificationInfo">
+          Tiada notifikasi berdasarkan rekod kehadiran tahun ini.
+        </div>
+      </div>
+
       <!-- Senarai kelas -->
       <div style="margin-top:16px;">
         <h3 style="margin:0 0 6px;font-size:1rem;">Senarai Kelas</h3>
@@ -599,6 +641,10 @@
   const adminCancelBtn = document.getElementById('adminCancelBtn');
   const adminModalError = document.getElementById('adminModalError');
   const adminTabBtn = document.getElementById('adminTabBtn');
+
+  const notificationBadge = document.getElementById('notificationBadge');
+  const adminNotificationBody = document.getElementById('adminNotificationBody');
+  const adminNotificationInfo = document.getElementById('adminNotificationInfo');
 
   const adminClassTableBody = document.getElementById('adminClassTableBody');
   const adminNewDarjah = document.getElementById('adminNewDarjah');
@@ -856,8 +902,14 @@
       loadDailySummary();
       loadWeeklySummary();
       loadMonthlySummary();
-      yearlyRaw = null; // paksa refresh ringkasan tahunan bila buka
+
+      // Refresh data tahunan & notifikasi
+      yearlyRaw = null;
       yearlyInitialised = false;
+      ensureYearlyData().then(() => {
+        recomputeNotificationsForYear(String(currentYear));
+      });
+
     }).catch(err => {
       console.error(err);
       setStatus('Ralat semasa menyimpan kehadiran: ' + err.message, 'error');
@@ -1185,10 +1237,195 @@
     });
   }
 
-  // -------- Ringkasan tahunan --------
+  // -------- Ringkasan tahunan / notifikasi --------
   let yearlyRaw = null;
   let yearlyYears = [];
   let yearlyInitialised = false;
+
+  let notifications = [];
+
+  function renderNotificationBadge() {
+    if (!notificationBadge) return;
+    const count = notifications.length;
+    if (count > 0) {
+      notificationBadge.textContent = count > 99 ? '99+' : String(count);
+      notificationBadge.style.display = 'flex';
+    } else {
+      notificationBadge.style.display = 'none';
+    }
+  }
+
+  function renderAdminNotifications(yearStr) {
+    if (!adminNotificationBody || !adminNotificationInfo) return;
+    adminNotificationBody.innerHTML = '';
+    if (!notifications.length) {
+      adminNotificationInfo.textContent = 'Tiada notifikasi berdasarkan rekod kehadiran tahun ' + yearStr + '.';
+      return;
+    }
+
+    const severityRank = {
+      'Amaran Pertama': 1,
+      'Amaran Kedua'  : 2,
+      'Amaran Terakhir':3,
+      'Buang Sekolah' : 4
+    };
+
+    notifications.sort((a,b) => {
+      if (severityRank[b.letter] !== severityRank[a.letter]) {
+        return severityRank[b.letter] - severityRank[a.letter];
+      }
+      if (a.classCode !== b.classCode) return a.classCode.localeCompare(b.classCode);
+      return a.name.localeCompare(b.name);
+    });
+
+    notifications.forEach((n,idx) => {
+      const tr = document.createElement('tr');
+
+      const c1 = document.createElement('td');
+      c1.textContent = idx + 1;
+
+      const c2 = document.createElement('td');
+      c2.textContent = n.name;
+
+      const c3 = document.createElement('td');
+      c3.textContent = n.classCode;
+
+      const c4 = document.createElement('td');
+      c4.textContent = n.mode === 'berturut-turut' ? 'Berturut-turut' : 'Berselang';
+
+      const c5 = document.createElement('td');
+      if (n.mode === 'berturut-turut') {
+        c5.textContent = n.consecutiveMax + " hari tidak hadir berturut-turut";
+      } else {
+        c5.textContent = n.totalAbsent + " hari tidak hadir berselang";
+      }
+
+      const c6 = document.createElement('td');
+      c6.textContent = n.letter;
+
+      tr.appendChild(c1); tr.appendChild(c2); tr.appendChild(c3);
+      tr.appendChild(c4); tr.appendChild(c5); tr.appendChild(c6);
+      adminNotificationBody.appendChild(tr);
+    });
+
+    adminNotificationInfo.textContent =
+      'Senarai murid yang melepasi had ketidakhadiran berdasarkan tatacara tindakan tahun ' +
+      yearStr +
+      '. Sistem hanya memberi cadangan; keputusan akhir tertakluk kepada pihak sekolah.';
+  }
+
+  function recomputeNotificationsForYear(yearStr) {
+    notifications = [];
+    if (!yearlyRaw) {
+      renderNotificationBadge();
+      renderAdminNotifications(yearStr);
+      return;
+    }
+
+    const stats = {}; // key: classCode|name
+
+    const dateKeys = Object.keys(yearlyRaw)
+      .filter(k => /^\d{4}-\d{2}-\d{2}$/.test(k) && k.slice(0,4) === yearStr)
+      .sort();
+
+    dateKeys.forEach(dateKey => {
+      const dayObj = yearlyRaw[dateKey] || {};
+      Object.keys(dayObj).forEach(classCode => {
+        const rec = dayObj[classCode];
+        if (!rec || !Array.isArray(rec.absentNames)) return;
+        rec.absentNames.forEach(name => {
+          const key = classCode + '|' + name;
+          if (!stats[key]) {
+            stats[key] = {
+              name: name,
+              classCode: classCode,
+              totalAbsent: 0,
+              dates: []
+            };
+          }
+          stats[key].totalAbsent++;
+          stats[key].dates.push(dateFromKey(dateKey));
+        });
+      });
+    });
+
+    Object.values(stats).forEach(stat => {
+      stat.dates.sort((a,b) => a - b);
+      let currentSeq = 0;
+      let maxSeq = 0;
+      let prevDate = null;
+      stat.dates.forEach(d => {
+        if (!prevDate) {
+          currentSeq = 1;
+        } else {
+          const diffDays = Math.round((d - prevDate) / (1000*60*60*24));
+          if (diffDays === 1) currentSeq += 1;
+          else currentSeq = 1;
+        }
+        if (currentSeq > maxSeq) maxSeq = currentSeq;
+        prevDate = d;
+      });
+      stat.consecutiveMax = maxSeq;
+    });
+
+    const consLevels = [
+      { threshold: 31, letter: 'Buang Sekolah' },
+      { threshold: 17, letter: 'Amaran Terakhir' },
+      { threshold: 10, letter: 'Amaran Kedua' },
+      { threshold: 3,  letter: 'Amaran Pertama' }
+    ];
+    const nonLevels = [
+      { threshold: 60, letter: 'Buang Sekolah' },
+      { threshold: 40, letter: 'Amaran Terakhir' },
+      { threshold: 20, letter: 'Amaran Kedua' },
+      { threshold: 10, letter: 'Amaran Pertama' }
+    ];
+    const rank = {
+      'Amaran Pertama': 1,
+      'Amaran Kedua'  : 2,
+      'Amaran Terakhir':3,
+      'Buang Sekolah' : 4
+    };
+
+    Object.values(stats).forEach(stat => {
+      let consSuggest = null;
+      let nonSuggest = null;
+
+      for (const lvl of consLevels) {
+        if (stat.consecutiveMax >= lvl.threshold) {
+          consSuggest = { letter: lvl.letter, mode: 'berturut-turut' };
+          break;
+        }
+      }
+      for (const lvl of nonLevels) {
+        if (stat.totalAbsent >= lvl.threshold) {
+          nonSuggest = { letter: lvl.letter, mode: 'berselang' };
+          break;
+        }
+      }
+
+      let chosen = null;
+      if (consSuggest && nonSuggest) {
+        chosen = rank[consSuggest.letter] >= rank[nonSuggest.letter] ? consSuggest : nonSuggest;
+      } else {
+        chosen = consSuggest || nonSuggest;
+      }
+
+      if (chosen) {
+        notifications.push({
+          name: stat.name,
+          classCode: stat.classCode,
+          letter: chosen.letter,
+          mode: chosen.mode,
+          totalAbsent: stat.totalAbsent,
+          consecutiveMax: stat.consecutiveMax
+        });
+      }
+    });
+
+    renderNotificationBadge();
+    renderAdminNotifications(yearStr);
+  }
 
   function ensureYearlyData() {
     if (yearlyRaw) return Promise.resolve();
@@ -1202,8 +1439,7 @@
       });
       yearlyYears = Array.from(yearSet).sort();
     }).catch(err => {
-      console.error(err);
-      yearlyInfo.textContent = 'Ralat memuatkan data tahunan: ' + err.message;
+      console.error('Ralat memuatkan data tahunan:', err);
     });
   }
 
@@ -1332,7 +1568,7 @@
     });
   }
 
-  // Padam kelas (event delegation)
+  // Padam kelas
   adminClassTableBody.addEventListener('click', (e) => {
     const btn = e.target.closest('.admin-delete-class');
     if (!btn) return;
@@ -1500,6 +1736,11 @@
     loadMonthlySummary();
     renderAdminClassTable();
     populateAdminClassSelect();
+
+    // Load data tahunan & kira notifikasi
+    ensureYearlyData().then(() => {
+      recomputeNotificationsForYear(String(currentYear));
+    });
   }
 
   loadClassConfigFromDB().then(initApp).catch(err => {
