@@ -7,246 +7,101 @@
   <style>
     * { box-sizing: border-box; font-family: system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; }
     body { margin: 0; padding: 0; background: #f3f4f6; color: #111827; }
-
-    /* Header */
-    header {
-      background: linear-gradient(135deg,#2563eb,#1d4ed8);
-      color: #fff;
-      padding: 12px 20px 14px;
-      box-shadow: 0 2px 8px rgba(15,23,42,0.4);
-      position: sticky;
-      top: 0;
-      z-index: 10;
-    }
+    header { background: linear-gradient(135deg,#2563eb,#1d4ed8); color: #fff; padding: 12px 20px 14px; box-shadow: 0 2px 8px rgba(15,23,42,0.4); position: sticky; top: 0; z-index: 10; }
     .header-main { display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
-    .header-logo {
-      height:48px; width:48px; border-radius:999px; background:#fff;
-      display:flex; align-items:center; justify-content:center;
-      overflow:hidden; flex-shrink:0;
-      box-shadow:0 2px 6px rgba(0,0,0,.25);
-      cursor:pointer;
-      position:relative;
-    }
+    .header-logo { height:48px; width:48px; border-radius:999px; background:#fff; display:flex; align-items:center; justify-content:center; overflow:hidden; flex-shrink:0; box-shadow:0 2px 6px rgba(0,0,0,.25); cursor:pointer; position:relative; }
     .header-logo img { max-width:100%; max-height:100%; display:block; }
-    .notification-badge {
-      position:absolute;
-      top:-4px;
-      right:-4px;
-      background:#ef4444;
-      color:#fff;
-      font-size:.65rem;
-      min-width:18px;
-      height:18px;
-      padding:0 4px;
-      border-radius:999px;
-      display:none;
-      align-items:center;
-      justify-content:center;
-      font-weight:700;
-      box-shadow:0 0 0 2px #1d4ed8;
-    }
+    .notification-badge { position:absolute; top:-4px; right:-4px; background:#ef4444; color:#fff; font-size:.65rem; min-width:18px; height:18px; padding:0 4px; border-radius:999px; display:none; align-items:center; justify-content:center; font-weight:700; box-shadow:0 0 0 2px #1d4ed8; animation: pulse 2s infinite; }
+    @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.1); } }
     .header-text h1 { margin:0; font-size:1.4rem; font-weight:700; }
     .header-text p { margin:2px 0 0; font-size:.9rem; opacity:.9; }
-
     main { max-width:1040px; margin:20px auto; padding:0 16px 32px; }
-
-    .card {
-      background:#fff; border-radius:16px;
-      box-shadow:0 10px 25px rgba(15,23,42,.08);
-      padding:20px; margin-bottom:20px;
-      border:1px solid #e5e7eb;
-    }
-    .card-header {
-      display:flex; justify-content:space-between; align-items:center;
-      gap:12px; margin-bottom:12px; flex-wrap:wrap;
-    }
+    .card { background:#fff; border-radius:16px; box-shadow:0 10px 25px rgba(15,23,42,.08); padding:20px; margin-bottom:20px; border:1px solid #e5e7eb; }
+    .card-header { display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:12px; flex-wrap:wrap; }
     .card-header h2 { margin:0; font-size:1.1rem; display:flex; align-items:center; gap:8px; }
-    .badge {
-      display:inline-block; padding:2px 10px; border-radius:999px;
-      font-size:.75rem; background:#e0f2fe; color:#0369a1; font-weight:600;
-    }
+    .badge { display:inline-block; padding:2px 10px; border-radius:999px; font-size:.75rem; background:#e0f2fe; color:#0369a1; font-weight:600; }
     .date-display { font-size:.9rem; color:#e5e7eb; }
-
     label { font-size:.9rem; color:#374151; }
     select, button { font-size:.9rem; }
-
-    select {
-      width:100%; padding:8px 10px; border-radius:999px;
-      border:1px solid #d1d5db; outline:none; background:#f9fafb;
-      transition:border-color .15s, box-shadow .15s, background .15s;
-    }
-    select:focus {
-      border-color:#2563eb;
-      box-shadow:0 0 0 2px rgba(37,99,235,.25);
-      background:#fff;
-    }
-
-    .flex-row {
-      display:flex; flex-wrap:wrap; gap:10px;
-      align-items:center; justify-content:space-between;
-      margin-top:12px;
-    }
-
-    .btn {
-      border-radius:999px; border:none; padding:8px 16px;
-      cursor:pointer; font-weight:600;
-      display:inline-flex; align-items:center; gap:6px;
-      box-shadow:0 8px 16px rgba(15,23,42,.18);
-      transition:transform .1s, box-shadow .1s, background .1s;
-    }
+    select { width:100%; padding:8px 10px; border-radius:999px; border:1px solid #d1d5db; outline:none; background:#f9fafb; transition:border-color .15s, box-shadow .15s, background .15s; }
+    select:focus { border-color:#2563eb; box-shadow:0 0 0 2px rgba(37,99,235,.25); background:#fff; }
+    .flex-row { display:flex; flex-wrap:wrap; gap:10px; align-items:center; justify-content:space-between; margin-top:12px; }
+    .btn { border-radius:999px; border:none; padding:8px 16px; cursor:pointer; font-weight:600; display:inline-flex; align-items:center; gap:6px; box-shadow:0 8px 16px rgba(15,23,42,.18); transition:transform .1s, box-shadow .1s, background .1s; }
     .btn-primary { background:linear-gradient(135deg,#2563eb,#1d4ed8); color:#fff; }
     .btn-outline { background:#fff; color:#1f2937; border:1px solid #d1d5db; box-shadow:none; }
     .btn-secondary { background:#e5e7eb; color:#111827; box-shadow:none; }
+    .btn-success { background:linear-gradient(135deg,#059669,#047857); color:#fff; }
+    .btn-danger { background:linear-gradient(135deg,#dc2626,#b91c1c); color:#fff; }
     .btn:hover { transform:translateY(-1px); box-shadow:0 12px 22px rgba(15,23,42,.18); }
     .btn:active { transform:translateY(0); box-shadow:0 6px 12px rgba(15,23,42,.18); }
-
-    .pill {
-      display:inline-flex; align-items:center; gap:6px;
-      padding:4px 10px; border-radius:999px;
-      background:#f3f4f6; font-size:.8rem; color:#374151;
-    }
+    .btn:disabled { opacity:0.5; cursor:not-allowed; transform:none; }
+    .btn-sm { padding:4px 10px; font-size:.8rem; }
+    .pill { display:inline-flex; align-items:center; gap:6px; padding:4px 10px; border-radius:999px; background:#f3f4f6; font-size:.8rem; color:#374151; }
     .pill strong { color:#111827; }
-
-    /* Tabs */
     .tabs { margin-top:4px; display:flex; flex-wrap:wrap; gap:6px; border-bottom:1px solid #e5e7eb; padding-bottom:4px; }
-    .tab-btn {
-      border:1px solid #e5e7eb; background:#f9fafb;
-      padding:6px 14px; border-radius:999px;
-      cursor:pointer; font-size:.9rem; color:#4b5563;
-      transition:background .15s, color .15s, box-shadow .15s, border-color .15s;
-    }
+    .tab-btn { border:1px solid #e5e7eb; background:#f9fafb; padding:6px 14px; border-radius:999px; cursor:pointer; font-size:.9rem; color:#4b5563; transition:background .15s, color .15s, box-shadow .15s, border-color .15s; }
     .tab-btn:hover { background:#f3f4ff; }
-    .tab-btn.active {
-      background:#fff; color:#1d4ed8; font-weight:600;
-      border-color:#bfdbfe; box-shadow:0 2px 6px rgba(15,23,42,.2);
-    }
+    .tab-btn.active { background:#fff; color:#1d4ed8; font-weight:600; border-color:#bfdbfe; box-shadow:0 2px 6px rgba(15,23,42,.2); }
     .tab-panel { margin-top:12px; }
-
     .subtabs { margin-top:8px; display:flex; flex-wrap:wrap; gap:6px; }
-    .subtab-btn {
-      border-radius:999px; border:1px solid #e5e7eb;
-      background:#f9fafb; padding:4px 12px;
-      font-size:.85rem; cursor:pointer; color:#4b5563;
-      transition:background .15s, color .15s, box-shadow .15s, border-color .15s;
-    }
+    .subtab-btn { border-radius:999px; border:1px solid #e5e7eb; background:#f9fafb; padding:4px 12px; font-size:.85rem; cursor:pointer; color:#4b5563; transition:background .15s, color .15s, box-shadow .15s, border-color .15s; }
     .subtab-btn:hover { background:#eef2ff; }
-    .subtab-btn.active {
-      background:#fff; color:#2563eb; font-weight:600;
-      border-color:#bfdbfe; box-shadow:0 1px 4px rgba(15,23,42,.2);
-    }
+    .subtab-btn.active { background:#fff; color:#2563eb; font-weight:600; border-color:#bfdbfe; box-shadow:0 1px 4px rgba(15,23,42,.2); }
     .subtab-panel { margin-top:8px; }
-
-    /* Search + list */
     .search-row { margin-top:14px; display:flex; flex-wrap:wrap; gap:8px; align-items:center; justify-content:space-between; }
     .search-row label { font-size:.85rem; white-space:nowrap; }
-    .search-row input[type="text"] {
-      flex:1 1 220px; padding:8px 10px; border-radius:999px;
-      border:1px solid #d1d5db; background:#f9fafb; font-size:.9rem; outline:none;
-      transition:border-color .15s, box-shadow .15s, background .15s;
-    }
-    .search-row input[type="text"]:focus {
-      border-color:#2563eb;
-      box-shadow:0 0 0 2px rgba(37,99,235,.25);
-      background:#fff;
-    }
-
-    .students-container {
-      margin-top:12px; max-height:420px; overflow-y:auto;
-      border-radius:12px; border:1px solid #e5e7eb; background:#f9fafb;
-    }
-    .students-header {
-      display:grid; grid-template-columns:52px 1fr 90px;
-      padding:8px 12px; border-bottom:1px solid #e5e7eb;
-      font-size:.8rem; font-weight:600; color:#6b7280;
-      background:#f3f4f6; position:sticky; top:0; z-index:2;
-    }
-    .student-row {
-      display:grid; grid-template-columns:52px 1fr 90px;
-      padding:7px 12px; align-items:center; font-size:.9rem;
-      border-bottom:1px solid #e5e7eb; background:#fff;
-    }
+    .search-row input[type="text"] { flex:1 1 220px; padding:8px 10px; border-radius:999px; border:1px solid #d1d5db; background:#f9fafb; font-size:.9rem; outline:none; transition:border-color .15s, box-shadow .15s, background .15s; }
+    .search-row input[type="text"]:focus { border-color:#2563eb; box-shadow:0 0 0 2px rgba(37,99,235,.25); background:#fff; }
+    .students-container { margin-top:12px; max-height:420px; overflow-y:auto; border-radius:12px; border:1px solid #e5e7eb; background:#f9fafb; }
+    .students-header { display:grid; grid-template-columns:52px 1fr 90px; padding:8px 12px; border-bottom:1px solid #e5e7eb; font-size:.8rem; font-weight:600; color:#6b7280; background:#f3f4f6; position:sticky; top:0; z-index:2; }
+    .student-row { display:grid; grid-template-columns:52px 1fr 90px; padding:7px 12px; align-items:center; font-size:.9rem; border-bottom:1px solid #e5e7eb; background:#fff; }
     .student-row:nth-child(even) { background:#f9fafb; }
     .student-row:hover { background:#eff6ff; }
     .student-name { font-weight:500; color:#111827; }
     .checkbox-wrapper { display:flex; justify-content:center; }
     .checkbox-wrapper input { width:18px; height:18px; cursor:pointer; }
-
-    .summary-box {
-      margin-top:16px; padding:12px 14px;
-      border-radius:12px; background:#eff6ff;
-      border:1px solid #bfdbfe; font-size:.9rem; color:#1e3a8a;
-    }
+    .summary-box { margin-top:16px; padding:12px 14px; border-radius:12px; background:#eff6ff; border:1px solid #bfdbfe; font-size:.9rem; color:#1e3a8a; }
     .summary-main { display:flex; flex-wrap:wrap; gap:10px; align-items:center; justify-content:space-between; }
     .summary-main strong { font-size:1rem; }
-
     .summary-absent { margin-top:8px; font-size:.9rem; }
     .summary-absent ul { margin:4px 0 0 18px; padding:0; }
     .summary-absent li { margin:0; }
-
     .status-bar { margin-top:10px; display:flex; flex-wrap:wrap; gap:8px; font-size:.85rem; }
-    .status-pill {
-      padding:4px 10px; border-radius:999px;
-      background:#e5f9ed; color:#047857; font-weight:600;
-    }
+    .status-pill { padding:4px 10px; border-radius:999px; background:#e5f9ed; color:#047857; font-weight:600; }
     .status-pill.error { background:#fee2e2; color:#b91c1c; }
     .status-pill.info { background:#e0f2fe; color:#0369a1; }
-
     .summary-header-row { font-size:.95rem; margin-top:4px; }
     .summary-date-link { color:#2563eb; text-decoration:underline; cursor:default; }
-
-    .summary-table-wrapper {
-      margin-top:10px; overflow-x:auto;
-      border-radius:8px; border:1px solid #cbd5e1; background:#f9fafb;
-    }
+    .summary-table-wrapper { margin-top:10px; overflow-x:auto; border-radius:8px; border:1px solid #cbd5e1; background:#f9fafb; }
     .summary-table { width:100%; border-collapse:collapse; font-size:.9rem; background:#fff; }
-    .summary-table th, .summary-table td {
-      border:1px solid #cbd5e1; padding:6px 8px; text-align:left;
-    }
-    .summary-table th {
-      background:#e5f0ff; color:#1f2937; font-weight:600;
-    }
+    .summary-table th, .summary-table td { border:1px solid #cbd5e1; padding:6px 8px; text-align:left; }
+    .summary-table th { background:#e5f0ff; color:#1f2937; font-weight:600; }
     .summary-table td.main-row-cell { background:#fff; }
     .summary-table tr:nth-child(even) td.main-row-cell { background:#f9fafb; }
     .row-not-updated td.main-row-cell { background:#fff7ed; }
     .cell-not-updated { font-weight:600; color:#b45309; }
-
     .attendance-link { cursor:pointer; text-decoration:underline; color:#111827; }
     .attendance-link:hover { color:#1d4ed8; }
     .absent-row td { background:#fefce8; font-size:.85rem; }
     .summary-footer { margin-top:8px; font-size:.85rem; color:#374151; }
-
     .darjah-col { width:70px; text-align:center; white-space:nowrap; }
-
     footer { text-align:center; font-size:.75rem; color:#9ca3af; margin-top:10px; }
-
-    /* Modal admin */
-    .modal-backdrop {
-      position:fixed; inset:0; background:rgba(15,23,42,.45);
-      display:flex; align-items:center; justify-content:center;
-      z-index:40;
-    }
-    .modal-card {
-      background:#fff; border-radius:16px; padding:20px;
-      width:100%; max-width:420px;
-      box-shadow:0 20px 40px rgba(15,23,42,.5);
-    }
+    .modal-backdrop { position:fixed; inset:0; background:rgba(15,23,42,.45); display:flex; align-items:center; justify-content:center; z-index:40; }
+    .modal-card { background:#fff; border-radius:16px; padding:20px; width:100%; max-width:420px; box-shadow:0 20px 40px rgba(15,23,42,.5); max-height:90vh; overflow-y:auto; }
+    .modal-card.modal-lg { max-width:700px; }
     .modal-card h3 { margin:0 0 8px; }
     .modal-card p { margin:0 0 14px; font-size:.9rem; color:#4b5563; }
-    .modal-input {
-      width:100%; padding:10px 12px; border-radius:10px;
-      border:1px solid #d1d5db; font-size:.95rem;
-    }
-    .modal-input:focus {
-      outline:none; border-color:#2563eb;
-      box-shadow:0 0 0 2px rgba(37,99,235,.25);
-    }
+    .modal-input { width:100%; padding:10px 12px; border-radius:10px; border:1px solid #d1d5db; font-size:.95rem; }
+    .modal-input:focus { outline:none; border-color:#2563eb; box-shadow:0 0 0 2px rgba(37,99,235,.25); }
     .modal-actions { margin-top:16px; display:flex; justify-content:flex-end; gap:8px; }
-
-    @media (max-width:640px) {
-      .header-text h1 { font-size:1.15rem; }
-      .students-header, .student-row { grid-template-columns:42px 1fr 80px; }
-      .students-container { max-height:360px; }
-    }
+    .status-bersebab { background:#d1fae5; color:#047857; padding:2px 8px; border-radius:999px; font-size:.75rem; font-weight:600; }
+    .status-tidak-bersebab { background:#fee2e2; color:#b91c1c; padding:2px 8px; border-radius:999px; font-size:.75rem; font-weight:600; }
+    .alert-box { padding:12px 16px; border-radius:12px; margin-bottom:12px; font-size:.9rem; }
+    .alert-info { background:#e0f2fe; border:1px solid #7dd3fc; color:#0369a1; }
+    .alert-warning { background:#fef3c7; border:1px solid #fcd34d; color:#b45309; }
+    .notification-row { transition: background 0.15s; }
+    .notification-row:hover { background:#eff6ff !important; }
+    @media (max-width:640px) { .header-text h1 { font-size:1.15rem; } .students-header, .student-row { grid-template-columns:42px 1fr 80px; } .students-container { max-height:360px; } }
   </style>
 </head>
 <body>
@@ -258,7 +113,7 @@
     </div>
     <div class="header-text">
       <h1>Rekod Kehadiran Harian Murid SKSA</h1>
-      <p>Guru hanya perlu tandakan murid <strong>tidak hadir</strong>. Sistem akan kira kehadiran automatik untuk hari tersebut.</p>
+      <p>Guru hanya perlu tandakan murid <strong>tidak hadir</strong>. Sistem akan kira kehadiran automatik.</p>
     </div>
   </div>
 </header>
@@ -270,270 +125,171 @@
       <div class="date-display" id="todayDisplay">Tarikh:</div>
     </div>
 
-    <!-- Tab utama -->
     <div class="tabs">
       <button class="tab-btn active" data-tab="byClass">Rekod Mengikut Kelas</button>
       <button class="tab-btn" data-tab="summary">Ringkasan Semua Kelas</button>
-      <button class="tab-btn" data-tab="admin" id="adminTabBtn" style="display:none;">Admin</button>
+      <button class="tab-btn" data-tab="admin" id="adminTabBtn" style="display:none;">🔒 Admin</button>
     </div>
 
     <!-- TAB: Mengikut kelas -->
     <div id="tab-byClass" class="tab-panel" style="display:block;">
       <div>
         <label for="classSelect">Pilih kelas:</label>
-        <select id="classSelect">
-          <option value="">— Sila pilih kelas —</option>
-        </select>
+        <select id="classSelect"><option value="">— Sila pilih kelas —</option></select>
       </div>
-
       <div class="flex-row">
-        <div class="pill">
-          🔁 <strong>Setiap hari baharu</strong> – kehadiran bermula semula (semua murid dianggap hadir).
-        </div>
+        <div class="pill">🔁 <strong>Setiap hari baharu</strong> — kehadiran bermula semula.</div>
         <div>
           <button type="button" class="btn btn-outline" id="btnAllPresent">✅ Semua hadir</button>
-          <button type="button" class="btn btn-outline" id="btnClearTicks">✖ Reset tanda</button>
+          <button type="button" class="btn btn-outline" id="btnClearTicks">✖ Reset</button>
         </div>
       </div>
-
       <div id="studentsSection" style="margin-top:16px;display:none;">
         <div class="search-row">
-          <label for="searchInput">Carian nama murid:</label>
-          <input id="searchInput" type="text" placeholder='Taip nama atau sebahagian nama, contoh: "adra"' />
+          <label for="searchInput">Carian nama:</label>
+          <input id="searchInput" type="text" placeholder='Taip nama murid...' />
         </div>
-
         <div class="students-container">
-          <div class="students-header">
-            <div>No.</div>
-            <div>Nama Murid</div>
-            <div style="text-align:center;">Tidak hadir</div>
-          </div>
+          <div class="students-header"><div>No.</div><div>Nama Murid</div><div style="text-align:center;">Tidak hadir</div></div>
           <div id="studentsList"></div>
         </div>
-
         <div class="flex-row">
           <div class="pill" id="countInfo">👥 Jumlah murid: <strong>0</strong></div>
-          <button type="button" class="btn btn-primary" id="btnSave">💾 Simpan kehadiran hari ini</button>
+          <button type="button" class="btn btn-primary" id="btnSave">💾 Simpan kehadiran</button>
         </div>
-
         <div class="summary-box" id="summaryBox" style="display:none;">
           <div class="summary-main">
-            <div>
-              <strong id="summaryTitle">Kehadiran hari ini:</strong>
-              <div id="summaryRatio">0/0 hadir</div>
-            </div>
+            <div><strong id="summaryTitle">Kehadiran hari ini:</strong><div id="summaryRatio">0/0 hadir</div></div>
             <div id="summaryMini"></div>
           </div>
           <div class="summary-absent" id="summaryAbsent"></div>
         </div>
-
         <div class="status-bar" id="statusBar"></div>
       </div>
     </div>
 
-    <!-- TAB: Ringkasan semua kelas -->
+    <!-- TAB: Ringkasan -->
     <div id="tab-summary" class="tab-panel" style="display:none;">
-
       <div class="subtabs">
         <button class="subtab-btn active" data-subtab="daily">Harian</button>
         <button class="subtab-btn" data-subtab="weekly">Mingguan</button>
         <button class="subtab-btn" data-subtab="monthly">Bulanan</button>
         <button class="subtab-btn" data-subtab="yearly" id="yearlySubtabBtn" style="display:none;">Tahunan</button>
       </div>
-
-      <!-- HARIAN -->
       <div id="summaryDailyPanel" class="subtab-panel" style="display:block;">
-        <div class="summary-header-row">
-          Rekod Kehadiran Pada <span id="summaryDateLink" class="summary-date-link"></span>
-        </div>
+        <div class="summary-header-row">Rekod Kehadiran Pada <span id="summaryDateLink" class="summary-date-link"></span></div>
         <div class="summary-table-wrapper">
-          <table class="summary-table">
-            <thead>
-              <tr>
-                <th>Bil</th>
-                <th class="darjah-col">Darjah</th>
-                <th>Kelas</th>
-                <th>Kehadiran</th>
-              </tr>
-            </thead>
-            <tbody id="summaryTableBody"></tbody>
-          </table>
+          <table class="summary-table"><thead><tr><th>Bil</th><th class="darjah-col">Darjah</th><th>Kelas</th><th>Kehadiran</th></tr></thead><tbody id="summaryTableBody"></tbody></table>
         </div>
-        <div class="summary-footer" id="summaryFooter">
-          Kehadiran : Tiada rekod kehadiran<br />
-          Peratus Kehadiran : Tiada rekod kehadiran
-        </div>
+        <div class="summary-footer" id="summaryFooter">Kehadiran : Tiada rekod</div>
       </div>
-
-      <!-- MINGGUAN -->
       <div id="summaryWeeklyPanel" class="subtab-panel" style="display:none;">
-        <div class="summary-header-row">
-          Ringkasan Mingguan: <span id="weeklyRangeLabel"></span>
-        </div>
+        <div class="summary-header-row">Ringkasan Mingguan: <span id="weeklyRangeLabel"></span></div>
         <div class="summary-table-wrapper">
-          <table class="summary-table">
-            <thead>
-              <tr>
-                <th rowspan="2">Bil</th>
-                <th rowspan="2" class="darjah-col">Darjah</th>
-                <th rowspan="2">Kelas</th>
-                <th colspan="5" id="weeklyHeaderSpan">Kehadiran</th>
-              </tr>
-              <tr id="weeklyDateRow"></tr>
-            </thead>
-            <tbody id="weeklyTableBody"></tbody>
-          </table>
+          <table class="summary-table"><thead><tr><th rowspan="2">Bil</th><th rowspan="2" class="darjah-col">Darjah</th><th rowspan="2">Kelas</th><th colspan="5" id="weeklyHeaderSpan">Kehadiran</th></tr><tr id="weeklyDateRow"></tr></thead><tbody id="weeklyTableBody"></tbody></table>
         </div>
-        <div class="summary-footer" id="weeklyInfo">
-          Tiada rekod kehadiran untuk minggu ini.
-        </div>
+        <div class="summary-footer" id="weeklyInfo">Tiada rekod.</div>
       </div>
-
-      <!-- BULANAN -->
       <div id="summaryMonthlyPanel" class="subtab-panel" style="display:none;">
         <div class="summary-header-row" style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;">
           <span>Ringkasan Bulanan: <span id="monthlyLabel"></span></span>
           <button type="button" class="btn btn-outline" id="btnPrintMonthly">🖨 Cetak</button>
         </div>
         <div class="summary-table-wrapper">
-          <table class="summary-table">
-            <thead>
-              <tr>
-                <th rowspan="2">Bil</th>
-                <th rowspan="2" class="darjah-col">Darjah</th>
-                <th rowspan="2">Kelas</th>
-                <th colspan="31" id="monthlyHeaderSpan">Kehadiran</th>
-              </tr>
-              <tr id="monthlyDateRow"></tr>
-            </thead>
-            <tbody id="monthlyTableBody"></tbody>
-          </table>
+          <table class="summary-table"><thead><tr><th rowspan="2">Bil</th><th rowspan="2" class="darjah-col">Darjah</th><th rowspan="2">Kelas</th><th colspan="31" id="monthlyHeaderSpan">Kehadiran</th></tr><tr id="monthlyDateRow"></tr></thead><tbody id="monthlyTableBody"></tbody></table>
         </div>
-        <div class="summary-footer" id="monthlyInfo">
-          Tiada rekod kehadiran untuk bulan ini.
-        </div>
+        <div class="summary-footer" id="monthlyInfo">Tiada rekod.</div>
       </div>
-
-      <!-- TAHUNAN (admin sahaja) -->
       <div id="summaryYearlyPanel" class="subtab-panel" style="display:none;">
         <div class="summary-header-row" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-          <div>
-            Ringkasan Tahunan:
-            <select id="yearlyYearSelect" style="padding:4px 10px;border-radius:999px;border:1px solid #d1d5db;background:#f9fafb;font-size:.85rem;min-width:90px;"></select>
-          </div>
+          <div>Ringkasan Tahunan: <select id="yearlyYearSelect" style="padding:4px 10px;border-radius:999px;border:1px solid #d1d5db;background:#f9fafb;font-size:.85rem;min-width:90px;"></select></div>
         </div>
         <div class="summary-table-wrapper">
-          <table class="summary-table">
-            <thead>
-              <tr>
-                <th>Bil</th>
-                <th>Bulan</th>
-                <th>Kehadiran</th>
-              </tr>
-            </thead>
-            <tbody id="yearlyTableBody"></tbody>
-          </table>
+          <table class="summary-table"><thead><tr><th>Bil</th><th>Bulan</th><th>Kehadiran</th></tr></thead><tbody id="yearlyTableBody"></tbody></table>
         </div>
-        <div class="summary-footer" id="yearlyInfo">
-          Tiada rekod kehadiran untuk tahun ini.
-        </div>
+        <div class="summary-footer" id="yearlyInfo">Tiada rekod.</div>
       </div>
-
     </div>
 
-    <!-- TAB: ADMIN -->
+    <!-- TAB: Admin -->
     <div id="tab-admin" class="tab-panel" style="display:none;">
-      <div class="summary-box">
-        <div class="summary-main">
-          <div><strong>Mod Admin</strong></div>
-          <div>Anda boleh tambah / padam kelas dan kemas kini senarai murid. Perubahan disimpan dalam pangkalan data.</div>
-        </div>
-      </div>
-
-      <!-- Notifikasi kehadiran -->
+      <div class="summary-box"><div class="summary-main"><div><strong>Mod Admin</strong></div><div>Anda boleh urus kelas, murid dan status ketidakhadiran.</div></div></div>
+      
+      <!-- Notifikasi Ponteng -->
       <div id="adminNotificationSection" style="margin-top:16px;">
-        <h3 style="margin:0 0 6px;font-size:1rem;">Notifikasi Kehadiran Murid</h3>
-        <div class="summary-table-wrapper">
+        <h3 style="margin:0 0 6px;font-size:1rem;">🔔 Notifikasi Murid Ponteng (Tidak Bersebab)</h3>
+        <div class="alert-box alert-info" style="margin-top:8px;">
+          <strong>Cara Penggunaan:</strong><br>
+          • <span class="status-bersebab">Bersebab</span> = Tidak hadir dengan alasan (sakit, hal keluarga) - <strong>TIDAK DIKIRA PONTENG</strong><br>
+          • <span class="status-tidak-bersebab">Tidak Bersebab</span> = Ponteng tanpa alasan - <strong>DIKIRA PONTENG</strong><br>
+          • Klik butang "Urus Status" untuk menukar status ketidakhadiran murid<br>
+          • Default: Semua ketidakhadiran adalah <strong>Bersebab</strong>
+        </div>
+        <div class="summary-table-wrapper" style="margin-top:12px;">
           <table class="summary-table">
-            <thead>
-              <tr>
-                <th>Bil</th>
-                <th>Nama Murid</th>
-                <th>Kelas</th>
-                <th>Jenis</th>
-                <th>Butiran Hari</th>
-                <th>Cadangan Surat</th>
-              </tr>
-            </thead>
+            <thead><tr><th>Bil</th><th>Nama Murid</th><th>Kelas</th><th>Hari Ponteng</th><th>Jenis</th><th>Cadangan Surat</th><th>Tindakan</th></tr></thead>
             <tbody id="adminNotificationBody"></tbody>
           </table>
         </div>
-        <div class="summary-footer" id="adminNotificationInfo">
-          Tiada notifikasi berdasarkan rekod kehadiran tahun ini.
+        <div class="summary-footer" id="adminNotificationInfo">Tiada notifikasi ponteng.</div>
+      </div>
+
+      <!-- Urus Status Ketidakhadiran -->
+      <div style="margin-top:20px;">
+        <h3 style="margin:0 0 6px;font-size:1rem;">📋 Urus Status Ketidakhadiran Murid</h3>
+        <div class="flex-row" style="margin-top:8px;">
+          <div style="flex:1;">
+            <label for="statusClassSelect" style="font-size:.85rem;">Pilih Kelas:</label>
+            <select id="statusClassSelect" style="margin-top:4px;"></select>
+          </div>
+          <div style="flex:1;">
+            <label for="statusDateSelect" style="font-size:.85rem;">Pilih Tarikh:</label>
+            <select id="statusDateSelect" style="margin-top:4px;"></select>
+          </div>
         </div>
+        <div id="statusAbsentList" style="margin-top:12px;"></div>
       </div>
 
       <!-- Senarai kelas -->
-      <div style="margin-top:16px;">
-        <h3 style="margin:0 0 6px;font-size:1rem;">Senarai Kelas</h3>
+      <div style="margin-top:20px;">
+        <h3 style="margin:0 0 6px;font-size:1rem;">🏫 Senarai Kelas</h3>
         <div class="summary-table-wrapper">
-          <table class="summary-table">
-            <thead>
-              <tr>
-                <th>Bil</th>
-                <th>Darjah</th>
-                <th>Kod</th>
-                <th>Nama Kelas</th>
-                <th>Bil. Murid</th>
-                <th>Tindakan</th>
-              </tr>
-            </thead>
-            <tbody id="adminClassTableBody"></tbody>
-          </table>
+          <table class="summary-table"><thead><tr><th>Bil</th><th>Darjah</th><th>Kod</th><th>Nama Kelas</th><th>Bil. Murid</th><th>Tindakan</th></tr></thead><tbody id="adminClassTableBody"></tbody></table>
         </div>
-
         <div style="margin-top:10px;padding:10px 12px;border-radius:12px;background:#f9fafb;border:1px dashed #cbd5e1;">
           <h4 style="margin:0 0 8px;font-size:.95rem;">Tambah Kelas Baharu</h4>
           <div class="flex-row" style="gap:8px;">
-            <input id="adminNewDarjah" type="text" placeholder="Contoh: D4" style="flex:0 0 80px;padding:6px 8px;border-radius:999px;border:1px solid #d1d5db;font-size:.85rem;">
-            <input id="adminNewCode" type="text" placeholder="Kod kelas (cth: 4B)" style="flex:0 0 110px;padding:6px 8px;border-radius:999px;border:1px solid #d1d5db;font-size:.85rem;">
-            <input id="adminNewLabel" type="text" placeholder="Nama kelas (cth: BESTARI)" style="flex:1;padding:6px 8px;border-radius:999px;border:1px solid #d1d5db;font-size:.85rem;">
-            <button type="button" class="btn btn-primary" id="adminAddClassBtn" style="box-shadow:none;padding:6px 12px;font-size:.85rem;">+ Tambah</button>
+            <input id="adminNewDarjah" type="text" placeholder="Darjah (D4)" style="flex:0 0 80px;padding:6px 8px;border-radius:999px;border:1px solid #d1d5db;font-size:.85rem;">
+            <input id="adminNewCode" type="text" placeholder="Kod (4B)" style="flex:0 0 80px;padding:6px 8px;border-radius:999px;border:1px solid #d1d5db;font-size:.85rem;">
+            <input id="adminNewLabel" type="text" placeholder="Nama (BESTARI)" style="flex:1;padding:6px 8px;border-radius:999px;border:1px solid #d1d5db;font-size:.85rem;">
+            <button type="button" class="btn btn-primary btn-sm" id="adminAddClassBtn">+ Tambah</button>
           </div>
-          <div id="adminClassMsg" style="margin-top:6px;font-size:.8rem;color:#6b7280;">
-            Pastikan kod kelas unik dan tidak sama dengan kelas sedia ada.
-          </div>
+          <div id="adminClassMsg" style="margin-top:6px;font-size:.8rem;color:#6b7280;"></div>
         </div>
       </div>
 
-      <!-- Senarai murid -->
+      <!-- Sunting murid -->
       <div style="margin-top:20px;">
-        <h3 style="margin:0 0 6px;font-size:1rem;">Sunting Senarai Murid</h3>
+        <h3 style="margin:0 0 6px;font-size:1rem;">✏️ Sunting Senarai Murid</h3>
         <label for="adminStudentClassSelect" style="font-size:.85rem;">Pilih kelas:</label>
-        <select id="adminStudentClassSelect" style="margin-top:4px;margin-bottom:8px;width:100%;padding:8px 10px;border-radius:999px;border:1px solid #d1d5db;background:#f9fafb;font-size:.9rem;"></select>
+        <select id="adminStudentClassSelect" style="margin-top:4px;margin-bottom:8px;"></select>
         <textarea id="adminStudentTextarea" rows="10" style="width:100%;padding:8px 10px;border-radius:12px;border:1px solid #d1d5db;font-size:.9rem;resize:vertical;" placeholder="Satu nama murid bagi setiap baris."></textarea>
         <div class="flex-row" style="margin-top:8px;">
           <div id="adminStudentCount" class="pill">Bil. murid: 0</div>
-          <button type="button" class="btn btn-primary" id="adminSaveStudentsBtn">💾 Simpan Senarai Murid</button>
+          <button type="button" class="btn btn-primary" id="adminSaveStudentsBtn">💾 Simpan ke Firebase</button>
         </div>
-        <div id="adminStudentMsg" style="margin-top:6px;font-size:.8rem;color:#6b7280;">
-          Perubahan akan digunakan dalam modul kehadiran dan disimpan di pangkalan data.
-        </div>
+        <div id="adminStudentMsg" style="margin-top:6px;font-size:.8rem;color:#6b7280;">Perubahan akan disimpan di Firebase Realtime Database.</div>
       </div>
     </div>
-
   </section>
-
-  <footer>
-    SK Sri Aman · Modul Kehadiran Harian Murid (Firebase Realtime Database)
-  </footer>
+  <footer>SK Sri Aman · Modul Kehadiran Harian Murid (Firebase Realtime Database)</footer>
 </main>
 
 <!-- Modal Log Masuk Admin -->
 <div id="adminModal" class="modal-backdrop" style="display:none;">
   <div class="modal-card">
-    <h3>Log Masuk Admin</h3>
-    <p>Masukkan kata laluan admin untuk mengakses tetapan kelas dan senarai murid.</p>
+    <h3>🔐 Log Masuk Admin</h3>
+    <p>Masukkan kata laluan admin untuk mengakses tetapan.</p>
     <label for="adminPassword" style="font-size:.85rem;color:#374151;">Kata Laluan</label>
     <input id="adminPassword" type="password" class="modal-input" placeholder="Masukkan kata laluan" />
     <div id="adminModalError" style="margin-top:6px;font-size:.8rem;color:#b91c1c;"></div>
@@ -544,7 +300,6 @@
   </div>
 </div>
 
-<!-- Firebase & database config -->
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 <script src="database.js"></script>
@@ -552,38 +307,22 @@
 <script>
 (function() {
   'use strict';
-
-  // Firebase init
   firebase.initializeApp(firebaseConfig);
   const db = firebase.database();
 
-  const MONTH_NAMES_MS = [
-    "Januari","Februari","Mac","April","Mei","Jun",
-    "Julai","Ogos","September","Oktober","November","Disember"
-  ];
+  const MONTH_NAMES_MS = ["Januari","Februari","Mac","April","Mei","Jun","Julai","Ogos","September","Oktober","November","Disember"];
 
   function formatDateKey(date) {
-    const y = date.getFullYear();
-    const m = String(date.getMonth() + 1).padStart(2, '0');
-    const d = String(date.getDate()).padStart(2, '0');
-    return y + "-" + m + "-" + d;
+    return date.getFullYear() + "-" + String(date.getMonth()+1).padStart(2,'0') + "-" + String(date.getDate()).padStart(2,'0');
   }
   function formatHumanDate(date) {
-    const d = String(date.getDate()).padStart(2, '0');
-    const mIdx = date.getMonth();
-    const y = date.getFullYear();
-    return d + " " + MONTH_NAMES_MS[mIdx] + " " + y;
+    return String(date.getDate()).padStart(2,'0') + " " + MONTH_NAMES_MS[date.getMonth()] + " " + date.getFullYear();
   }
   function formatShortDM(date) {
-    const d = String(date.getDate()).padStart(2, '0');
-    const m = String(date.getMonth() + 1).padStart(2, '0');
-    return d + "/" + m;
+    return String(date.getDate()).padStart(2,'0') + "/" + String(date.getMonth()+1).padStart(2,'0');
   }
   function dateFromKey(key) {
-    const y = parseInt(key.slice(0,4),10);
-    const m = parseInt(key.slice(5,7),10) - 1;
-    const d = parseInt(key.slice(8,10),10);
-    return new Date(y,m,d);
+    return new Date(parseInt(key.slice(0,4)), parseInt(key.slice(5,7))-1, parseInt(key.slice(8,10)));
   }
 
   const today = new Date();
@@ -595,7 +334,6 @@
   const yearBadge = document.getElementById('yearBadge');
   const todayDisplay = document.getElementById('todayDisplay');
   const summaryDateLink = document.getElementById('summaryDateLink');
-
   const classSelect = document.getElementById('classSelect');
   const studentsSection = document.getElementById('studentsSection');
   const studentsList = document.getElementById('studentsList');
@@ -610,30 +348,23 @@
   const summaryAbsent = document.getElementById('summaryAbsent');
   const statusBar = document.getElementById('statusBar');
   const searchInput = document.getElementById('searchInput');
-
   const summaryTableBody = document.getElementById('summaryTableBody');
   const summaryFooter = document.getElementById('summaryFooter');
-
   const weeklyRangeLabel = document.getElementById('weeklyRangeLabel');
   const weeklyHeaderSpan = document.getElementById('weeklyHeaderSpan');
   const weeklyDateRow = document.getElementById('weeklyDateRow');
   const weeklyTableBody = document.getElementById('weeklyTableBody');
   const weeklyInfo = document.getElementById('weeklyInfo');
-
   const monthlyLabel = document.getElementById('monthlyLabel');
   const monthlyHeaderSpan = document.getElementById('monthlyHeaderSpan');
   const monthlyDateRow = document.getElementById('monthlyDateRow');
   const monthlyTableBody = document.getElementById('monthlyTableBody');
   const monthlyInfo = document.getElementById('monthlyInfo');
   const btnPrintMonthly = document.getElementById('btnPrintMonthly');
-
-  // Yearly summary DOM
   const yearlySubtabBtn = document.getElementById('yearlySubtabBtn');
   const yearlyYearSelect = document.getElementById('yearlyYearSelect');
   const yearlyTableBody = document.getElementById('yearlyTableBody');
   const yearlyInfo = document.getElementById('yearlyInfo');
-
-  // Admin DOM
   const adminLogoBtn = document.getElementById('adminLogoBtn');
   const adminModal = document.getElementById('adminModal');
   const adminPasswordInput = document.getElementById('adminPassword');
@@ -641,23 +372,23 @@
   const adminCancelBtn = document.getElementById('adminCancelBtn');
   const adminModalError = document.getElementById('adminModalError');
   const adminTabBtn = document.getElementById('adminTabBtn');
-
   const notificationBadge = document.getElementById('notificationBadge');
   const adminNotificationBody = document.getElementById('adminNotificationBody');
   const adminNotificationInfo = document.getElementById('adminNotificationInfo');
-
   const adminClassTableBody = document.getElementById('adminClassTableBody');
   const adminNewDarjah = document.getElementById('adminNewDarjah');
   const adminNewCode = document.getElementById('adminNewCode');
   const adminNewLabel = document.getElementById('adminNewLabel');
   const adminAddClassBtn = document.getElementById('adminAddClassBtn');
   const adminClassMsg = document.getElementById('adminClassMsg');
-
   const adminStudentClassSelect = document.getElementById('adminStudentClassSelect');
   const adminStudentTextarea = document.getElementById('adminStudentTextarea');
   const adminStudentCount = document.getElementById('adminStudentCount');
   const adminSaveStudentsBtn = document.getElementById('adminSaveStudentsBtn');
   const adminStudentMsg = document.getElementById('adminStudentMsg');
+  const statusClassSelect = document.getElementById('statusClassSelect');
+  const statusDateSelect = document.getElementById('statusDateSelect');
+  const statusAbsentList = document.getElementById('statusAbsentList');
 
   yearBadge.textContent = "Tahun " + currentYear;
   todayDisplay.textContent = "Tarikh: " + todayHuman;
@@ -673,7 +404,7 @@
   }
   function clearStatus() { statusBar.innerHTML = ""; }
 
-  // Tab utama
+  // Tabs
   document.querySelectorAll('.tab-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -682,28 +413,26 @@
       document.getElementById('tab-byClass').style.display = tab === 'byClass' ? 'block' : 'none';
       document.getElementById('tab-summary').style.display = tab === 'summary' ? 'block' : 'none';
       document.getElementById('tab-admin').style.display = tab === 'admin' ? 'block' : 'none';
+      if (tab === 'admin') { loadStatusManagement(); recomputeNotificationsForYear(String(currentYear)); }
     });
   });
 
-  // Subtab ringkasan
   document.querySelectorAll('.subtab-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       document.querySelectorAll('.subtab-btn').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
       const sub = btn.dataset.subtab;
-      document.getElementById('summaryDailyPanel').style.display   = sub === 'daily'   ? 'block' : 'none';
-      document.getElementById('summaryWeeklyPanel').style.display  = sub === 'weekly'  ? 'block' : 'none';
+      document.getElementById('summaryDailyPanel').style.display = sub === 'daily' ? 'block' : 'none';
+      document.getElementById('summaryWeeklyPanel').style.display = sub === 'weekly' ? 'block' : 'none';
       document.getElementById('summaryMonthlyPanel').style.display = sub === 'monthly' ? 'block' : 'none';
-      document.getElementById('summaryYearlyPanel').style.display  = sub === 'yearly'  ? 'block' : 'none';
-      if (sub === 'yearly' && !yearlyInitialised) {
-        initYearlySummary();
-      }
+      document.getElementById('summaryYearlyPanel').style.display = sub === 'yearly' ? 'block' : 'none';
+      if (sub === 'yearly' && !yearlyInitialised) initYearlySummary();
     });
   });
 
   btnPrintMonthly.addEventListener('click', () => window.print());
 
-  // -------- Admin login --------
+  // Admin login
   let isAdmin = false;
   const ADMIN_PASSWORD = "admin123";
 
@@ -713,17 +442,15 @@
     adminModalError.textContent = "";
     setTimeout(() => adminPasswordInput.focus(), 20);
   }
-  function closeAdminModal() {
-    adminModal.style.display = 'none';
-  }
+  function closeAdminModal() { adminModal.style.display = 'none'; }
   function tryAdminLogin() {
-    const pw = adminPasswordInput.value.trim();
-    if (pw === ADMIN_PASSWORD) {
+    if (adminPasswordInput.value.trim() === ADMIN_PASSWORD) {
       isAdmin = true;
       closeAdminModal();
       adminTabBtn.style.display = 'inline-block';
       yearlySubtabBtn.style.display = 'inline-block';
       setStatus('Log masuk admin berjaya.', 'info');
+      ensureYearlyData().then(() => recomputeNotificationsForYear(String(currentYear)));
     } else {
       adminModalError.textContent = 'Kata laluan tidak sah.';
     }
@@ -732,129 +459,184 @@
   adminLogoBtn.addEventListener('click', openAdminModal);
   adminCancelBtn.addEventListener('click', closeAdminModal);
   adminLoginBtn.addEventListener('click', tryAdminLogin);
-  adminPasswordInput.addEventListener('keydown', e => {
-    if (e.key === 'Enter') { tryAdminLogin(); }
-  });
+  adminPasswordInput.addEventListener('keydown', e => { if (e.key === 'Enter') tryAdminLogin(); });
 
-  // ---------- Data asas (classData, summaryConfig) ----------
+  // Data loading
   function loadClassConfigFromDB() {
     return db.ref('config/classes').once('value').then(snap => {
       const val = snap.val();
       if (val && val.classData && val.summaryConfig) {
-        for (const key in classData) {
-          if (Object.prototype.hasOwnProperty.call(classData, key)) {
-            delete classData[key];
-          }
-        }
-        Object.keys(val.classData).forEach(k => {
-          classData[k] = val.classData[k];
-        });
-
+        for (const key in classData) delete classData[key];
+        Object.keys(val.classData).forEach(k => classData[k] = val.classData[k]);
         summaryConfig.length = 0;
         val.summaryConfig.forEach(item => summaryConfig.push(item));
       }
-    }).catch(err => {
-      console.error('Gagal memuatkan config kelas:', err);
-    });
+    }).catch(err => console.error('Gagal memuatkan config kelas:', err));
   }
 
   function saveClassConfigToDB() {
-    return db.ref('config/classes')
-      .set({ classData: classData, summaryConfig: summaryConfig })
-      .catch(err => console.error('Gagal menyimpan config kelas:', err));
+    return db.ref('config/classes').set({ classData: classData, summaryConfig: summaryConfig })
+      .then(() => console.log('Config disimpan ke Firebase.'))
+      .catch(err => console.error('Gagal menyimpan config:', err));
   }
 
-  // ---------- UI berkaitan kelas / murid ----------
+  // Absence status management
+  let absenceStatusCache = {};
 
+  function loadAbsenceStatus() {
+    return db.ref('absenceStatus').once('value').then(snap => {
+      absenceStatusCache = snap.val() || {};
+    }).catch(err => { console.error('Gagal memuatkan status:', err); absenceStatusCache = {}; });
+  }
+
+  function getAbsenceStatus(dateKey, classCode, studentName) {
+    try {
+      const safeName = studentName.replace(/[.#$\/\[\]]/g, '_');
+      return (absenceStatusCache[dateKey]?.[classCode]?.[safeName]) || 'bersebab';
+    } catch(e) { return 'bersebab'; }
+  }
+
+  function setAbsenceStatus(dateKey, classCode, studentName, status) {
+    const safeName = studentName.replace(/[.#$\/\[\]]/g, '_');
+    const path = `absenceStatus/${dateKey}/${classCode}/${safeName}`;
+    return db.ref(path).set(status).then(() => {
+      if (!absenceStatusCache[dateKey]) absenceStatusCache[dateKey] = {};
+      if (!absenceStatusCache[dateKey][classCode]) absenceStatusCache[dateKey][classCode] = {};
+      absenceStatusCache[dateKey][classCode][safeName] = status;
+    });
+  }
+
+  // Status management UI
+  function loadStatusManagement() {
+    populateStatusClassSelect();
+  }
+
+  function populateStatusClassSelect() {
+    statusClassSelect.innerHTML = '<option value="">— Pilih kelas —</option>';
+    summaryConfig.forEach(cfg => {
+      const opt = document.createElement('option');
+      opt.value = cfg.code;
+      opt.textContent = cfg.code + " - " + cfg.kelasLabel;
+      statusClassSelect.appendChild(opt);
+    });
+  }
+
+  statusClassSelect.addEventListener('change', loadStatusDates);
+
+  function loadStatusDates() {
+    const classCode = statusClassSelect.value;
+    statusDateSelect.innerHTML = '<option value="">— Pilih tarikh —</option>';
+    statusAbsentList.innerHTML = '';
+    if (!classCode || !yearlyRaw) return;
+
+    const dates = [];
+    Object.keys(yearlyRaw).forEach(dateKey => {
+      if (yearlyRaw[dateKey]?.[classCode]?.absentNames?.length > 0) {
+        dates.push(dateKey);
+      }
+    });
+    dates.sort().reverse();
+
+    dates.forEach(dk => {
+      const opt = document.createElement('option');
+      opt.value = dk;
+      opt.textContent = formatHumanDate(dateFromKey(dk));
+      statusDateSelect.appendChild(opt);
+    });
+  }
+
+  statusDateSelect.addEventListener('change', loadAbsentStudentsForDate);
+
+  function loadAbsentStudentsForDate() {
+    const classCode = statusClassSelect.value;
+    const dateKey = statusDateSelect.value;
+    statusAbsentList.innerHTML = '';
+    if (!classCode || !dateKey || !yearlyRaw) return;
+
+    const rec = yearlyRaw[dateKey]?.[classCode];
+    if (!rec || !rec.absentNames?.length) {
+      statusAbsentList.innerHTML = '<div class="pill">Tiada murid tidak hadir pada tarikh ini.</div>';
+      return;
+    }
+
+    const table = document.createElement('table');
+    table.className = 'summary-table';
+    table.innerHTML = '<thead><tr><th>Bil</th><th>Nama Murid</th><th>Status Semasa</th><th>Tukar Status</th></tr></thead>';
+    const tbody = document.createElement('tbody');
+
+    rec.absentNames.forEach((name, idx) => {
+      const status = getAbsenceStatus(dateKey, classCode, name);
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${idx + 1}</td>
+        <td>${name}</td>
+        <td><span class="${status === 'bersebab' ? 'status-bersebab' : 'status-tidak-bersebab'}">${status === 'bersebab' ? 'Bersebab' : 'Tidak Bersebab'}</span></td>
+        <td></td>
+      `;
+      const btnCell = tr.querySelector('td:last-child');
+      const btn = document.createElement('button');
+      btn.className = status === 'bersebab' ? 'btn btn-danger btn-sm' : 'btn btn-success btn-sm';
+      btn.textContent = status === 'bersebab' ? 'Tandai Ponteng' : 'Tandai Bersebab';
+      btn.addEventListener('click', () => {
+        const newStatus = status === 'bersebab' ? 'tidak_bersebab' : 'bersebab';
+        setAbsenceStatus(dateKey, classCode, name, newStatus).then(() => {
+          loadAbsentStudentsForDate();
+          recomputeNotificationsForYear(String(currentYear));
+        });
+      });
+      btnCell.appendChild(btn);
+      tbody.appendChild(tr);
+    });
+
+    table.appendChild(tbody);
+    statusAbsentList.appendChild(table);
+  }
+
+  // UI functions
   function populateClassDropdown() {
     const prev = classSelect.value;
-    classSelect.innerHTML = '';
-    const opt0 = document.createElement('option');
-    opt0.value = '';
-    opt0.textContent = '— Sila pilih kelas —';
-    classSelect.appendChild(opt0);
-
+    classSelect.innerHTML = '<option value="">— Sila pilih kelas —</option>';
     summaryConfig.forEach(item => {
       const opt = document.createElement('option');
       opt.value = item.code;
       opt.textContent = item.code + " - " + item.kelasLabel;
       classSelect.appendChild(opt);
     });
-
-    if (prev) {
-      const found = Array.from(classSelect.options).some(o => o.value === prev);
-      if (found) classSelect.value = prev;
-    }
+    if (prev && Array.from(classSelect.options).some(o => o.value === prev)) classSelect.value = prev;
   }
 
   function renderStudentsForClass(kelas) {
     studentsList.innerHTML = '';
     summaryBox.style.display = 'none';
     clearStatus();
-
     const names = classData[kelas] || [];
-    if (!names.length) {
-      studentsSection.style.display = 'none';
-      setStatus('Tiada senarai murid untuk kelas ini.', 'error');
-      return;
-    }
+    if (!names.length) { studentsSection.style.display = 'none'; setStatus('Tiada senarai murid.', 'error'); return; }
     studentsSection.style.display = 'block';
-
     names.forEach((nama, idx) => {
       const row = document.createElement('div');
       row.className = 'student-row';
       row.dataset.name = (nama || '').toLowerCase();
-
-      const c1 = document.createElement('div');
-      c1.textContent = idx + 1;
-
-      const c2 = document.createElement('div');
-      c2.className = 'student-name';
-      c2.textContent = nama;
-
-      const c3 = document.createElement('div');
-      c3.className = 'checkbox-wrapper';
-      const chk = document.createElement('input');
-      chk.type = 'checkbox';
-      chk.dataset.nama = nama;
-      c3.appendChild(chk);
-
-      row.appendChild(c1);
-      row.appendChild(c2);
-      row.appendChild(c3);
+      row.innerHTML = `<div>${idx + 1}</div><div class="student-name">${nama}</div><div class="checkbox-wrapper"><input type="checkbox" data-nama="${nama}"></div>`;
       studentsList.appendChild(row);
     });
-
     countInfo.innerHTML = "👥 Jumlah murid: <strong>" + names.length + "</strong>";
     searchInput.value = '';
   }
 
   function getAbsentNames() {
     const arr = [];
-    studentsList.querySelectorAll('input[type="checkbox"]').forEach(chk => {
-      if (chk.checked) arr.push(chk.dataset.nama);
-    });
+    studentsList.querySelectorAll('input[type="checkbox"]').forEach(chk => { if (chk.checked) arr.push(chk.dataset.nama); });
     return arr;
   }
 
   function updateSummaryBox(kelas, absent) {
     const total = (classData[kelas] || []).length;
-    const absentCount = absent.length;
-    const present = total - absentCount;
-
+    const present = total - absent.length;
     summaryTitle.textContent = "Kehadiran hari ini (" + kelas + "):";
     summaryRatio.textContent = present + "/" + total + " hadir";
-    summaryMini.textContent = "Tidak hadir: " + absentCount + " orang";
-
-    if (absentCount > 0) {
-      const ul = document.createElement('ul');
-      absent.forEach(n => {
-        const li = document.createElement('li');
-        li.textContent = n;
-        ul.appendChild(li);
-      });
-      summaryAbsent.innerHTML = "Senarai murid tidak hadir:";
-      summaryAbsent.appendChild(ul);
+    summaryMini.textContent = "Tidak hadir: " + absent.length + " orang";
+    if (absent.length > 0) {
+      summaryAbsent.innerHTML = "Senarai murid tidak hadir:<ul>" + absent.map(n => "<li>" + n + "</li>").join('') + "</ul>";
     } else {
       summaryAbsent.textContent = "Semua murid hadir.";
     }
@@ -864,8 +646,7 @@
   function applySearchFilter() {
     const q = searchInput.value.trim().toLowerCase();
     studentsList.querySelectorAll('.student-row').forEach(row => {
-      const name = row.dataset.name || '';
-      row.style.display = (!q || name.includes(q)) ? '' : 'none';
+      row.style.display = (!q || (row.dataset.name || '').includes(q)) ? '' : 'none';
     });
   }
   searchInput.addEventListener('input', applySearchFilter);
@@ -874,7 +655,7 @@
     const kelas = classSelect.value;
     if (!kelas) { setStatus('Sila pilih kelas dahulu.', 'error'); return; }
     const names = classData[kelas] || [];
-    if (!names.length) { setStatus('Tiada senarai murid untuk kelas ini.', 'error'); return; }
+    if (!names.length) { setStatus('Tiada senarai murid.', 'error'); return; }
 
     const absentNames = getAbsentNames();
     const total = names.length;
@@ -894,35 +675,27 @@
       updatedAt: Date.now()
     };
 
-    const path = "kehadiran/" + todayKey + "/" + kelas;
     setStatus('Menyimpan kehadiran...', 'info');
-    db.ref(path).set(data).then(() => {
+    db.ref("kehadiran/" + todayKey + "/" + kelas).set(data).then(() => {
       setStatus('Kehadiran berjaya disimpan.', '');
       updateSummaryBox(kelas, absentNames);
       loadDailySummary();
       loadWeeklySummary();
       loadMonthlySummary();
-
-      // Refresh data tahunan & notifikasi
       yearlyRaw = null;
       yearlyInitialised = false;
-      ensureYearlyData().then(() => {
-        recomputeNotificationsForYear(String(currentYear));
-      });
-
+      ensureYearlyData().then(() => recomputeNotificationsForYear(String(currentYear)));
     }).catch(err => {
       console.error(err);
-      setStatus('Ralat semasa menyimpan kehadiran: ' + err.message, 'error');
+      setStatus('Ralat: ' + err.message, 'error');
     });
   }
 
   function loadExistingAttendance(kelas) {
-    const path = "kehadiran/" + todayKey + "/" + kelas;
-    db.ref(path).once('value').then(snap => {
+    db.ref("kehadiran/" + todayKey + "/" + kelas).once('value').then(snap => {
       const data = snap.val();
       studentsList.querySelectorAll('input[type="checkbox"]').forEach(chk => chk.checked = false);
-
-      if (data && Array.isArray(data.absentNames)) {
+      if (data?.absentNames) {
         studentsList.querySelectorAll('input[type="checkbox"]').forEach(chk => {
           if (data.absentNames.includes(chk.dataset.nama)) chk.checked = true;
         });
@@ -930,100 +703,49 @@
       } else {
         summaryBox.style.display = 'none';
       }
-    }).catch(err => {
-      console.error(err);
-      setStatus('Gagal memuatkan rekod sedia ada: ' + err.message, 'error');
-    });
+    }).catch(err => { console.error(err); setStatus('Gagal memuatkan rekod.', 'error'); });
   }
 
-  // -------- Ringkasan harian --------
+  // Daily summary
   function loadDailySummary() {
-    const path = "kehadiran/" + todayKey;
-    db.ref(path).once('value').then(snap => {
+    db.ref("kehadiran/" + todayKey).once('value').then(snap => {
       const all = snap.val() || {};
       summaryTableBody.innerHTML = '';
       let totalPresent = 0, totalStudents = 0, bil = 1;
-
       summaryConfig.forEach(cfg => {
         const rec = all[cfg.code];
         const tr = document.createElement('tr');
         tr.className = 'main-row';
-
-        const c1 = document.createElement('td');
-        c1.className = 'main-row-cell';
-        c1.textContent = bil++;
-
-        const c2 = document.createElement('td');
-        c2.className = 'main-row-cell darjah-col';
-        c2.textContent = cfg.darjah;
-
-        const c3 = document.createElement('td');
-        c3.className = 'main-row-cell';
-        c3.textContent = cfg.kelasLabel;
-
-        const c4 = document.createElement('td');
-        c4.className = 'main-row-cell';
-
-        const detailRow = document.createElement('tr');
-        detailRow.className = 'absent-row';
-        detailRow.style.display = 'none';
-        const detailTd = document.createElement('td');
-        detailTd.colSpan = 4;
-        detailRow.appendChild(detailTd);
-
+        let c4Content = '';
         if (rec) {
           const ratio = (rec.present || 0) + "/" + (rec.total || 0);
-          if (rec.absentCount > 0 && Array.isArray(rec.absentNames) && rec.absentNames.length) {
-            const link = document.createElement('span');
-            link.className = 'attendance-link';
-            link.textContent = ratio;
-            link.addEventListener('click', () => {
-              const content = "Tidak hadir:<br>" + rec.absentNames.join("<br>");
-              if (detailRow.style.display === 'table-row') {
-                detailRow.style.display = 'none';
-              } else {
-                detailTd.innerHTML = content;
-                detailRow.style.display = 'table-row';
-              }
-            });
-            c4.appendChild(link);
+          if (rec.absentCount > 0 && rec.absentNames?.length) {
+            c4Content = `<span class="attendance-link" onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'block':'none'">${ratio}</span><div style="display:none;font-size:.8rem;color:#b45309;margin-top:4px;">Tidak hadir: ${rec.absentNames.join(', ')}</div>`;
           } else {
-            c4.textContent = ratio;
+            c4Content = ratio;
           }
           totalPresent += rec.present || 0;
           totalStudents += rec.total || 0;
-
-          tr.appendChild(c1); tr.appendChild(c2); tr.appendChild(c3); tr.appendChild(c4);
-          summaryTableBody.appendChild(tr);
-          summaryTableBody.appendChild(detailRow);
         } else {
           tr.classList.add('row-not-updated');
-          const span = document.createElement('span');
-          span.className = 'cell-not-updated';
-          span.textContent = 'Kehadiran Belum Dikemaskini.';
-          c4.appendChild(span);
-          tr.appendChild(c1); tr.appendChild(c2); tr.appendChild(c3); tr.appendChild(c4);
-          summaryTableBody.appendChild(tr);
+          c4Content = '<span class="cell-not-updated">Belum dikemaskini</span>';
         }
+        tr.innerHTML = `<td class="main-row-cell">${bil++}</td><td class="main-row-cell darjah-col">${cfg.darjah}</td><td class="main-row-cell">${cfg.kelasLabel}</td><td class="main-row-cell">${c4Content}</td>`;
+        summaryTableBody.appendChild(tr);
       });
-
       if (totalStudents > 0) {
         const pct = (totalPresent / totalStudents) * 100;
-        summaryFooter.innerHTML = "Kehadiran : " + totalPresent + "/" + totalStudents +
-          "<br/>Peratus Kehadiran : " + pct.toFixed(1) + "%";
+        summaryFooter.innerHTML = "Kehadiran: " + totalPresent + "/" + totalStudents + " | Peratus: " + pct.toFixed(1) + "%";
       } else {
-        summaryFooter.innerHTML = "Kehadiran : Tiada rekod kehadiran<br/>Peratus Kehadiran : Tiada rekod kehadiran";
+        summaryFooter.innerHTML = "Tiada rekod kehadiran.";
       }
-    }).catch(err => {
-      console.error(err);
-      summaryFooter.innerHTML = "Kehadiran : Ralat memuatkan data<br/>Peratus Kehadiran : Ralat memuatkan data";
-    });
+    }).catch(err => { console.error(err); summaryFooter.innerHTML = "Ralat memuatkan data."; });
   }
 
-  // -------- Ringkasan mingguan --------
+  // Weekly summary
   function getWeekDates(baseDate) {
     const d = new Date(baseDate.getFullYear(), baseDate.getMonth(), baseDate.getDate());
-    const day = d.getDay(); // 0=Ahad
+    const day = d.getDay();
     const diffToMonday = (day + 6) % 7;
     const monday = new Date(d);
     monday.setDate(d.getDate() - diffToMonday);
@@ -1039,209 +761,75 @@
   function loadWeeklySummary() {
     const weekDates = getWeekDates(today);
     if (!weekDates.length) return;
-
-    weeklyRangeLabel.textContent = formatShortDM(weekDates[0]) + " - " +
-                                   formatShortDM(weekDates[weekDates.length - 1]);
-
+    weeklyRangeLabel.textContent = formatShortDM(weekDates[0]) + " - " + formatShortDM(weekDates[weekDates.length - 1]);
     weeklyDateRow.innerHTML = '';
-    const dateKeys = [];
-    weekDates.forEach(dt => {
-      const th = document.createElement('th');
-      th.textContent = formatShortDM(dt);
-      weeklyDateRow.appendChild(th);
-      dateKeys.push(formatDateKey(dt));
-    });
+    const dateKeys = weekDates.map(dt => { weeklyDateRow.innerHTML += `<th>${formatShortDM(dt)}</th>`; return formatDateKey(dt); });
     weeklyHeaderSpan.colSpan = dateKeys.length;
-
-    const promises = dateKeys.map(k => db.ref('kehadiran/' + k).once('value'));
-    Promise.all(promises).then(snaps => {
+    Promise.all(dateKeys.map(k => db.ref('kehadiran/' + k).once('value'))).then(snaps => {
       const allByDate = {};
       snaps.forEach((snap, i) => { allByDate[dateKeys[i]] = snap.val() || {}; });
-
       weeklyTableBody.innerHTML = '';
       let bil = 1;
-
       summaryConfig.forEach(cfg => {
         const tr = document.createElement('tr');
-
-        const c1 = document.createElement('td');
-        c1.className = 'main-row-cell';
-        c1.textContent = bil++;
-
-        const c2 = document.createElement('td');
-        c2.className = 'main-row-cell darjah-col';
-        c2.textContent = cfg.darjah;
-
-        const c3 = document.createElement('td');
-        c3.className = 'main-row-cell';
-        c3.textContent = cfg.kelasLabel;
-
-        tr.appendChild(c1); tr.appendChild(c2); tr.appendChild(c3);
-
-        const detailRow = document.createElement('tr');
-        detailRow.className = 'absent-row';
-        detailRow.style.display = 'none';
-        const detailTd = document.createElement('td');
-        detailTd.colSpan = 3 + dateKeys.length;
-        detailRow.appendChild(detailTd);
-
+        tr.innerHTML = `<td class="main-row-cell">${bil++}</td><td class="main-row-cell darjah-col">${cfg.darjah}</td><td class="main-row-cell">${cfg.kelasLabel}</td>`;
         dateKeys.forEach(k => {
-          const rec = (allByDate[k] || {})[cfg.code];
+          const rec = allByDate[k]?.[cfg.code];
           const td = document.createElement('td');
           td.className = 'main-row-cell';
-
-          if (rec) {
-            const ratio = (rec.present || 0) + "/" + (rec.total || 0);
-            if (rec.absentCount > 0 && Array.isArray(rec.absentNames) && rec.absentNames.length) {
-              const link = document.createElement('span');
-              link.className = 'attendance-link';
-              link.textContent = ratio;
-              link.addEventListener('click', () => {
-                const human = formatHumanDate(dateFromKey(k));
-                const html = "Tarikh " + human + "<br>Tidak hadir:<br>" + rec.absentNames.join("<br>");
-                if (detailRow.style.display === 'table-row' && detailRow.dataset.currentDate === k) {
-                  detailRow.style.display = 'none';
-                } else {
-                  detailRow.dataset.currentDate = k;
-                  detailTd.innerHTML = html;
-                  detailRow.style.display = 'table-row';
-                }
-              });
-              td.appendChild(link);
-            } else {
-              td.textContent = ratio;
-            }
-          } else {
-            td.textContent = '-';
-            td.style.color = '#9ca3af';
-          }
+          td.textContent = rec ? (rec.present || 0) + "/" + (rec.total || 0) : '-';
+          if (!rec) td.style.color = '#9ca3af';
           tr.appendChild(td);
         });
-
         weeklyTableBody.appendChild(tr);
-        weeklyTableBody.appendChild(detailRow);
       });
-
-      weeklyInfo.textContent = 'Data minggu ' + weeklyRangeLabel.textContent +
-        '. "-" bermaksud tiada rekod kehadiran pada hari tersebut.';
-    }).catch(err => {
-      console.error(err);
-      weeklyInfo.textContent = 'Ralat memuatkan data mingguan: ' + err.message;
-    });
+      weeklyInfo.textContent = 'Data minggu ' + weeklyRangeLabel.textContent;
+    }).catch(err => { console.error(err); weeklyInfo.textContent = 'Ralat: ' + err.message; });
   }
 
-  // -------- Ringkasan bulanan --------
+  // Monthly summary
   function getMonthDates(baseDate) {
     const y = baseDate.getFullYear();
     const m = baseDate.getMonth();
     const daysInMonth = new Date(y, m + 1, 0).getDate();
     const arr = [];
-    for (let d = 1; d <= daysInMonth; d++) {
-      arr.push(new Date(y, m, d));
-    }
+    for (let d = 1; d <= daysInMonth; d++) arr.push(new Date(y, m, d));
     return arr;
   }
 
   function loadMonthlySummary() {
     const monthDates = getMonthDates(today);
     if (!monthDates.length) return;
-
-    const y = today.getFullYear();
-    const mIdx = today.getMonth();
-    monthlyLabel.textContent = MONTH_NAMES_MS[mIdx] + " " + y;
-
+    monthlyLabel.textContent = MONTH_NAMES_MS[today.getMonth()] + " " + today.getFullYear();
     monthlyDateRow.innerHTML = '';
-    const dateKeys = [];
-    monthDates.forEach(dt => {
-      const th = document.createElement('th');
-      th.textContent = String(dt.getDate());
-      monthlyDateRow.appendChild(th);
-      dateKeys.push(formatDateKey(dt));
-    });
+    const dateKeys = monthDates.map(dt => { monthlyDateRow.innerHTML += `<th>${dt.getDate()}</th>`; return formatDateKey(dt); });
     monthlyHeaderSpan.colSpan = dateKeys.length;
-
-    const promises = dateKeys.map(k => db.ref('kehadiran/' + k).once('value'));
-    Promise.all(promises).then(snaps => {
+    Promise.all(dateKeys.map(k => db.ref('kehadiran/' + k).once('value'))).then(snaps => {
       const allByDate = {};
       snaps.forEach((snap, i) => { allByDate[dateKeys[i]] = snap.val() || {}; });
-
       monthlyTableBody.innerHTML = '';
       let bil = 1;
-
       summaryConfig.forEach(cfg => {
         const tr = document.createElement('tr');
-
-        const c1 = document.createElement('td');
-        c1.className = 'main-row-cell';
-        c1.textContent = bil++;
-
-        const c2 = document.createElement('td');
-        c2.className = 'main-row-cell darjah-col';
-        c2.textContent = cfg.darjah;
-
-        const c3 = document.createElement('td');
-        c3.className = 'main-row-cell';
-        c3.textContent = cfg.kelasLabel;
-
-        tr.appendChild(c1); tr.appendChild(c2); tr.appendChild(c3);
-
-        const detailRow = document.createElement('tr');
-        detailRow.className = 'absent-row';
-        detailRow.style.display = 'none';
-        const detailTd = document.createElement('td');
-        detailTd.colSpan = 3 + dateKeys.length;
-        detailRow.appendChild(detailTd);
-
+        tr.innerHTML = `<td class="main-row-cell">${bil++}</td><td class="main-row-cell darjah-col">${cfg.darjah}</td><td class="main-row-cell">${cfg.kelasLabel}</td>`;
         dateKeys.forEach(k => {
-          const rec = (allByDate[k] || {})[cfg.code];
+          const rec = allByDate[k]?.[cfg.code];
           const td = document.createElement('td');
           td.className = 'main-row-cell';
-
-          if (rec) {
-            const ratio = (rec.present || 0) + "/" + (rec.total || 0);
-            if (rec.absentCount > 0 && Array.isArray(rec.absentNames) && rec.absentNames.length) {
-              const link = document.createElement('span');
-              link.className = 'attendance-link';
-              link.textContent = ratio;
-              link.addEventListener('click', () => {
-                const human = formatHumanDate(dateFromKey(k));
-                const html = "Tarikh " + human + "<br>Tidak hadir:<br>" + rec.absentNames.join("<br>");
-                if (detailRow.style.display === 'table-row' && detailRow.dataset.currentDate === k) {
-                  detailRow.style.display = 'none';
-                } else {
-                  detailRow.dataset.currentDate = k;
-                  detailTd.innerHTML = html;
-                  detailRow.style.display = 'table-row';
-                }
-              });
-              td.appendChild(link);
-            } else {
-              td.textContent = ratio;
-            }
-          } else {
-            td.textContent = '-';
-            td.style.color = '#9ca3af';
-          }
+          td.textContent = rec ? (rec.present || 0) + "/" + (rec.total || 0) : '-';
+          if (!rec) td.style.color = '#9ca3af';
           tr.appendChild(td);
         });
-
         monthlyTableBody.appendChild(tr);
-        monthlyTableBody.appendChild(detailRow);
       });
-
-      monthlyInfo.textContent = 'Ringkasan untuk ' + monthlyLabel.textContent +
-        '. "-" bermaksud tiada rekod kehadiran pada hari tersebut.';
-    }).catch(err => {
-      console.error(err);
-      monthlyInfo.textContent = 'Ralat memuatkan data bulanan: ' + err.message;
-    });
+      monthlyInfo.textContent = 'Ringkasan untuk ' + monthlyLabel.textContent;
+    }).catch(err => { console.error(err); monthlyInfo.textContent = 'Ralat: ' + err.message; });
   }
 
-  // -------- Ringkasan tahunan / notifikasi --------
+  // Yearly summary & notifications
   let yearlyRaw = null;
   let yearlyYears = [];
   let yearlyInitialised = false;
-
   let notifications = [];
 
   function renderNotificationBadge() {
@@ -1259,108 +847,67 @@
     if (!adminNotificationBody || !adminNotificationInfo) return;
     adminNotificationBody.innerHTML = '';
     if (!notifications.length) {
-      adminNotificationInfo.textContent = 'Tiada notifikasi berdasarkan rekod kehadiran tahun ' + yearStr + '.';
+      adminNotificationInfo.textContent = 'Tiada murid ponteng (tidak bersebab) yang melepasi had tahun ' + yearStr + '.';
       return;
     }
 
-    const severityRank = {
-      'Amaran Pertama': 1,
-      'Amaran Kedua'  : 2,
-      'Amaran Terakhir':3,
-      'Buang Sekolah' : 4
-    };
-
-    notifications.sort((a,b) => {
-      if (severityRank[b.letter] !== severityRank[a.letter]) {
-        return severityRank[b.letter] - severityRank[a.letter];
-      }
+    const severityRank = { 'Amaran Pertama': 1, 'Amaran Kedua': 2, 'Amaran Terakhir': 3, 'Buang Sekolah': 4 };
+    notifications.sort((a, b) => {
+      if (severityRank[b.letter] !== severityRank[a.letter]) return severityRank[b.letter] - severityRank[a.letter];
       if (a.classCode !== b.classCode) return a.classCode.localeCompare(b.classCode);
       return a.name.localeCompare(b.name);
     });
 
-    notifications.forEach((n,idx) => {
+    notifications.forEach((n, idx) => {
       const tr = document.createElement('tr');
-
-      const c1 = document.createElement('td');
-      c1.textContent = idx + 1;
-
-      const c2 = document.createElement('td');
-      c2.textContent = n.name;
-
-      const c3 = document.createElement('td');
-      c3.textContent = n.classCode;
-
-      const c4 = document.createElement('td');
-      c4.textContent = n.mode === 'berturut-turut' ? 'Berturut-turut' : 'Berselang';
-
-      const c5 = document.createElement('td');
-      if (n.mode === 'berturut-turut') {
-        c5.textContent = n.consecutiveMax + " hari tidak hadir berturut-turut";
-      } else {
-        c5.textContent = n.totalAbsent + " hari tidak hadir berselang";
-      }
-
-      const c6 = document.createElement('td');
-      c6.textContent = n.letter;
-
-      tr.appendChild(c1); tr.appendChild(c2); tr.appendChild(c3);
-      tr.appendChild(c4); tr.appendChild(c5); tr.appendChild(c6);
+      tr.className = 'notification-row';
+      tr.innerHTML = `
+        <td>${idx + 1}</td>
+        <td>${n.name}</td>
+        <td>${n.classCode}</td>
+        <td><strong>${n.totalPonteng}</strong> hari</td>
+        <td>${n.mode === 'berturut-turut' ? 'Berturut-turut (' + n.consecutiveMax + ' hari)' : 'Berselang'}</td>
+        <td><span class="${n.letter === 'Buang Sekolah' ? 'status-tidak-bersebab' : 'status-bersebab'}">${n.letter}</span></td>
+        <td><button class="btn btn-outline btn-sm" onclick="document.getElementById('statusClassSelect').value='${n.classCode}';document.getElementById('statusClassSelect').dispatchEvent(new Event('change'));">Urus Status</button></td>
+      `;
       adminNotificationBody.appendChild(tr);
     });
 
-    adminNotificationInfo.textContent =
-      'Senarai murid yang melepasi had ketidakhadiran berdasarkan tatacara tindakan tahun ' +
-      yearStr +
-      '. Sistem hanya memberi cadangan; keputusan akhir tertakluk kepada pihak sekolah.';
+    adminNotificationInfo.textContent = 'Senarai murid yang melepasi had ponteng (tidak bersebab) tahun ' + yearStr + '.';
   }
 
   function recomputeNotificationsForYear(yearStr) {
     notifications = [];
-    if (!yearlyRaw) {
-      renderNotificationBadge();
-      renderAdminNotifications(yearStr);
-      return;
-    }
+    if (!yearlyRaw) { renderNotificationBadge(); renderAdminNotifications(yearStr); return; }
 
-    const stats = {}; // key: classCode|name
-
-    const dateKeys = Object.keys(yearlyRaw)
-      .filter(k => /^\d{4}-\d{2}-\d{2}$/.test(k) && k.slice(0,4) === yearStr)
-      .sort();
+    const stats = {};
+    const dateKeys = Object.keys(yearlyRaw).filter(k => /^\d{4}-\d{2}-\d{2}$/.test(k) && k.slice(0, 4) === yearStr).sort();
 
     dateKeys.forEach(dateKey => {
       const dayObj = yearlyRaw[dateKey] || {};
       Object.keys(dayObj).forEach(classCode => {
         const rec = dayObj[classCode];
-        if (!rec || !Array.isArray(rec.absentNames)) return;
+        if (!rec?.absentNames) return;
         rec.absentNames.forEach(name => {
+          const status = getAbsenceStatus(dateKey, classCode, name);
+          if (status !== 'tidak_bersebab') return; // Only count ponteng (tidak bersebab)
+          
           const key = classCode + '|' + name;
-          if (!stats[key]) {
-            stats[key] = {
-              name: name,
-              classCode: classCode,
-              totalAbsent: 0,
-              dates: []
-            };
-          }
-          stats[key].totalAbsent++;
+          if (!stats[key]) stats[key] = { name, classCode, totalPonteng: 0, dates: [] };
+          stats[key].totalPonteng++;
           stats[key].dates.push(dateFromKey(dateKey));
         });
       });
     });
 
     Object.values(stats).forEach(stat => {
-      stat.dates.sort((a,b) => a - b);
-      let currentSeq = 0;
-      let maxSeq = 0;
-      let prevDate = null;
+      stat.dates.sort((a, b) => a - b);
+      let currentSeq = 0, maxSeq = 0, prevDate = null;
       stat.dates.forEach(d => {
-        if (!prevDate) {
-          currentSeq = 1;
-        } else {
-          const diffDays = Math.round((d - prevDate) / (1000*60*60*24));
-          if (diffDays === 1) currentSeq += 1;
-          else currentSeq = 1;
+        if (!prevDate) { currentSeq = 1; }
+        else {
+          const diffDays = Math.round((d - prevDate) / (1000 * 60 * 60 * 24));
+          currentSeq = diffDays === 1 ? currentSeq + 1 : 1;
         }
         if (currentSeq > maxSeq) maxSeq = currentSeq;
         prevDate = d;
@@ -1368,56 +915,26 @@
       stat.consecutiveMax = maxSeq;
     });
 
-    const consLevels = [
-      { threshold: 31, letter: 'Buang Sekolah' },
-      { threshold: 17, letter: 'Amaran Terakhir' },
-      { threshold: 10, letter: 'Amaran Kedua' },
-      { threshold: 3,  letter: 'Amaran Pertama' }
-    ];
-    const nonLevels = [
-      { threshold: 60, letter: 'Buang Sekolah' },
-      { threshold: 40, letter: 'Amaran Terakhir' },
-      { threshold: 20, letter: 'Amaran Kedua' },
-      { threshold: 10, letter: 'Amaran Pertama' }
-    ];
-    const rank = {
-      'Amaran Pertama': 1,
-      'Amaran Kedua'  : 2,
-      'Amaran Terakhir':3,
-      'Buang Sekolah' : 4
-    };
+    const consLevels = [{ threshold: 31, letter: 'Buang Sekolah' }, { threshold: 17, letter: 'Amaran Terakhir' }, { threshold: 10, letter: 'Amaran Kedua' }, { threshold: 3, letter: 'Amaran Pertama' }];
+    const nonLevels = [{ threshold: 60, letter: 'Buang Sekolah' }, { threshold: 40, letter: 'Amaran Terakhir' }, { threshold: 20, letter: 'Amaran Kedua' }, { threshold: 10, letter: 'Amaran Pertama' }];
+    const rank = { 'Amaran Pertama': 1, 'Amaran Kedua': 2, 'Amaran Terakhir': 3, 'Buang Sekolah': 4 };
 
     Object.values(stats).forEach(stat => {
-      let consSuggest = null;
-      let nonSuggest = null;
-
-      for (const lvl of consLevels) {
-        if (stat.consecutiveMax >= lvl.threshold) {
-          consSuggest = { letter: lvl.letter, mode: 'berturut-turut' };
-          break;
-        }
-      }
-      for (const lvl of nonLevels) {
-        if (stat.totalAbsent >= lvl.threshold) {
-          nonSuggest = { letter: lvl.letter, mode: 'berselang' };
-          break;
-        }
-      }
-
+      let consSuggest = null, nonSuggest = null;
+      for (const lvl of consLevels) if (stat.consecutiveMax >= lvl.threshold) { consSuggest = { letter: lvl.letter, mode: 'berturut-turut' }; break; }
+      for (const lvl of nonLevels) if (stat.totalPonteng >= lvl.threshold) { nonSuggest = { letter: lvl.letter, mode: 'berselang' }; break; }
+      
       let chosen = null;
-      if (consSuggest && nonSuggest) {
-        chosen = rank[consSuggest.letter] >= rank[nonSuggest.letter] ? consSuggest : nonSuggest;
-      } else {
-        chosen = consSuggest || nonSuggest;
-      }
-
+      if (consSuggest && nonSuggest) chosen = rank[consSuggest.letter] >= rank[nonSuggest.letter] ? consSuggest : nonSuggest;
+      else chosen = consSuggest || nonSuggest;
+      
       if (chosen) {
         notifications.push({
           name: stat.name,
           classCode: stat.classCode,
           letter: chosen.letter,
           mode: chosen.mode,
-          totalAbsent: stat.totalAbsent,
+          totalPonteng: stat.totalPonteng,
           consecutiveMax: stat.consecutiveMax
         });
       }
@@ -1432,46 +949,26 @@
     return db.ref('kehadiran').once('value').then(snap => {
       yearlyRaw = snap.val() || {};
       const yearSet = new Set();
-      Object.keys(yearlyRaw).forEach(k => {
-        if (/^\d{4}-\d{2}-\d{2}$/.test(k)) {
-          yearSet.add(k.slice(0,4));
-        }
-      });
+      Object.keys(yearlyRaw).forEach(k => { if (/^\d{4}-\d{2}-\d{2}$/.test(k)) yearSet.add(k.slice(0, 4)); });
       yearlyYears = Array.from(yearSet).sort();
-    }).catch(err => {
-      console.error('Ralat memuatkan data tahunan:', err);
-    });
+    }).catch(err => console.error('Ralat memuatkan data tahunan:', err));
   }
 
   function populateYearlyYearOptions() {
     yearlyYearSelect.innerHTML = '';
-    if (!yearlyYears.length) {
-      const opt = document.createElement('option');
-      opt.value = '';
-      opt.textContent = 'Tiada tahun';
-      yearlyYearSelect.appendChild(opt);
-      return;
-    }
-    yearlyYears.forEach(y => {
-      const opt = document.createElement('option');
-      opt.value = y;
-      opt.textContent = y;
-      yearlyYearSelect.appendChild(opt);
-    });
+    if (!yearlyYears.length) { yearlyYearSelect.innerHTML = '<option value="">Tiada tahun</option>'; return; }
+    yearlyYears.forEach(y => { yearlyYearSelect.innerHTML += `<option value="${y}">${y}</option>`; });
   }
 
   function renderYearly(year) {
     yearlyTableBody.innerHTML = '';
-    if (!year) {
-      yearlyInfo.textContent = 'Tiada rekod kehadiran untuk tahun ini.';
-      return;
-    }
+    if (!year) { yearlyInfo.textContent = 'Tiada rekod.'; return; }
     const monthlyPresent = new Array(12).fill(0);
     const monthlyTotal = new Array(12).fill(0);
 
     Object.keys(yearlyRaw).forEach(dateKey => {
-      if (dateKey.slice(0,4) !== year) return;
-      const mIdx = parseInt(dateKey.slice(5,7),10) - 1;
+      if (dateKey.slice(0, 4) !== year) return;
+      const mIdx = parseInt(dateKey.slice(5, 7), 10) - 1;
       if (mIdx < 0 || mIdx > 11) return;
       const dayData = yearlyRaw[dateKey] || {};
       Object.values(dayData).forEach(rec => {
@@ -1481,157 +978,74 @@
       });
     });
 
-    let anyData = false;
-    let bil = 1;
+    let anyData = false, bil = 1;
     for (let i = 0; i < 12; i++) {
-      const present = monthlyPresent[i];
-      const total = monthlyTotal[i];
+      const present = monthlyPresent[i], total = monthlyTotal[i];
       if (total > 0) anyData = true;
-
       const tr = document.createElement('tr');
-      const c1 = document.createElement('td'); c1.textContent = bil++;
-      const c2 = document.createElement('td'); c2.textContent = MONTH_NAMES_MS[i];
-      const c3 = document.createElement('td');
-
-      if (total > 0) {
-        const pct = (present / total) * 100;
-        c3.textContent = present + "/" + total + " (" + pct.toFixed(1) + "%)";
-      } else {
-        c3.textContent = '-';
-        c3.style.color = '#9ca3af';
-      }
-
-      tr.appendChild(c1); tr.appendChild(c2); tr.appendChild(c3);
+      let c3 = total > 0 ? present + "/" + total + " (" + (present / total * 100).toFixed(1) + "%)" : '-';
+      tr.innerHTML = `<td>${bil++}</td><td>${MONTH_NAMES_MS[i]}</td><td style="${total === 0 ? 'color:#9ca3af' : ''}">${c3}</td>`;
       yearlyTableBody.appendChild(tr);
     }
-
-    yearlyInfo.textContent = anyData
-      ? 'Ringkasan kehadiran bagi tahun ' + year + '. "-" bermaksud tiada rekod kehadiran untuk bulan tersebut.'
-      : 'Tiada rekod kehadiran untuk tahun ini.';
+    yearlyInfo.textContent = anyData ? 'Ringkasan kehadiran bagi tahun ' + year + '.' : 'Tiada rekod.';
   }
 
   function initYearlySummary() {
     ensureYearlyData().then(() => {
       populateYearlyYearOptions();
       let defaultYear = String(currentYear);
-      if (!yearlyYears.includes(defaultYear) && yearlyYears.length) {
-        defaultYear = yearlyYears[0];
-      }
+      if (!yearlyYears.includes(defaultYear) && yearlyYears.length) defaultYear = yearlyYears[0];
       yearlyYearSelect.value = defaultYear;
       renderYearly(yearlyYearSelect.value);
       yearlyInitialised = true;
     });
   }
 
-  if (yearlyYearSelect) {
-    yearlyYearSelect.addEventListener('change', () => {
-      if (!yearlyRaw) return;
-      renderYearly(yearlyYearSelect.value);
-    });
-  }
+  if (yearlyYearSelect) yearlyYearSelect.addEventListener('change', () => { if (yearlyRaw) renderYearly(yearlyYearSelect.value); });
 
-  // -------- Admin: paparan senarai kelas & murid --------
-
+  // Admin class table
   function renderAdminClassTable() {
     if (!adminClassTableBody) return;
     adminClassTableBody.innerHTML = '';
     let bil = 1;
     summaryConfig.forEach(cfg => {
-      const code = cfg.code;
-      const list = classData[code] || [];
+      const list = classData[cfg.code] || [];
       const tr = document.createElement('tr');
-
-      function makeCell(text) {
-        const td = document.createElement('td');
-        td.textContent = text;
-        return td;
-      }
-
-      tr.appendChild(makeCell(bil++));
-      tr.appendChild(makeCell(cfg.darjah));
-      tr.appendChild(makeCell(code));
-      tr.appendChild(makeCell(cfg.kelasLabel));
-      tr.appendChild(makeCell(list.length));
-
-      const actionTd = document.createElement('td');
-      const delBtn = document.createElement('button');
-      delBtn.type = 'button';
-      delBtn.textContent = 'Padam';
-      delBtn.className = 'btn btn-secondary admin-delete-class';
-      delBtn.style.padding = '4px 10px';
-      delBtn.style.fontSize = '.8rem';
-      delBtn.dataset.code = code;
-      actionTd.appendChild(delBtn);
-      tr.appendChild(actionTd);
-
+      tr.innerHTML = `<td>${bil++}</td><td>${cfg.darjah}</td><td>${cfg.code}</td><td>${cfg.kelasLabel}</td><td>${list.length}</td><td><button class="btn btn-danger btn-sm admin-delete-class" data-code="${cfg.code}">Padam</button></td>`;
       adminClassTableBody.appendChild(tr);
     });
   }
 
-  // Padam kelas
   adminClassTableBody.addEventListener('click', (e) => {
     const btn = e.target.closest('.admin-delete-class');
     if (!btn) return;
     const code = btn.dataset.code;
-    if (!code) return;
-
+    if (!confirm('Padam kelas ' + code + '?')) return;
     const cfgIndex = summaryConfig.findIndex(c => c.code === code);
-    const confirmMsg = 'Padam kelas ' + code + ' daripada konfigurasi?\n' +
-      'Rekod kehadiran lama untuk kod ini masih kekal dalam pangkalan data.';
-    if (!confirm(confirmMsg)) return;
-
-    if (cfgIndex !== -1) {
-      summaryConfig.splice(cfgIndex, 1);
-    }
-    if (classData[code]) {
-      delete classData[code];
-    }
-
+    if (cfgIndex !== -1) summaryConfig.splice(cfgIndex, 1);
+    if (classData[code]) delete classData[code];
     saveClassConfigToDB();
     renderAdminClassTable();
     populateClassDropdown();
     populateAdminClassSelect();
-
-    if (classSelect.value === code) {
-      classSelect.value = '';
-      studentsSection.style.display = 'none';
-      summaryBox.style.display = 'none';
-    }
-
-    adminClassMsg.textContent = 'Kelas ' + code + ' telah dipadam daripada konfigurasi.';
+    populateStatusClassSelect();
+    if (classSelect.value === code) { classSelect.value = ''; studentsSection.style.display = 'none'; summaryBox.style.display = 'none'; }
+    adminClassMsg.textContent = 'Kelas ' + code + ' telah dipadam.';
     adminClassMsg.style.color = '#b91c1c';
   });
 
   function populateAdminClassSelect() {
     if (!adminStudentClassSelect) return;
     const prev = adminStudentClassSelect.value;
-    adminStudentClassSelect.innerHTML = '';
-    const opt0 = document.createElement('option');
-    opt0.value = '';
-    opt0.textContent = '— Pilih kelas —';
-    adminStudentClassSelect.appendChild(opt0);
-
-    summaryConfig.forEach(cfg => {
-      const opt = document.createElement('option');
-      opt.value = cfg.code;
-      opt.textContent = cfg.code + " - " + cfg.kelasLabel;
-      adminStudentClassSelect.appendChild(opt);
-    });
-
-    if (prev) {
-      const found = Array.from(adminStudentClassSelect.options).some(o => o.value === prev);
-      if (found) adminStudentClassSelect.value = prev;
-    }
+    adminStudentClassSelect.innerHTML = '<option value="">— Pilih kelas —</option>';
+    summaryConfig.forEach(cfg => { adminStudentClassSelect.innerHTML += `<option value="${cfg.code}">${cfg.code} - ${cfg.kelasLabel}</option>`; });
+    if (prev && Array.from(adminStudentClassSelect.options).some(o => o.value === prev)) adminStudentClassSelect.value = prev;
     loadAdminStudentsForClass();
   }
 
   function loadAdminStudentsForClass() {
     const code = adminStudentClassSelect.value;
-    if (!code) {
-      adminStudentTextarea.value = '';
-      adminStudentCount.textContent = 'Bil. murid: 0';
-      return;
-    }
+    if (!code) { adminStudentTextarea.value = ''; adminStudentCount.textContent = 'Bil. murid: 0'; return; }
     const list = classData[code] || [];
     adminStudentTextarea.value = list.join("\n");
     adminStudentCount.textContent = 'Bil. murid: ' + list.length;
@@ -1639,96 +1053,72 @@
 
   function handleAdminSaveStudents() {
     const code = adminStudentClassSelect.value;
-    if (!code) {
-      adminStudentMsg.textContent = 'Sila pilih kelas dahulu.';
-      adminStudentMsg.style.color = '#b91c1c';
-      return;
-    }
-    const lines = adminStudentTextarea.value
-      .split(/\r?\n/)
-      .map(x => x.trim())
-      .filter(x => x.length > 0);
+    if (!code) { adminStudentMsg.textContent = 'Sila pilih kelas dahulu.'; adminStudentMsg.style.color = '#b91c1c'; return; }
+    const lines = adminStudentTextarea.value.split(/\r?\n/).map(x => x.trim()).filter(x => x.length > 0);
     classData[code] = lines;
     adminStudentCount.textContent = 'Bil. murid: ' + lines.length;
-    adminStudentMsg.textContent = 'Senarai murid disimpan.';
-    adminStudentMsg.style.color = '#047857';
-
-    saveClassConfigToDB();
-    renderAdminClassTable();
-    populateClassDropdown();
+    adminStudentMsg.textContent = 'Menyimpan ke Firebase...';
+    adminStudentMsg.style.color = '#0369a1';
+    saveClassConfigToDB().then(() => {
+      adminStudentMsg.textContent = 'Senarai murid berjaya disimpan ke Firebase!';
+      adminStudentMsg.style.color = '#047857';
+      renderAdminClassTable();
+      populateClassDropdown();
+    });
   }
 
   function handleAdminAddClass() {
     const darjah = adminNewDarjah.value.trim();
     const code = adminNewCode.value.trim();
     const label = adminNewLabel.value.trim();
-
-    if (!darjah || !code || !label) {
-      adminClassMsg.textContent = 'Sila isi semua ruangan.';
-      adminClassMsg.style.color = '#b91c1c';
-      return;
-    }
-    if (classData[code]) {
-      adminClassMsg.textContent = 'Kod kelas sudah wujud. Sila guna kod lain.';
-      adminClassMsg.style.color = '#b91c1c';
-      return;
-    }
-
+    if (!darjah || !code || !label) { adminClassMsg.textContent = 'Sila isi semua ruangan.'; adminClassMsg.style.color = '#b91c1c'; return; }
+    if (classData[code]) { adminClassMsg.textContent = 'Kod kelas sudah wujud.'; adminClassMsg.style.color = '#b91c1c'; return; }
     classData[code] = [];
-    summaryConfig.push({ darjah: darjah, kelasLabel: label, code: code });
-
+    summaryConfig.push({ darjah, kelasLabel: label, code });
     adminNewDarjah.value = '';
     adminNewCode.value = '';
     adminNewLabel.value = '';
-
-    adminClassMsg.textContent = 'Kelas baharu ditambah. Seterusnya, kemas kini senarai murid di bahagian bawah.';
-    adminClassMsg.style.color = '#047857';
-
-    saveClassConfigToDB();
-    renderAdminClassTable();
-    populateClassDropdown();
-    populateAdminClassSelect();
+    adminClassMsg.textContent = 'Menyimpan ke Firebase...';
+    adminClassMsg.style.color = '#0369a1';
+    saveClassConfigToDB().then(() => {
+      adminClassMsg.textContent = 'Kelas baharu ditambah dan disimpan ke Firebase!';
+      adminClassMsg.style.color = '#047857';
+      renderAdminClassTable();
+      populateClassDropdown();
+      populateAdminClassSelect();
+      populateStatusClassSelect();
+    });
   }
 
   adminStudentClassSelect.addEventListener('change', loadAdminStudentsForClass);
   adminSaveStudentsBtn.addEventListener('click', handleAdminSaveStudents);
   adminAddClassBtn.addEventListener('click', handleAdminAddClass);
   adminStudentTextarea.addEventListener('input', () => {
-    const lines = adminStudentTextarea.value
-      .split(/\r?\n/)
-      .map(x => x.trim())
-      .filter(x => x.length > 0);
+    const lines = adminStudentTextarea.value.split(/\r?\n/).map(x => x.trim()).filter(x => x.length > 0);
     adminStudentCount.textContent = 'Bil. murid: ' + lines.length;
   });
 
-  // ---------- Event butang utama ----------
+  // Event handlers
   classSelect.addEventListener('change', () => {
     const kelas = classSelect.value;
-    if (!kelas) {
-      studentsSection.style.display = 'none';
-      summaryBox.style.display = 'none';
-      clearStatus();
-      return;
-    }
+    if (!kelas) { studentsSection.style.display = 'none'; summaryBox.style.display = 'none'; clearStatus(); return; }
     renderStudentsForClass(kelas);
     loadExistingAttendance(kelas);
   });
 
   btnSave.addEventListener('click', saveAttendance);
-
   btnAllPresent.addEventListener('click', () => {
     studentsList.querySelectorAll('input[type="checkbox"]').forEach(chk => chk.checked = false);
-    setStatus('Semua hadir (tiada murid ditanda tidak hadir).', 'info');
+    setStatus('Semua hadir.', 'info');
     summaryBox.style.display = 'none';
   });
-
   btnClearTicks.addEventListener('click', () => {
     studentsList.querySelectorAll('input[type="checkbox"]').forEach(chk => chk.checked = false);
-    setStatus('Tanda tidak hadir telah dikosongkan.', 'info');
+    setStatus('Tanda dikosongkan.', 'info');
     summaryBox.style.display = 'none';
   });
 
-  // ---------- Init ----------
+  // Init
   function initApp() {
     populateClassDropdown();
     loadDailySummary();
@@ -1736,18 +1126,14 @@
     loadMonthlySummary();
     renderAdminClassTable();
     populateAdminClassSelect();
-
-    // Load data tahunan & kira notifikasi
     ensureYearlyData().then(() => {
-      recomputeNotificationsForYear(String(currentYear));
+      loadAbsenceStatus().then(() => {
+        recomputeNotificationsForYear(String(currentYear));
+      });
     });
   }
 
-  loadClassConfigFromDB().then(initApp).catch(err => {
-    console.error(err);
-    initApp();
-  });
-
+  loadClassConfigFromDB().then(initApp).catch(err => { console.error(err); initApp(); });
 })();
 </script>
 </body>
