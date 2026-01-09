@@ -461,6 +461,27 @@
   adminLoginBtn.addEventListener('click', tryAdminLogin);
   adminPasswordInput.addEventListener('keydown', e => { if (e.key === 'Enter') tryAdminLogin(); });
 
+  // Fungsi untuk sort summaryConfig mengikut Darjah (D1-D6) dan Kelas (B, C, G)
+  function sortSummaryConfig() {
+    const kelasOrder = { 'BESTARI': 1, 'CEMERLANG': 2, 'GEMILANG': 3 };
+    summaryConfig.sort((a, b) => {
+      // Extract darjah number (D1 -> 1, D2 -> 2, etc)
+      const darjahA = parseInt(a.darjah.replace(/\D/g, '')) || 0;
+      const darjahB = parseInt(b.darjah.replace(/\D/g, '')) || 0;
+      
+      // Compare darjah first
+      if (darjahA !== darjahB) return darjahA - darjahB;
+      
+      // If same darjah, compare by kelas label order (BESTARI < CEMERLANG < GEMILANG)
+      const orderA = kelasOrder[a.kelasLabel.toUpperCase()] || 99;
+      const orderB = kelasOrder[b.kelasLabel.toUpperCase()] || 99;
+      if (orderA !== orderB) return orderA - orderB;
+      
+      // Fallback: sort by code alphabetically
+      return a.code.localeCompare(b.code);
+    });
+  }
+
   // Data loading
   function loadClassConfigFromDB() {
     return db.ref('config/classes').once('value').then(snap => {
@@ -493,7 +514,9 @@
         } else if (typeof val.summaryConfig === 'object') {
           Object.values(val.summaryConfig).forEach(item => summaryConfig.push(item));
         }
-        console.log('summaryConfig loaded:', summaryConfig); // Debug log
+        // Sort summaryConfig selepas load
+        sortSummaryConfig();
+        console.log('summaryConfig loaded & sorted:', summaryConfig); // Debug log
       }
     }).catch(err => console.error('Gagal memuatkan config kelas:', err));
   }
@@ -1092,13 +1115,17 @@
   }
 
   function handleAdminAddClass() {
-    const darjah = adminNewDarjah.value.trim();
-    const code = adminNewCode.value.trim();
-    const label = adminNewLabel.value.trim();
+    const darjah = adminNewDarjah.value.trim().toUpperCase();
+    const code = adminNewCode.value.trim().toUpperCase();
+    const label = adminNewLabel.value.trim().toUpperCase();
     if (!darjah || !code || !label) { adminClassMsg.textContent = 'Sila isi semua ruangan.'; adminClassMsg.style.color = '#b91c1c'; return; }
     if (classData[code]) { adminClassMsg.textContent = 'Kod kelas sudah wujud.'; adminClassMsg.style.color = '#b91c1c'; return; }
     classData[code] = [];
     summaryConfig.push({ darjah, kelasLabel: label, code });
+    
+    // Sort selepas tambah kelas baharu
+    sortSummaryConfig();
+    
     adminNewDarjah.value = '';
     adminNewCode.value = '';
     adminNewLabel.value = '';
