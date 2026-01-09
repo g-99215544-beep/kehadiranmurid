@@ -229,34 +229,39 @@
     <div id="tab-admin" class="tab-panel" style="display:none;">
       <div class="summary-box"><div class="summary-main"><div><strong>Mod Admin</strong></div><div>Anda boleh urus kelas, murid, cuti sekolah dan status ketidakhadiran.</div></div></div>
       
-      <!-- Pengurusan Cuti Sekolah -->
+      <!-- Pengurusan Cuti Sekolah - Jadual Bulanan -->
       <div style="margin-top:16px;">
-        <h3 style="margin:0 0 6px;font-size:1rem;">📅 Pengurusan Cuti Sekolah</h3>
+        <h3 style="margin:0 0 6px;font-size:1rem;">📅 Tetapan Cuti Sekolah</h3>
         <div class="alert-box alert-info" style="margin-top:8px;">
-          <strong>Nota:</strong> Sabtu & Ahad <strong>tidak dikira</strong> secara automatik. Tambah cuti lain seperti cuti umum, cuti peristiwa khas, dll.
+          <strong>Cara Penggunaan:</strong> Klik pada tarikh untuk tandakan sebagai <strong>CUTI</strong>. Klik sekali lagi untuk batalkan.<br>
+          <span style="display:inline-block;width:20px;height:20px;background:#fecaca;border:1px solid #f87171;border-radius:4px;vertical-align:middle;margin:0 4px;text-align:center;line-height:20px;font-size:.7rem;">X</span> = Cuti Sekolah &nbsp;
+          <span style="display:inline-block;width:20px;height:20px;background:#e5e7eb;border:1px solid #d1d5db;border-radius:4px;vertical-align:middle;margin:0 4px;text-align:center;line-height:20px;font-size:.7rem;color:#9ca3af;">5</span> = Sabtu/Ahad (auto skip)
         </div>
-        <div class="flex-row" style="margin-top:10px;gap:8px;">
-          <div style="flex:1;">
-            <label style="font-size:.85rem;">Tarikh Cuti:</label>
-            <input type="date" id="holidayDateInput" style="width:100%;margin-top:4px;padding:8px 10px;border-radius:999px;border:1px solid #d1d5db;font-size:.9rem;">
-          </div>
-          <div style="flex:2;">
-            <label style="font-size:.85rem;">Keterangan Cuti:</label>
-            <input type="text" id="holidayDescInput" placeholder="Cth: Hari Raya Aidilfitri" style="width:100%;margin-top:4px;padding:8px 10px;border-radius:999px;border:1px solid #d1d5db;font-size:.9rem;">
-          </div>
-          <div style="display:flex;align-items:flex-end;">
-            <button type="button" class="btn btn-primary btn-sm" id="addHolidayBtn">+ Tambah Cuti</button>
-          </div>
-        </div>
-        <div id="holidayMsg" style="margin-top:6px;font-size:.8rem;color:#6b7280;"></div>
         
-        <div class="summary-table-wrapper" style="margin-top:12px;">
+        <!-- Month Navigation -->
+        <div class="summary-header-row" style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-top:12px;">
+          <span>Bulan: <span id="holidayMonthLabel" style="font-weight:600;"></span></span>
+          <div style="display:flex;gap:6px;">
+            <button type="button" class="btn btn-outline btn-sm" id="prevMonthBtn">◀</button>
+            <button type="button" class="btn btn-outline btn-sm" id="nextMonthBtn">▶</button>
+          </div>
+        </div>
+        
+        <!-- Holiday Calendar Grid - Same format as Monthly Summary -->
+        <div class="summary-table-wrapper" style="margin-top:10px;">
           <table class="summary-table">
-            <thead><tr><th>Bil</th><th>Tarikh</th><th>Hari</th><th>Keterangan</th><th>Tindakan</th></tr></thead>
-            <tbody id="holidayTableBody"></tbody>
+            <thead>
+              <tr>
+                <th colspan="31" id="holidayHeaderSpan">Tarikh</th>
+              </tr>
+              <tr id="holidayDateRow"></tr>
+            </thead>
+            <tbody>
+              <tr id="holidayClickRow"></tr>
+            </tbody>
           </table>
         </div>
-        <div class="summary-footer" id="holidayInfo">Tiada cuti ditambah.</div>
+        <div class="summary-footer" id="holidayInfo">Klik pada tarikh untuk tandakan sebagai cuti sekolah.</div>
       </div>
 
       <!-- Notifikasi Ponteng -->
@@ -445,16 +450,21 @@
   const statusDateSelect = document.getElementById('statusDateSelect');
   const statusAbsentList = document.getElementById('statusAbsentList');
   
-  // Holiday & Reset DOM refs
-  const holidayDateInput = document.getElementById('holidayDateInput');
-  const holidayDescInput = document.getElementById('holidayDescInput');
-  const addHolidayBtn = document.getElementById('addHolidayBtn');
-  const holidayTableBody = document.getElementById('holidayTableBody');
+  // Holiday Calendar DOM refs
+  const holidayMonthLabel = document.getElementById('holidayMonthLabel');
+  const holidayHeaderSpan = document.getElementById('holidayHeaderSpan');
+  const holidayDateRow = document.getElementById('holidayDateRow');
+  const holidayClickRow = document.getElementById('holidayClickRow');
   const holidayInfo = document.getElementById('holidayInfo');
-  const holidayMsg = document.getElementById('holidayMsg');
+  const prevMonthBtn = document.getElementById('prevMonthBtn');
+  const nextMonthBtn = document.getElementById('nextMonthBtn');
   const resetAttendanceBtn = document.getElementById('resetAttendanceBtn');
   const resetHolidaysBtn = document.getElementById('resetHolidaysBtn');
   const resetMsg = document.getElementById('resetMsg');
+  
+  // Calendar state
+  let calendarYear = currentYear;
+  let calendarMonth = today.getMonth();
 
   yearBadge.textContent = "Tahun " + currentYear;
   todayDisplay.textContent = "Tarikh: " + todayHuman;
@@ -619,7 +629,7 @@
     });
   }
 
-  // ============ Holiday Management ============
+  // ============ Holiday Calendar Management ============
   let holidaysCache = {};
   const DAY_NAMES_MS = ['Ahad', 'Isnin', 'Selasa', 'Rabu', 'Khamis', 'Jumaat', 'Sabtu'];
 
@@ -641,103 +651,106 @@
   }
 
   function isSchoolDay(dateKey) {
-    // Hari sekolah = bukan hujung minggu DAN bukan cuti
     return !isWeekend(dateKey) && !isHoliday(dateKey);
   }
 
-  function addHoliday(dateKey, description) {
-    return db.ref(`holidays/${dateKey}`).set(description).then(() => {
-      holidaysCache[dateKey] = description;
-    });
-  }
-
-  function removeHoliday(dateKey) {
-    return db.ref(`holidays/${dateKey}`).remove().then(() => {
-      delete holidaysCache[dateKey];
-    });
-  }
-
-  function renderHolidayTable() {
-    if (!holidayTableBody) return;
-    holidayTableBody.innerHTML = '';
-    
-    const sortedDates = Object.keys(holidaysCache).sort();
-    
-    if (sortedDates.length === 0) {
-      holidayInfo.textContent = 'Tiada cuti ditambah. Sabtu & Ahad tidak dikira secara automatik.';
-      return;
+  function toggleHoliday(dateKey) {
+    if (holidaysCache[dateKey]) {
+      return db.ref(`holidays/${dateKey}`).remove().then(() => {
+        delete holidaysCache[dateKey];
+      });
+    } else {
+      return db.ref(`holidays/${dateKey}`).set('Cuti Sekolah').then(() => {
+        holidaysCache[dateKey] = 'Cuti Sekolah';
+      });
     }
-
-    sortedDates.forEach((dateKey, idx) => {
-      const date = dateFromKey(dateKey);
-      const dayName = DAY_NAMES_MS[date.getDay()];
-      const tr = document.createElement('tr');
-      tr.innerHTML = `
-        <td>${idx + 1}</td>
-        <td>${formatHumanDate(date)}</td>
-        <td>${dayName}</td>
-        <td>${holidaysCache[dateKey]}</td>
-        <td><button class="btn btn-danger btn-sm delete-holiday-btn" data-date="${dateKey}">Padam</button></td>
-      `;
-      holidayTableBody.appendChild(tr);
-    });
-
-    holidayInfo.textContent = `Jumlah ${sortedDates.length} hari cuti ditambah. Sabtu & Ahad tidak dikira secara automatik.`;
   }
 
-  // Holiday event listeners
-  if (addHolidayBtn) {
-    addHolidayBtn.addEventListener('click', () => {
-      const dateVal = holidayDateInput.value;
-      const desc = holidayDescInput.value.trim();
+  function renderHolidayCalendar() {
+    if (!holidayDateRow || !holidayClickRow) return;
+    
+    // Update month label
+    holidayMonthLabel.textContent = MONTH_NAMES_MS[calendarMonth] + ' ' + calendarYear;
+    
+    // Get total days in month
+    const totalDays = new Date(calendarYear, calendarMonth + 1, 0).getDate();
+    holidayHeaderSpan.colSpan = totalDays;
+    
+    // Build header row with date numbers
+    let headerHtml = '';
+    let clickRowHtml = '';
+    
+    for (let d = 1; d <= totalDays; d++) {
+      const dateKey = calendarYear + '-' + String(calendarMonth + 1).padStart(2, '0') + '-' + String(d).padStart(2, '0');
+      const date = new Date(calendarYear, calendarMonth, d);
+      const dayOfWeek = date.getDay();
+      const isWeekendDay = dayOfWeek === 0 || dayOfWeek === 6;
+      const isHolidayDay = holidaysCache[dateKey];
+      const isToday = dateKey === todayKey;
       
-      if (!dateVal) {
-        holidayMsg.textContent = 'Sila pilih tarikh.';
-        holidayMsg.style.color = '#b91c1c';
-        return;
-      }
-      if (!desc) {
-        holidayMsg.textContent = 'Sila masukkan keterangan cuti.';
-        holidayMsg.style.color = '#b91c1c';
-        return;
+      // Header cell with date number
+      let headerStyle = '';
+      if (isWeekendDay) headerStyle = 'background:#f3f4f6;color:#9ca3af;';
+      headerHtml += `<th style="${headerStyle}">${d}</th>`;
+      
+      // Clickable cell
+      let cellStyle = 'cursor:pointer;text-align:center;padding:8px 4px;';
+      let cellContent = '-';
+      let cellTitle = 'Klik untuk tandakan cuti';
+      
+      if (isWeekendDay) {
+        cellStyle += 'background:#f3f4f6;color:#9ca3af;cursor:default;';
+        cellContent = '-';
+        cellTitle = 'Hujung minggu (auto skip)';
+      } else if (isHolidayDay) {
+        cellStyle += 'background:#fecaca;color:#b91c1c;font-weight:600;';
+        cellContent = 'X';
+        cellTitle = 'Cuti - Klik untuk batalkan';
       }
       
-      const dateKey = dateVal; // Already in YYYY-MM-DD format
-      
-      if (holidaysCache[dateKey]) {
-        holidayMsg.textContent = 'Tarikh ini sudah ditandakan sebagai cuti.';
-        holidayMsg.style.color = '#b91c1c';
-        return;
+      if (isToday) {
+        cellStyle += 'border:2px solid #2563eb;';
       }
+      
+      const clickAttr = !isWeekendDay ? `data-date="${dateKey}" onclick="window.toggleHolidayDate('${dateKey}')"` : '';
+      clickRowHtml += `<td style="${cellStyle}" title="${cellTitle}" ${clickAttr}>${cellContent}</td>`;
+    }
+    
+    holidayDateRow.innerHTML = headerHtml;
+    holidayClickRow.innerHTML = clickRowHtml;
+    
+    // Update info
+    const holidayCount = Object.keys(holidaysCache).filter(k => {
+      return k.startsWith(calendarYear + '-' + String(calendarMonth + 1).padStart(2, '0'));
+    }).length;
+    
+    holidayInfo.textContent = holidayCount > 0 
+      ? `${holidayCount} hari cuti ditandakan untuk ${MONTH_NAMES_MS[calendarMonth]} ${calendarYear}. Sabtu & Ahad auto skip.`
+      : 'Klik pada tarikh untuk tandakan cuti. Sabtu & Ahad auto skip.';
+  }
 
-      holidayMsg.textContent = 'Menyimpan...';
-      holidayMsg.style.color = '#0369a1';
-      
-      addHoliday(dateKey, desc).then(() => {
-        holidayMsg.textContent = 'Cuti berjaya ditambah!';
-        holidayMsg.style.color = '#047857';
-        holidayDateInput.value = '';
-        holidayDescInput.value = '';
-        renderHolidayTable();
-        recomputeNotificationsForYear(String(currentYear));
-      }).catch(err => {
-        holidayMsg.textContent = 'Ralat: ' + err.message;
-        holidayMsg.style.color = '#b91c1c';
-      });
+  // Global function for onclick
+  window.toggleHolidayDate = function(dateKey) {
+    toggleHoliday(dateKey).then(() => {
+      renderHolidayCalendar();
+      recomputeNotificationsForYear(String(currentYear));
+    });
+  };
+
+  // Calendar navigation
+  if (prevMonthBtn) {
+    prevMonthBtn.addEventListener('click', () => {
+      calendarMonth--;
+      if (calendarMonth < 0) { calendarMonth = 11; calendarYear--; }
+      renderHolidayCalendar();
     });
   }
 
-  if (holidayTableBody) {
-    holidayTableBody.addEventListener('click', (e) => {
-      const btn = e.target.closest('.delete-holiday-btn');
-      if (!btn) return;
-      const dateKey = btn.dataset.date;
-      if (!confirm('Padam cuti pada ' + formatHumanDate(dateFromKey(dateKey)) + '?')) return;
-      
-      removeHoliday(dateKey).then(() => {
-        renderHolidayTable();
-        recomputeNotificationsForYear(String(currentYear));
-      });
+  if (nextMonthBtn) {
+    nextMonthBtn.addEventListener('click', () => {
+      calendarMonth++;
+      if (calendarMonth > 11) { calendarMonth = 0; calendarYear++; }
+      renderHolidayCalendar();
     });
   }
 
@@ -783,7 +796,7 @@
       
       db.ref('holidays').remove().then(() => {
         holidaysCache = {};
-        renderHolidayTable();
+        renderHolidayCalendar();
         recomputeNotificationsForYear(String(currentYear));
         resetMsg.textContent = 'Senarai cuti telah dipadam!';
         resetMsg.style.color = '#047857';
@@ -1440,7 +1453,7 @@
     
     // Load holidays first, then yearly data and notifications
     loadHolidays().then(() => {
-      renderHolidayTable();
+      renderHolidayCalendar();
       ensureYearlyData().then(() => {
         loadAbsenceStatus().then(() => {
           recomputeNotificationsForYear(String(currentYear));
