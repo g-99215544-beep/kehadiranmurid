@@ -465,11 +465,35 @@
   function loadClassConfigFromDB() {
     return db.ref('config/classes').once('value').then(snap => {
       const val = snap.val();
-      if (val && val.classData && val.summaryConfig) {
+      console.log('Data dari Firebase:', val); // Debug log
+      
+      if (val && val.classData) {
+        // Clear existing data
         for (const key in classData) delete classData[key];
-        Object.keys(val.classData).forEach(k => classData[k] = val.classData[k]);
+        
+        // Load classData - handle both array and object format from Firebase
+        Object.keys(val.classData).forEach(classCode => {
+          const students = val.classData[classCode];
+          // Firebase may store array as object with numeric keys
+          if (Array.isArray(students)) {
+            classData[classCode] = students;
+          } else if (typeof students === 'object' && students !== null) {
+            // Convert object {0: "name1", 1: "name2"} to array ["name1", "name2"]
+            classData[classCode] = Object.values(students);
+          }
+        });
+        console.log('classData loaded:', classData); // Debug log
+      }
+      
+      if (val && val.summaryConfig) {
         summaryConfig.length = 0;
-        val.summaryConfig.forEach(item => summaryConfig.push(item));
+        // Handle both array and object format
+        if (Array.isArray(val.summaryConfig)) {
+          val.summaryConfig.forEach(item => summaryConfig.push(item));
+        } else if (typeof val.summaryConfig === 'object') {
+          Object.values(val.summaryConfig).forEach(item => summaryConfig.push(item));
+        }
+        console.log('summaryConfig loaded:', summaryConfig); // Debug log
       }
     }).catch(err => console.error('Gagal memuatkan config kelas:', err));
   }
