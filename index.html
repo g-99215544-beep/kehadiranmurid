@@ -152,7 +152,7 @@
         <select id="classSelect"><option value="">— Sila pilih kelas —</option></select>
       </div>
       <div class="flex-row">
-        <div class="pill">🔁 <strong>Setiap hari baharu</strong> — kehadiran bermula semula.</div>
+        <div class="pill">📌 <strong>Setiap hari baharu</strong> — kehadiran bermula semula.</div>
         <div>
           <button type="button" class="btn btn-outline" id="btnAllPresent">✅ Semua hadir</button>
           <button type="button" class="btn btn-outline" id="btnClearTicks">✖ Reset</button>
@@ -181,6 +181,8 @@
         <div class="status-bar" id="statusBar"></div>
       </div>
     </div>
+
+<!-- PART 1 END - Sambung dengan Part 2 --><!-- PART 2 START - Sambung dari Part 1 -->
 
     <!-- TAB: Ringkasan -->
     <div id="tab-summary" class="tab-panel" style="display:none;">
@@ -232,15 +234,12 @@
       <!-- Pengurusan Cuti Sekolah - Jadual Bulanan -->
       <div style="margin-top:16px;">
         <h3 style="margin:0 0 6px;font-size:1rem;">📅 Tetapan Cuti Sekolah</h3>
-        <div id="matrixCutiContainer" style="margin-top:12px;"></div>
-    
         <div class="alert-box alert-info" style="margin-top:8px;">
           <strong>Cara Penggunaan:</strong> Klik pada tarikh untuk tandakan sebagai <strong>CUTI</strong>. Klik sekali lagi untuk batalkan.<br>
           <span style="display:inline-block;width:20px;height:20px;background:#fecaca;border:1px solid #f87171;border-radius:4px;vertical-align:middle;margin:0 4px;text-align:center;line-height:20px;font-size:.7rem;">X</span> = Cuti Sekolah &nbsp;
           <span style="display:inline-block;width:20px;height:20px;background:#e5e7eb;border:1px solid #d1d5db;border-radius:4px;vertical-align:middle;margin:0 4px;text-align:center;line-height:20px;font-size:.7rem;color:#9ca3af;">5</span> = Sabtu/Ahad (auto skip)
         </div>
         
-        <!-- Month Navigation -->
         <div class="summary-header-row" style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-top:12px;">
           <span>Bulan: <span id="holidayMonthLabel" style="font-weight:600;"></span></span>
           <div style="display:flex;gap:6px;">
@@ -249,13 +248,10 @@
           </div>
         </div>
         
-        <!-- Holiday Calendar Grid - Same format as Monthly Summary -->
         <div class="summary-table-wrapper" style="margin-top:10px;">
           <table class="summary-table">
             <thead>
-              <tr>
-                <th colspan="31" id="holidayHeaderSpan">Tarikh</th>
-              </tr>
+              <tr><th colspan="31" id="holidayHeaderSpan">Tarikh</th></tr>
               <tr id="holidayDateRow"></tr>
             </thead>
             <tbody>
@@ -350,7 +346,7 @@
 <!-- Modal Log Masuk Admin -->
 <div id="adminModal" class="modal-backdrop" style="display:none;">
   <div class="modal-card">
-    <h3>🔐 Log Masuk Admin</h3>
+    <h3>🔒 Log Masuk Admin</h3>
     <p>Masukkan kata laluan admin untuk mengakses tetapan.</p>
     <label for="adminPassword" style="font-size:.85rem;color:#374151;">Kata Laluan</label>
     <input id="adminPassword" type="password" class="modal-input" placeholder="Masukkan kata laluan" />
@@ -362,366 +358,11 @@
   </div>
 </div>
 
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js">
-// ================= Matrix Cuti Table (Option 1) =================
-let matrixYear = new Date().getFullYear();
-let matrixMonth = new Date().getMonth();
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+<script src="database.js"></script>
 
-function daysInMonth(y, m) {
-  return new Date(y, m + 1, 0).getDate();
-}
-
-function formatYM(y, m) {
-  return MONTH_NAMES_MS[m] + ' ' + y;
-}
-
-function buildMatrixHeader(y, m) {
-  const totalDays = daysInMonth(y, m);
-  let ths = '<th style="position:sticky;left:0;background:#e5f0ff;z-index:3;">Kelas</th>';
-  for (let d = 1; d <= totalDays; d++) {
-    const dateKey = y + '-' + String(m+1).padStart(2,'0') + '-' + String(d).padStart(2,'0');
-    const dt = new Date(y, m, d);
-    const isWeekendDay = dt.getDay() === 0 || dt.getDay() === 6;
-    const isHolidayDay = holidaysCache[dateKey];
-    let style = 'cursor:pointer;';
-    if (isWeekendDay) style += 'background:#f3f4f6;color:#9ca3af;cursor:default;';
-    if (isHolidayDay) style += 'background:#fecaca;color:#b91c1c;';
-    ths += `<th style="${style}" ${!isWeekendDay ? `onclick="toggleMatrixHoliday('${dateKey}')"` : ''} title="${isWeekendDay?'Hujung minggu':(isHolidayDay?'Cuti - klik untuk batalkan':'Klik untuk tandakan cuti')}">${d}</th>`;
-  }
-  return ths;
-}
-
-function buildMatrixRows(y, m, allByDate) {
-  const totalDays = daysInMonth(y, m);
-  let rows = '';
-  summaryConfig.forEach(cfg => {
-    rows += `<tr><td style="position:sticky;left:0;background:#fff;font-weight:600;z-index:2;">${cfg.code} - ${cfg.kelasLabel}</td>`;
-    for (let d = 1; d <= totalDays; d++) {
-      const dateKey = y + '-' + String(m+1).padStart(2,'0') + '-' + String(d).padStart(2,'0');
-      const dt = new Date(y, m, d);
-      const isWeekendDay = dt.getDay() === 0 || dt.getDay() === 6;
-      const isHolidayDay = holidaysCache[dateKey];
-      const rec = allByDate[dateKey]?.[cfg.code];
-      let content = '-';
-      let style = 'text-align:center;';
-      if (isWeekendDay) style += 'background:#f3f4f6;color:#9ca3af;';
-      if (isHolidayDay) style += 'background:#fecaca;color:#b91c1c;';
-      if (rec && !isWeekendDay && !isHolidayDay) content = (rec.present||0) + '/' + (rec.total||0);
-      rows += `<td style="${style}">${content}</td>`;
-    }
-    rows += '</tr>';
-  });
-  return rows;
-}
-
-function renderMatrixCuti() {
-  if (!isAdmin) return;
-  const container = document.getElementById('matrixCutiContainer');
-  if (!container) return;
-  const y = matrixYear, m = matrixMonth;
-  const totalDays = daysInMonth(y, m);
-  const monthLabel = formatYM(y, m);
-  container.innerHTML = `
-    <div class="summary-header-row" style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;">
-      <strong>Jadual Cuti & Kehadiran (Matrix): ${monthLabel}</strong>
-      <div style="display:flex;gap:6px;">
-        <button type="button" class="btn btn-outline btn-sm" onclick="prevMatrixMonth()">◀</button>
-        <button type="button" class="btn btn-outline btn-sm" onclick="nextMatrixMonth()">▶</button>
-      </div>
-    </div>
-    <div class="summary-table-wrapper" style="margin-top:8px;overflow:auto;">
-      <table class="summary-table">
-        <thead><tr id="matrixHeaderRow"></tr></thead>
-        <tbody id="matrixBody"></tbody>
-      </table>
-    </div>
-    <div class="summary-footer">Klik tarikh (header) untuk tandakan CUTI bagi semua kelas. Sabtu/Ahad auto cuti.</div>
-  `;
-  const headerRow = container.querySelector('#matrixHeaderRow');
-  headerRow.innerHTML = buildMatrixHeader(y, m);
-
-  const dateKeys = [];
-  for (let d = 1; d <= totalDays; d++) {
-    dateKeys.push(y + '-' + String(m+1).padStart(2,'0') + '-' + String(d).padStart(2,'0'));
-  }
-  Promise.all(dateKeys.map(k => db.ref('kehadiran/' + k).once('value'))).then(snaps => {
-    const allByDate = {};
-    snaps.forEach((snap, i) => { allByDate[dateKeys[i]] = snap.val() || {}; });
-    const body = container.querySelector('#matrixBody');
-    body.innerHTML = buildMatrixRows(y, m, allByDate);
-  });
-}
-
-function toggleMatrixHoliday(dateKey) {
-  toggleHoliday(dateKey).then(() => {
-    renderMatrixCuti();
-    loadMonthlySummary();
-    loadWeeklySummary();
-    loadDailySummary();
-    recomputeNotificationsForYear(String(currentYear));
-  });
-}
-
-function prevMatrixMonth() {
-  matrixMonth--;
-  if (matrixMonth < 0) { matrixMonth = 11; matrixYear--; }
-  renderMatrixCuti();
-}
-function nextMatrixMonth() {
-  matrixMonth++;
-  if (matrixMonth > 11) { matrixMonth = 0; matrixYear++; }
-  renderMatrixCuti();
-}
-
-// Hook render when admin tab is opened
-const _origAdminTabHandler = document.getElementById('adminTabBtn');
-if (_origAdminTabHandler) {
-  _origAdminTabHandler.addEventListener('click', () => {
-    loadHolidays().then(renderMatrixCuti);
-  });
-}
-
-</script>
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js">
-// ================= Matrix Cuti Table (Option 1) =================
-let matrixYear = new Date().getFullYear();
-let matrixMonth = new Date().getMonth();
-
-function daysInMonth(y, m) {
-  return new Date(y, m + 1, 0).getDate();
-}
-
-function formatYM(y, m) {
-  return MONTH_NAMES_MS[m] + ' ' + y;
-}
-
-function buildMatrixHeader(y, m) {
-  const totalDays = daysInMonth(y, m);
-  let ths = '<th style="position:sticky;left:0;background:#e5f0ff;z-index:3;">Kelas</th>';
-  for (let d = 1; d <= totalDays; d++) {
-    const dateKey = y + '-' + String(m+1).padStart(2,'0') + '-' + String(d).padStart(2,'0');
-    const dt = new Date(y, m, d);
-    const isWeekendDay = dt.getDay() === 0 || dt.getDay() === 6;
-    const isHolidayDay = holidaysCache[dateKey];
-    let style = 'cursor:pointer;';
-    if (isWeekendDay) style += 'background:#f3f4f6;color:#9ca3af;cursor:default;';
-    if (isHolidayDay) style += 'background:#fecaca;color:#b91c1c;';
-    ths += `<th style="${style}" ${!isWeekendDay ? `onclick="toggleMatrixHoliday('${dateKey}')"` : ''} title="${isWeekendDay?'Hujung minggu':(isHolidayDay?'Cuti - klik untuk batalkan':'Klik untuk tandakan cuti')}">${d}</th>`;
-  }
-  return ths;
-}
-
-function buildMatrixRows(y, m, allByDate) {
-  const totalDays = daysInMonth(y, m);
-  let rows = '';
-  summaryConfig.forEach(cfg => {
-    rows += `<tr><td style="position:sticky;left:0;background:#fff;font-weight:600;z-index:2;">${cfg.code} - ${cfg.kelasLabel}</td>`;
-    for (let d = 1; d <= totalDays; d++) {
-      const dateKey = y + '-' + String(m+1).padStart(2,'0') + '-' + String(d).padStart(2,'0');
-      const dt = new Date(y, m, d);
-      const isWeekendDay = dt.getDay() === 0 || dt.getDay() === 6;
-      const isHolidayDay = holidaysCache[dateKey];
-      const rec = allByDate[dateKey]?.[cfg.code];
-      let content = '-';
-      let style = 'text-align:center;';
-      if (isWeekendDay) style += 'background:#f3f4f6;color:#9ca3af;';
-      if (isHolidayDay) style += 'background:#fecaca;color:#b91c1c;';
-      if (rec && !isWeekendDay && !isHolidayDay) content = (rec.present||0) + '/' + (rec.total||0);
-      rows += `<td style="${style}">${content}</td>`;
-    }
-    rows += '</tr>';
-  });
-  return rows;
-}
-
-function renderMatrixCuti() {
-  if (!isAdmin) return;
-  const container = document.getElementById('matrixCutiContainer');
-  if (!container) return;
-  const y = matrixYear, m = matrixMonth;
-  const totalDays = daysInMonth(y, m);
-  const monthLabel = formatYM(y, m);
-  container.innerHTML = `
-    <div class="summary-header-row" style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;">
-      <strong>Jadual Cuti & Kehadiran (Matrix): ${monthLabel}</strong>
-      <div style="display:flex;gap:6px;">
-        <button type="button" class="btn btn-outline btn-sm" onclick="prevMatrixMonth()">◀</button>
-        <button type="button" class="btn btn-outline btn-sm" onclick="nextMatrixMonth()">▶</button>
-      </div>
-    </div>
-    <div class="summary-table-wrapper" style="margin-top:8px;overflow:auto;">
-      <table class="summary-table">
-        <thead><tr id="matrixHeaderRow"></tr></thead>
-        <tbody id="matrixBody"></tbody>
-      </table>
-    </div>
-    <div class="summary-footer">Klik tarikh (header) untuk tandakan CUTI bagi semua kelas. Sabtu/Ahad auto cuti.</div>
-  `;
-  const headerRow = container.querySelector('#matrixHeaderRow');
-  headerRow.innerHTML = buildMatrixHeader(y, m);
-
-  const dateKeys = [];
-  for (let d = 1; d <= totalDays; d++) {
-    dateKeys.push(y + '-' + String(m+1).padStart(2,'0') + '-' + String(d).padStart(2,'0'));
-  }
-  Promise.all(dateKeys.map(k => db.ref('kehadiran/' + k).once('value'))).then(snaps => {
-    const allByDate = {};
-    snaps.forEach((snap, i) => { allByDate[dateKeys[i]] = snap.val() || {}; });
-    const body = container.querySelector('#matrixBody');
-    body.innerHTML = buildMatrixRows(y, m, allByDate);
-  });
-}
-
-function toggleMatrixHoliday(dateKey) {
-  toggleHoliday(dateKey).then(() => {
-    renderMatrixCuti();
-    loadMonthlySummary();
-    loadWeeklySummary();
-    loadDailySummary();
-    recomputeNotificationsForYear(String(currentYear));
-  });
-}
-
-function prevMatrixMonth() {
-  matrixMonth--;
-  if (matrixMonth < 0) { matrixMonth = 11; matrixYear--; }
-  renderMatrixCuti();
-}
-function nextMatrixMonth() {
-  matrixMonth++;
-  if (matrixMonth > 11) { matrixMonth = 0; matrixYear++; }
-  renderMatrixCuti();
-}
-
-// Hook render when admin tab is opened
-const _origAdminTabHandler = document.getElementById('adminTabBtn');
-if (_origAdminTabHandler) {
-  _origAdminTabHandler.addEventListener('click', () => {
-    loadHolidays().then(renderMatrixCuti);
-  });
-}
-
-</script>
-<script src="database.js">
-// ================= Matrix Cuti Table (Option 1) =================
-let matrixYear = new Date().getFullYear();
-let matrixMonth = new Date().getMonth();
-
-function daysInMonth(y, m) {
-  return new Date(y, m + 1, 0).getDate();
-}
-
-function formatYM(y, m) {
-  return MONTH_NAMES_MS[m] + ' ' + y;
-}
-
-function buildMatrixHeader(y, m) {
-  const totalDays = daysInMonth(y, m);
-  let ths = '<th style="position:sticky;left:0;background:#e5f0ff;z-index:3;">Kelas</th>';
-  for (let d = 1; d <= totalDays; d++) {
-    const dateKey = y + '-' + String(m+1).padStart(2,'0') + '-' + String(d).padStart(2,'0');
-    const dt = new Date(y, m, d);
-    const isWeekendDay = dt.getDay() === 0 || dt.getDay() === 6;
-    const isHolidayDay = holidaysCache[dateKey];
-    let style = 'cursor:pointer;';
-    if (isWeekendDay) style += 'background:#f3f4f6;color:#9ca3af;cursor:default;';
-    if (isHolidayDay) style += 'background:#fecaca;color:#b91c1c;';
-    ths += `<th style="${style}" ${!isWeekendDay ? `onclick="toggleMatrixHoliday('${dateKey}')"` : ''} title="${isWeekendDay?'Hujung minggu':(isHolidayDay?'Cuti - klik untuk batalkan':'Klik untuk tandakan cuti')}">${d}</th>`;
-  }
-  return ths;
-}
-
-function buildMatrixRows(y, m, allByDate) {
-  const totalDays = daysInMonth(y, m);
-  let rows = '';
-  summaryConfig.forEach(cfg => {
-    rows += `<tr><td style="position:sticky;left:0;background:#fff;font-weight:600;z-index:2;">${cfg.code} - ${cfg.kelasLabel}</td>`;
-    for (let d = 1; d <= totalDays; d++) {
-      const dateKey = y + '-' + String(m+1).padStart(2,'0') + '-' + String(d).padStart(2,'0');
-      const dt = new Date(y, m, d);
-      const isWeekendDay = dt.getDay() === 0 || dt.getDay() === 6;
-      const isHolidayDay = holidaysCache[dateKey];
-      const rec = allByDate[dateKey]?.[cfg.code];
-      let content = '-';
-      let style = 'text-align:center;';
-      if (isWeekendDay) style += 'background:#f3f4f6;color:#9ca3af;';
-      if (isHolidayDay) style += 'background:#fecaca;color:#b91c1c;';
-      if (rec && !isWeekendDay && !isHolidayDay) content = (rec.present||0) + '/' + (rec.total||0);
-      rows += `<td style="${style}">${content}</td>`;
-    }
-    rows += '</tr>';
-  });
-  return rows;
-}
-
-function renderMatrixCuti() {
-  if (!isAdmin) return;
-  const container = document.getElementById('matrixCutiContainer');
-  if (!container) return;
-  const y = matrixYear, m = matrixMonth;
-  const totalDays = daysInMonth(y, m);
-  const monthLabel = formatYM(y, m);
-  container.innerHTML = `
-    <div class="summary-header-row" style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;">
-      <strong>Jadual Cuti & Kehadiran (Matrix): ${monthLabel}</strong>
-      <div style="display:flex;gap:6px;">
-        <button type="button" class="btn btn-outline btn-sm" onclick="prevMatrixMonth()">◀</button>
-        <button type="button" class="btn btn-outline btn-sm" onclick="nextMatrixMonth()">▶</button>
-      </div>
-    </div>
-    <div class="summary-table-wrapper" style="margin-top:8px;overflow:auto;">
-      <table class="summary-table">
-        <thead><tr id="matrixHeaderRow"></tr></thead>
-        <tbody id="matrixBody"></tbody>
-      </table>
-    </div>
-    <div class="summary-footer">Klik tarikh (header) untuk tandakan CUTI bagi semua kelas. Sabtu/Ahad auto cuti.</div>
-  `;
-  const headerRow = container.querySelector('#matrixHeaderRow');
-  headerRow.innerHTML = buildMatrixHeader(y, m);
-
-  const dateKeys = [];
-  for (let d = 1; d <= totalDays; d++) {
-    dateKeys.push(y + '-' + String(m+1).padStart(2,'0') + '-' + String(d).padStart(2,'0'));
-  }
-  Promise.all(dateKeys.map(k => db.ref('kehadiran/' + k).once('value'))).then(snaps => {
-    const allByDate = {};
-    snaps.forEach((snap, i) => { allByDate[dateKeys[i]] = snap.val() || {}; });
-    const body = container.querySelector('#matrixBody');
-    body.innerHTML = buildMatrixRows(y, m, allByDate);
-  });
-}
-
-function toggleMatrixHoliday(dateKey) {
-  toggleHoliday(dateKey).then(() => {
-    renderMatrixCuti();
-    loadMonthlySummary();
-    loadWeeklySummary();
-    loadDailySummary();
-    recomputeNotificationsForYear(String(currentYear));
-  });
-}
-
-function prevMatrixMonth() {
-  matrixMonth--;
-  if (matrixMonth < 0) { matrixMonth = 11; matrixYear--; }
-  renderMatrixCuti();
-}
-function nextMatrixMonth() {
-  matrixMonth++;
-  if (matrixMonth > 11) { matrixMonth = 0; matrixYear++; }
-  renderMatrixCuti();
-}
-
-// Hook render when admin tab is opened
-const _origAdminTabHandler = document.getElementById('adminTabBtn');
-if (_origAdminTabHandler) {
-  _origAdminTabHandler.addEventListener('click', () => {
-    loadHolidays().then(renderMatrixCuti);
-  });
-}
-
-</script>
+<!-- PART 2 END - Sambung dengan Part 3 (JavaScript) --><!-- PART 3 START - Sambung dari Part 2 -->
 
 <script>
 (function() {
@@ -896,23 +537,16 @@ if (_origAdminTabHandler) {
   adminLoginBtn.addEventListener('click', tryAdminLogin);
   adminPasswordInput.addEventListener('keydown', e => { if (e.key === 'Enter') tryAdminLogin(); });
 
-  // Fungsi untuk sort summaryConfig mengikut Darjah (D1-D6) dan Kelas (B, C, G)
+  // Fungsi untuk sort summaryConfig
   function sortSummaryConfig() {
     const kelasOrder = { 'BESTARI': 1, 'CEMERLANG': 2, 'GEMILANG': 3 };
     summaryConfig.sort((a, b) => {
-      // Extract darjah number (D1 -> 1, D2 -> 2, etc)
       const darjahA = parseInt(a.darjah.replace(/\D/g, '')) || 0;
       const darjahB = parseInt(b.darjah.replace(/\D/g, '')) || 0;
-      
-      // Compare darjah first
       if (darjahA !== darjahB) return darjahA - darjahB;
-      
-      // If same darjah, compare by kelas label order (BESTARI < CEMERLANG < GEMILANG)
       const orderA = kelasOrder[a.kelasLabel.toUpperCase()] || 99;
       const orderB = kelasOrder[b.kelasLabel.toUpperCase()] || 99;
       if (orderA !== orderB) return orderA - orderB;
-      
-      // Fallback: sort by code alphabetically
       return a.code.localeCompare(b.code);
     });
   }
@@ -921,37 +555,25 @@ if (_origAdminTabHandler) {
   function loadClassConfigFromDB() {
     return db.ref('config/classes').once('value').then(snap => {
       const val = snap.val();
-      console.log('Data dari Firebase:', val); // Debug log
-      
       if (val && val.classData) {
-        // Clear existing data
         for (const key in classData) delete classData[key];
-        
-        // Load classData - handle both array and object format from Firebase
         Object.keys(val.classData).forEach(classCode => {
           const students = val.classData[classCode];
-          // Firebase may store array as object with numeric keys
           if (Array.isArray(students)) {
             classData[classCode] = students;
           } else if (typeof students === 'object' && students !== null) {
-            // Convert object {0: "name1", 1: "name2"} to array ["name1", "name2"]
             classData[classCode] = Object.values(students);
           }
         });
-        console.log('classData loaded:', classData); // Debug log
       }
-      
       if (val && val.summaryConfig) {
         summaryConfig.length = 0;
-        // Handle both array and object format
         if (Array.isArray(val.summaryConfig)) {
           val.summaryConfig.forEach(item => summaryConfig.push(item));
         } else if (typeof val.summaryConfig === 'object') {
           Object.values(val.summaryConfig).forEach(item => summaryConfig.push(item));
         }
-        // Sort summaryConfig selepas load
         sortSummaryConfig();
-        console.log('summaryConfig loaded & sorted:', summaryConfig); // Debug log
       }
     }).catch(err => console.error('Gagal memuatkan config kelas:', err));
   }
@@ -962,7 +584,7 @@ if (_origAdminTabHandler) {
       .catch(err => console.error('Gagal menyimpan config:', err));
   }
 
-  // Absence status management
+  // Absence status management - DEFAULT TIDAK BERSEBAB
   let absenceStatusCache = {};
 
   function loadAbsenceStatus() {
@@ -988,14 +610,12 @@ if (_origAdminTabHandler) {
     });
   }
 
-  // ============ Holiday Calendar Management ============
+  // Holiday Calendar Management
   let holidaysCache = {};
-  const DAY_NAMES_MS = ['Ahad', 'Isnin', 'Selasa', 'Rabu', 'Khamis', 'Jumaat', 'Sabtu'];
 
   function loadHolidays() {
     return db.ref('holidays').once('value').then(snap => {
       holidaysCache = snap.val() || {};
-      console.log('Holidays loaded:', holidaysCache);
     }).catch(err => { console.error('Gagal memuatkan cuti:', err); holidaysCache = {}; });
   }
 
@@ -1005,7 +625,7 @@ if (_origAdminTabHandler) {
 
   function isWeekend(dateKey) {
     const date = dateFromKey(dateKey);
-    const day = date.getDay(); // 0 = Ahad, 6 = Sabtu
+    const day = date.getDay();
     return day === 0 || day === 6;
   }
 
@@ -1028,14 +648,11 @@ if (_origAdminTabHandler) {
   function renderHolidayCalendar() {
     if (!holidayDateRow || !holidayClickRow) return;
     
-    // Update month label
     holidayMonthLabel.textContent = MONTH_NAMES_MS[calendarMonth] + ' ' + calendarYear;
     
-    // Get total days in month
     const totalDays = new Date(calendarYear, calendarMonth + 1, 0).getDate();
     holidayHeaderSpan.colSpan = totalDays;
     
-    // Build header row with date numbers
     let headerHtml = '';
     let clickRowHtml = '';
     
@@ -1047,12 +664,10 @@ if (_origAdminTabHandler) {
       const isHolidayDay = holidaysCache[dateKey];
       const isToday = dateKey === todayKey;
       
-      // Header cell with date number
       let headerStyle = '';
       if (isWeekendDay) headerStyle = 'background:#f3f4f6;color:#9ca3af;';
       headerHtml += `<th style="${headerStyle}">${d}</th>`;
       
-      // Clickable cell
       let cellStyle = 'cursor:pointer;text-align:center;padding:8px 4px;';
       let cellContent = '-';
       let cellTitle = 'Klik untuk tandakan cuti';
@@ -1067,9 +682,7 @@ if (_origAdminTabHandler) {
         cellTitle = 'Cuti - Klik untuk batalkan';
       }
       
-      if (isToday) {
-        cellStyle += 'border:2px solid #2563eb;';
-      }
+      if (isToday) cellStyle += 'border:2px solid #2563eb;';
       
       const clickAttr = !isWeekendDay ? `data-date="${dateKey}" onclick="window.toggleHolidayDate('${dateKey}')"` : '';
       clickRowHtml += `<td style="${cellStyle}" title="${cellTitle}" ${clickAttr}>${cellContent}</td>`;
@@ -1078,7 +691,6 @@ if (_origAdminTabHandler) {
     holidayDateRow.innerHTML = headerHtml;
     holidayClickRow.innerHTML = clickRowHtml;
     
-    // Update info
     const holidayCount = Object.keys(holidaysCache).filter(k => {
       return k.startsWith(calendarYear + '-' + String(calendarMonth + 1).padStart(2, '0'));
     }).length;
@@ -1088,7 +700,6 @@ if (_origAdminTabHandler) {
       : 'Klik pada tarikh untuk tandakan cuti. Sabtu & Ahad auto skip.';
   }
 
-  // Global function for onclick
   window.toggleHolidayDate = function(dateKey) {
     toggleHoliday(dateKey).then(() => {
       renderHolidayCalendar();
@@ -1096,7 +707,6 @@ if (_origAdminTabHandler) {
     });
   };
 
-  // Calendar navigation
   if (prevMonthBtn) {
     prevMonthBtn.addEventListener('click', () => {
       calendarMonth--;
@@ -1113,7 +723,7 @@ if (_origAdminTabHandler) {
     });
   }
 
-  // ============ Reset Data Functions ============
+  // Reset Data Functions
   if (resetAttendanceBtn) {
     resetAttendanceBtn.addEventListener('click', () => {
       if (!confirm('⚠️ AMARAN!\n\nAnda akan MEMADAM SEMUA:\n• Rekod kehadiran\n• Status ketidakhadiran (bersebab/tidak bersebab)\n\nTindakan ini TIDAK BOLEH dibatalkan!\n\nTeruskan?')) return;
@@ -1165,6 +775,8 @@ if (_origAdminTabHandler) {
       });
     });
   }
+
+<!-- PART 3 END - Sambung dengan Part 4 (JavaScript lagi) --><!-- PART 4 START - Sambung dari Part 3 -->
 
   // Status management UI
   function loadStatusManagement() {
@@ -1230,7 +842,7 @@ if (_origAdminTabHandler) {
       tr.innerHTML = `
         <td>${idx + 1}</td>
         <td>${name}</td>
-        <td><span class="${status === 'bersebab' ? 'status-bersebab' : 'status-tidak-bersebab'}">${status === 'bersebab' ? 'Bersebab' : 'Tidak Bersebab'}</span></td>
+        <td><span class="${status === 'bersebab' ? 'status-bersebab' : 'status-tidak-bersebab'}">${status === 'bersebab' ? 'Bersebab' : 'Tidak Bersebab (Ponteng)'}</span></td>
         <td></td>
       `;
       const btnCell = tr.querySelector('td:last-child');
@@ -1544,7 +1156,6 @@ if (_origAdminTabHandler) {
     const dateKeys = Object.keys(yearlyRaw).filter(k => /^\d{4}-\d{2}-\d{2}$/.test(k) && k.slice(0, 4) === yearStr).sort();
 
     dateKeys.forEach(dateKey => {
-      // Skip Sabtu, Ahad dan cuti sekolah
       if (!isSchoolDay(dateKey)) return;
       
       const dayObj = yearlyRaw[dateKey] || {};
@@ -1553,7 +1164,7 @@ if (_origAdminTabHandler) {
         if (!rec?.absentNames) return;
         rec.absentNames.forEach(name => {
           const status = getAbsenceStatus(dateKey, classCode, name);
-          if (status !== 'tidak_bersebab') return; // Only count ponteng (tidak bersebab)
+          if (status !== 'tidak_bersebab') return;
           
           const key = classCode + '|' + name;
           if (!stats[key]) stats[key] = { name, classCode, totalPonteng: 0, dates: [] };
@@ -1563,7 +1174,6 @@ if (_origAdminTabHandler) {
       });
     });
 
-    // Calculate consecutive days (skip weekends and holidays in between)
     Object.values(stats).forEach(stat => {
       stat.dates.sort((a, b) => a - b);
       let currentSeq = 0, maxSeq = 0, prevDate = null;
@@ -1572,7 +1182,6 @@ if (_origAdminTabHandler) {
         if (!prevDate) { 
           currentSeq = 1; 
         } else {
-          // Count school days between prevDate and d
           let schoolDaysBetween = 0;
           let checkDate = new Date(prevDate);
           checkDate.setDate(checkDate.getDate() + 1);
@@ -1585,7 +1194,6 @@ if (_origAdminTabHandler) {
             checkDate.setDate(checkDate.getDate() + 1);
           }
           
-          // If no school days between, it's consecutive
           currentSeq = schoolDaysBetween === 0 ? currentSeq + 1 : 1;
         }
         if (currentSeq > maxSeq) maxSeq = currentSeq;
@@ -1734,265 +1342,4 @@ if (_origAdminTabHandler) {
     const code = adminStudentClassSelect.value;
     if (!code) { adminStudentMsg.textContent = 'Sila pilih kelas dahulu.'; adminStudentMsg.style.color = '#b91c1c'; return; }
     const lines = adminStudentTextarea.value.split(/\r?\n/).map(x => x.trim()).filter(x => x.length > 0);
-    classData[code] = lines;
-    adminStudentCount.textContent = 'Bil. murid: ' + lines.length;
-    adminStudentMsg.textContent = 'Menyimpan ke Firebase...';
-    adminStudentMsg.style.color = '#0369a1';
-    saveClassConfigToDB().then(() => {
-      adminStudentMsg.textContent = 'Senarai murid berjaya disimpan ke Firebase!';
-      adminStudentMsg.style.color = '#047857';
-      renderAdminClassTable();
-      populateClassDropdown();
-    });
-  }
-
-  function handleAdminAddClass() {
-    const darjah = adminNewDarjah.value.trim().toUpperCase();
-    const code = adminNewCode.value.trim().toUpperCase();
-    const label = adminNewLabel.value.trim().toUpperCase();
-    if (!darjah || !code || !label) { adminClassMsg.textContent = 'Sila isi semua ruangan.'; adminClassMsg.style.color = '#b91c1c'; return; }
-    if (classData[code]) { adminClassMsg.textContent = 'Kod kelas sudah wujud.'; adminClassMsg.style.color = '#b91c1c'; return; }
-    classData[code] = [];
-    summaryConfig.push({ darjah, kelasLabel: label, code });
-    
-    // Sort selepas tambah kelas baharu
-    sortSummaryConfig();
-    
-    adminNewDarjah.value = '';
-    adminNewCode.value = '';
-    adminNewLabel.value = '';
-    adminClassMsg.textContent = 'Menyimpan ke Firebase...';
-    adminClassMsg.style.color = '#0369a1';
-    saveClassConfigToDB().then(() => {
-      adminClassMsg.textContent = 'Kelas baharu ditambah dan disimpan ke Firebase!';
-      adminClassMsg.style.color = '#047857';
-      renderAdminClassTable();
-      populateClassDropdown();
-      populateAdminClassSelect();
-      populateStatusClassSelect();
-    });
-  }
-
-  adminStudentClassSelect.addEventListener('change', loadAdminStudentsForClass);
-  adminSaveStudentsBtn.addEventListener('click', handleAdminSaveStudents);
-  adminAddClassBtn.addEventListener('click', handleAdminAddClass);
-  adminStudentTextarea.addEventListener('input', () => {
-    const lines = adminStudentTextarea.value.split(/\r?\n/).map(x => x.trim()).filter(x => x.length > 0);
-    adminStudentCount.textContent = 'Bil. murid: ' + lines.length;
-  });
-
-  // Event handlers
-  classSelect.addEventListener('change', () => {
-    const kelas = classSelect.value;
-    if (!kelas) { studentsSection.style.display = 'none'; summaryBox.style.display = 'none'; clearStatus(); return; }
-    renderStudentsForClass(kelas);
-    loadExistingAttendance(kelas);
-  });
-
-  btnSave.addEventListener('click', saveAttendance);
-  btnAllPresent.addEventListener('click', () => {
-    studentsList.querySelectorAll('input[type="checkbox"]').forEach(chk => chk.checked = false);
-    setStatus('Semua hadir.', 'info');
-    summaryBox.style.display = 'none';
-  });
-  btnClearTicks.addEventListener('click', () => {
-    studentsList.querySelectorAll('input[type="checkbox"]').forEach(chk => chk.checked = false);
-    setStatus('Tanda dikosongkan.', 'info');
-    summaryBox.style.display = 'none';
-  });
-
-  // Init
-  function initApp() {
-    populateClassDropdown();
-    loadDailySummary();
-    loadWeeklySummary();
-    loadMonthlySummary();
-    renderAdminClassTable();
-    populateAdminClassSelect();
-    
-    // Load holidays first, then yearly data and notifications
-    loadHolidays().then(() => {
-      renderHolidayCalendar();
-      ensureYearlyData().then(() => {
-        loadAbsenceStatus().then(() => {
-          recomputeNotificationsForYear(String(currentYear));
-        });
-      });
-    });
-  }
-
-  loadClassConfigFromDB().then(initApp).catch(err => { console.error(err); initApp(); });
-
-  // ============ PWA Service Worker & Install Prompt ============
-  
-  // Register Service Worker
-  if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-      navigator.serviceWorker.register('./service-worker.js')
-        .then(reg => console.log('Service Worker berjaya didaftarkan:', reg.scope))
-        .catch(err => console.log('Service Worker gagal didaftarkan:', err));
-    });
-  }
-
-  // Install Prompt
-  let deferredPrompt;
-  const installBanner = document.createElement('div');
-  installBanner.id = 'installBanner';
-  installBanner.innerHTML = `
-    <div style="position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,#2563eb,#1d4ed8);color:#fff;padding:12px 20px;border-radius:12px;box-shadow:0 4px 20px rgba(0,0,0,0.3);display:flex;align-items:center;gap:12px;z-index:100;max-width:90%;font-size:.9rem;">
-      <span>📱 Install app ini ke peranti anda!</span>
-      <button id="installBtn" style="background:#fff;color:#1d4ed8;border:none;padding:8px 16px;border-radius:8px;font-weight:600;cursor:pointer;">Install</button>
-      <button id="dismissBtn" style="background:transparent;color:#fff;border:1px solid #fff;padding:8px 12px;border-radius:8px;cursor:pointer;">Nanti</button>
-    </div>
-  `;
-  installBanner.style.display = 'none';
-  document.body.appendChild(installBanner);
-
-  window.addEventListener('beforeinstallprompt', (e) => {
-    e.preventDefault();
-    deferredPrompt = e;
-    installBanner.style.display = 'block';
-  });
-
-  document.getElementById('installBtn').addEventListener('click', async () => {
-    if (deferredPrompt) {
-      deferredPrompt.prompt();
-      const { outcome } = await deferredPrompt.userChoice;
-      console.log('Install prompt outcome:', outcome);
-      deferredPrompt = null;
-      installBanner.style.display = 'none';
-    }
-  });
-
-  document.getElementById('dismissBtn').addEventListener('click', () => {
-    installBanner.style.display = 'none';
-  });
-
-  window.addEventListener('appinstalled', () => {
-    console.log('App berjaya diinstall!');
-    installBanner.style.display = 'none';
-  });
-
-})();
-
-// ================= Matrix Cuti Table (Option 1) =================
-let matrixYear = new Date().getFullYear();
-let matrixMonth = new Date().getMonth();
-
-function daysInMonth(y, m) {
-  return new Date(y, m + 1, 0).getDate();
-}
-
-function formatYM(y, m) {
-  return MONTH_NAMES_MS[m] + ' ' + y;
-}
-
-function buildMatrixHeader(y, m) {
-  const totalDays = daysInMonth(y, m);
-  let ths = '<th style="position:sticky;left:0;background:#e5f0ff;z-index:3;">Kelas</th>';
-  for (let d = 1; d <= totalDays; d++) {
-    const dateKey = y + '-' + String(m+1).padStart(2,'0') + '-' + String(d).padStart(2,'0');
-    const dt = new Date(y, m, d);
-    const isWeekendDay = dt.getDay() === 0 || dt.getDay() === 6;
-    const isHolidayDay = holidaysCache[dateKey];
-    let style = 'cursor:pointer;';
-    if (isWeekendDay) style += 'background:#f3f4f6;color:#9ca3af;cursor:default;';
-    if (isHolidayDay) style += 'background:#fecaca;color:#b91c1c;';
-    ths += `<th style="${style}" ${!isWeekendDay ? `onclick="toggleMatrixHoliday('${dateKey}')"` : ''} title="${isWeekendDay?'Hujung minggu':(isHolidayDay?'Cuti - klik untuk batalkan':'Klik untuk tandakan cuti')}">${d}</th>`;
-  }
-  return ths;
-}
-
-function buildMatrixRows(y, m, allByDate) {
-  const totalDays = daysInMonth(y, m);
-  let rows = '';
-  summaryConfig.forEach(cfg => {
-    rows += `<tr><td style="position:sticky;left:0;background:#fff;font-weight:600;z-index:2;">${cfg.code} - ${cfg.kelasLabel}</td>`;
-    for (let d = 1; d <= totalDays; d++) {
-      const dateKey = y + '-' + String(m+1).padStart(2,'0') + '-' + String(d).padStart(2,'0');
-      const dt = new Date(y, m, d);
-      const isWeekendDay = dt.getDay() === 0 || dt.getDay() === 6;
-      const isHolidayDay = holidaysCache[dateKey];
-      const rec = allByDate[dateKey]?.[cfg.code];
-      let content = '-';
-      let style = 'text-align:center;';
-      if (isWeekendDay) style += 'background:#f3f4f6;color:#9ca3af;';
-      if (isHolidayDay) style += 'background:#fecaca;color:#b91c1c;';
-      if (rec && !isWeekendDay && !isHolidayDay) content = (rec.present||0) + '/' + (rec.total||0);
-      rows += `<td style="${style}">${content}</td>`;
-    }
-    rows += '</tr>';
-  });
-  return rows;
-}
-
-function renderMatrixCuti() {
-  if (!isAdmin) return;
-  const container = document.getElementById('matrixCutiContainer');
-  if (!container) return;
-  const y = matrixYear, m = matrixMonth;
-  const totalDays = daysInMonth(y, m);
-  const monthLabel = formatYM(y, m);
-  container.innerHTML = `
-    <div class="summary-header-row" style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;">
-      <strong>Jadual Cuti & Kehadiran (Matrix): ${monthLabel}</strong>
-      <div style="display:flex;gap:6px;">
-        <button type="button" class="btn btn-outline btn-sm" onclick="prevMatrixMonth()">◀</button>
-        <button type="button" class="btn btn-outline btn-sm" onclick="nextMatrixMonth()">▶</button>
-      </div>
-    </div>
-    <div class="summary-table-wrapper" style="margin-top:8px;overflow:auto;">
-      <table class="summary-table">
-        <thead><tr id="matrixHeaderRow"></tr></thead>
-        <tbody id="matrixBody"></tbody>
-      </table>
-    </div>
-    <div class="summary-footer">Klik tarikh (header) untuk tandakan CUTI bagi semua kelas. Sabtu/Ahad auto cuti.</div>
-  `;
-  const headerRow = container.querySelector('#matrixHeaderRow');
-  headerRow.innerHTML = buildMatrixHeader(y, m);
-
-  const dateKeys = [];
-  for (let d = 1; d <= totalDays; d++) {
-    dateKeys.push(y + '-' + String(m+1).padStart(2,'0') + '-' + String(d).padStart(2,'0'));
-  }
-  Promise.all(dateKeys.map(k => db.ref('kehadiran/' + k).once('value'))).then(snaps => {
-    const allByDate = {};
-    snaps.forEach((snap, i) => { allByDate[dateKeys[i]] = snap.val() || {}; });
-    const body = container.querySelector('#matrixBody');
-    body.innerHTML = buildMatrixRows(y, m, allByDate);
-  });
-}
-
-function toggleMatrixHoliday(dateKey) {
-  toggleHoliday(dateKey).then(() => {
-    renderMatrixCuti();
-    loadMonthlySummary();
-    loadWeeklySummary();
-    loadDailySummary();
-    recomputeNotificationsForYear(String(currentYear));
-  });
-}
-
-function prevMatrixMonth() {
-  matrixMonth--;
-  if (matrixMonth < 0) { matrixMonth = 11; matrixYear--; }
-  renderMatrixCuti();
-}
-function nextMatrixMonth() {
-  matrixMonth++;
-  if (matrixMonth > 11) { matrixMonth = 0; matrixYear++; }
-  renderMatrixCuti();
-}
-
-// Hook render when admin tab is opened
-const _origAdminTabHandler = document.getElementById('adminTabBtn');
-if (_origAdminTabHandler) {
-  _origAdminTabHandler.addEventListener('click', () => {
-    loadHolidays().then(renderMatrixCuti);
-  });
-}
-
-</script>
-</body>
-</html>
+    classData[code]
