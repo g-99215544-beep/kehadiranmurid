@@ -1,5 +1,8 @@
 // service-worker.js
-const CACHE_NAME = 'kehadiran-sksa-v1';
+
+// 🔥 CHANGE VERSION EVERY TIME YOU UPDATE SYSTEM
+const CACHE_NAME = 'kehadiran-sksa-v2';
+
 const urlsToCache = [
   './',
   './index.html',
@@ -9,43 +12,67 @@ const urlsToCache = [
   './icon-512.png'
 ];
 
-// Install service worker
+// ===============================
+// INSTALL
+// ===============================
 self.addEventListener('install', event => {
+  console.log('[SW] Install');
+  self.skipWaiting(); // 🔥 force activate new SW immediately
+
   event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then(cache => {
-        console.log('Cache dibuka');
-        return cache.addAll(urlsToCache);
-      })
+    caches.open(CACHE_NAME).then(cache => {
+      console.log('[SW] Caching files');
+      return cache.addAll(urlsToCache);
+    })
   );
 });
 
-// Fetch from cache or network
-self.addEventListener('fetch', event => {
-  event.respondWith(
-    caches.match(event.request)
-      .then(response => {
-        // Return cached version or fetch from network
-        if (response) {
-          return response;
-        }
-        return fetch(event.request);
-      })
-  );
-});
-
-// Update cache when new version available
+// ===============================
+// ACTIVATE
+// ===============================
 self.addEventListener('activate', event => {
+  console.log('[SW] Activate');
+
   event.waitUntil(
     caches.keys().then(cacheNames => {
       return Promise.all(
         cacheNames.map(cacheName => {
           if (cacheName !== CACHE_NAME) {
-            console.log('Memadam cache lama:', cacheName);
+            console.log('[SW] Deleting old cache:', cacheName);
             return caches.delete(cacheName);
           }
         })
       );
+    }).then(() => {
+      return self.clients.claim(); // 🔥 take control immediately
+    })
+  );
+});
+
+// ===============================
+// FETCH
+// ===============================
+self.addEventListener('fetch', event => {
+  // Always fetch latest index.html (important for updates)
+  if (event.request.mode === 'navigate') {
+    event.respondWith(
+      fetch(event.request).catch(() => caches.match('./index.html'))
+    );
+    return;
+  }
+
+  event.respondWith(
+    caches.match(event.request).then(response => {
+      if (response) {
+        return response;
+      }
+      return fetch(event.request).then(networkResponse => {
+        // Save new files into cache
+        return caches.open(CACHE_NAME).then(cache => {
+          cache.put(event.request, networkResponse.clone());
+          return networkResponse;
+        });
+      });
     })
   );
 });
