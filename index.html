@@ -1382,7 +1382,7 @@ const db = firebase.database();
         if (rec) {
           const ratio = (rec.present || 0) + "/" + (rec.total || 0);
           if (rec.absentCount > 0 && rec.absentNames?.length) {
-            c4Content = `<span class="attendance-link" onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'block':'none'">${ratio}</span><div style="display:none;font-size:.8rem;color:#b45309;margin-top:4px;">Tidak hadir: ${rec.absentNames.map((n,i)=> (i+1)+') '+n).join('<br>')}</div>`;
+            c4Content = `<span class="attendance-link" onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'block':'none'">${ratio}</span><div style="display:none;font-size:.8rem;color:#b45309;margin-top:4px;">Tidak hadir: ${rec.absentNames.join(', ')}</div>`;
           } else {
             c4Content = ratio;
           }
@@ -1439,15 +1439,7 @@ const db = firebase.database();
           const rec = allByDate[k]?.[cfg.code];
           const td = document.createElement('td');
           td.className = 'main-row-cell';
-          if(rec){
-  const p = (rec.present || 0);
-  const t = (rec.total || 0);
-  if(p < t){
-    td.innerHTML = `<span style="cursor:pointer;color:#2563eb;" onclick="toggleAbsentListFromDaily('${k}','${cfg.code}', this)">${p}/${t}</span>`;
-  } else {
-    td.textContent = `${p}/${t}`;
-  }
-} else { td.textContent = '-'; td.style.color = '#9ca3af'; }
+          td.textContent = rec ? (rec.present || 0) + "/" + (rec.total || 0) : '-';
           if (!rec) td.style.color = '#9ca3af';
           tr.appendChild(td);
         });
@@ -1486,15 +1478,7 @@ const db = firebase.database();
           const rec = allByDate[k]?.[cfg.code];
           const td = document.createElement('td');
           td.className = 'main-row-cell';
-          if(rec){
-  const p = (rec.present || 0);
-  const t = (rec.total || 0);
-  if(p < t){
-    td.innerHTML = `<span style="cursor:pointer;color:#2563eb;" onclick="toggleAbsentListFromDaily('${k}','${cfg.code}', this)">${p}/${t}</span>`;
-  } else {
-    td.textContent = `${p}/${t}`;
-  }
-} else { td.textContent = '-'; td.style.color = '#9ca3af'; }
+          td.textContent = rec ? (rec.present || 0) + "/" + (rec.total || 0) : '-';
           if (!rec) td.style.color = '#9ca3af';
           tr.appendChild(td);
         });
@@ -2012,25 +1996,22 @@ if (_origAdminTabHandler) {
 }
 
 
-async function fetchAbsentListFromDaily(dateKey, classCode) {
-  try {
-    const database = window.db || (firebase && firebase.database && firebase.database());
-      const snap = await database.ref(`kehadiran/${dateKey}/${classCode}/absent`).once('value');
-    const val = snap.val();
-    if (Array.isArray(val)) return val;
-    if (val && typeof val === 'object') return Object.values(val);
-    return [];
-  } catch (e) {
-    console.error('Fetch absent error', e);
-    return [];
-  }
-}
-
-async function toggleAbsentListFromDaily(dateKey, classCode, el){
+async function toggleAbsentListFromDaily(dateKey, darjah, kelas, el){
   const existing = el.parentElement.querySelector('.absent-dropdown');
   if(existing){ existing.remove(); return; }
 
-  const names = await fetchAbsentListFromDaily(dateKey, classCode);
+  const fullKey = `${darjah}_${kelas}`;
+  const database = window.db || firebase.database();
+
+  let names = [];
+  try {
+    const snap = await database.ref(`kehadiran/${dateKey}/${fullKey}/absent`).once('value');
+    const val = snap.val();
+    if (Array.isArray(val)) names = val;
+    else if (val && typeof val === 'object') names = Object.values(val);
+  } catch(e){
+    console.error('Fetch absent error', e);
+  }
 
   const div = document.createElement('div');
   div.className = 'absent-dropdown';
