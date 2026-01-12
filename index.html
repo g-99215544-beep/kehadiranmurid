@@ -728,7 +728,9 @@ if (_origAdminTabHandler) {
   'use strict';
   firebase.initializeApp(firebaseConfig);
   
-    window.db = firebase.database();
+    
+    window.today = new Date();
+window.db = firebase.database();
 const db = firebase.database();
 
   const MONTH_NAMES_MS = ["Januari","Februari","Mac","April","Mei","Jun","Julai","Ogos","September","Oktober","November","Disember"];
