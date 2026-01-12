@@ -455,8 +455,8 @@ function renderMatrixCuti() {
 function toggleMatrixHoliday(dateKey) {
   toggleHoliday(dateKey).then(() => {
     renderMatrixCuti();
-    loadMonthlySummary();
-    loadWeeklySummary();
+    loadMonthlySummary_2B();
+    loadWeeklySummary_2B();
     loadDailySummary();
     recomputeNotificationsForYear(String(currentYear));
   });
@@ -575,8 +575,8 @@ function renderMatrixCuti() {
 function toggleMatrixHoliday(dateKey) {
   toggleHoliday(dateKey).then(() => {
     renderMatrixCuti();
-    loadMonthlySummary();
-    loadWeeklySummary();
+    loadMonthlySummary_2B();
+    loadWeeklySummary_2B();
     loadDailySummary();
     recomputeNotificationsForYear(String(currentYear));
   });
@@ -695,8 +695,8 @@ function renderMatrixCuti() {
 function toggleMatrixHoliday(dateKey) {
   toggleHoliday(dateKey).then(() => {
     renderMatrixCuti();
-    loadMonthlySummary();
-    loadWeeklySummary();
+    loadMonthlySummary_2B();
+    loadWeeklySummary_2B();
     loadDailySummary();
     recomputeNotificationsForYear(String(currentYear));
   });
@@ -1139,8 +1139,8 @@ const db = firebase.database();
         renderNotificationBadge();
         renderAdminNotifications(String(currentYear));
         loadDailySummary();
-        loadWeeklySummary();
-        loadMonthlySummary();
+        loadWeeklySummary_2B();
+        loadMonthlySummary_2B();
       }).catch(err => {
         resetMsg.textContent = 'Ralat: ' + err.message;
         resetMsg.style.color = '#b91c1c';
@@ -1342,8 +1342,8 @@ const db = firebase.database();
       setStatus('Kehadiran berjaya disimpan.', '');
       updateSummaryBox(kelas, absentNames);
       loadDailySummary();
-      loadWeeklySummary();
-      loadMonthlySummary();
+      loadWeeklySummary_2B();
+      loadMonthlySummary_2B();
       yearlyRaw = null;
       yearlyInitialised = false;
       ensureYearlyData().then(() => recomputeNotificationsForYear(String(currentYear)));
@@ -1420,51 +1420,44 @@ const db = firebase.database();
     return arr;
   }
 
-  
-function loadWeeklySummary() {
-  const weekDates = getWeekDates(today);
-  if (!weekDates.length) return;
-  weeklyRangeLabel.textContent = formatShortDM(weekDates[0]) + " - " + formatShortDM(weekDates[weekDates.length - 1]);
-  weeklyDateRow.innerHTML = '';
-  const dateKeys = weekDates.map(dt => { weeklyDateRow.innerHTML += `<th>${formatShortDM(dt)}</th>`; return formatDateKey(dt); });
-  weeklyHeaderSpan.colSpan = dateKeys.length;
-  weeklyTableBody.innerHTML = '';
-  let bil = 1;
-  const database = window.db || firebase.database();
-  const weekKey = getWeekKeyFromDateKey(formatDateKey(weekDates[0]));
-  database.ref('weeklySummary/' + weekKey).once('value').then(snap => {
-    const data = snap.val() || {};
-    summaryConfig.forEach(cfg => {
-      const tr = document.createElement('tr');
-      tr.innerHTML = `<td class="main-row-cell">${bil++}</td><td class="main-row-cell">${cfg.darjah}</td><td class="main-row-cell">${cfg.kelasLabel}</td>`;
-      const classKey = cfg.code;
-      dateKeys.forEach(k => {
-        const td = document.createElement('td');
-        td.className = 'main-row-cell';
-        const rec = data[classKey];
-        if(rec && rec.absent && rec.absent[k]){
-          const p = rec.present || 0;
-          const t = rec.total || 0;
-          if((rec.absent[k] || []).length > 0){
-            td.innerHTML = `<span style="cursor:pointer;color:#2563eb;" onclick="showAbsentInline_2B('${k}','${classKey}', this)">${p}/${t}</span>`;
-          } else {
-            td.textContent = `${p}/${t}`;
-          }
-        } else {
-          td.textContent = '-';
-          td.style.color = '#9ca3af';
-        }
-        tr.appendChild(td);
+  function loadWeeklySummary() {
+    const weekDates = getWeekDates(today);
+    if (!weekDates.length) return;
+    weeklyRangeLabel.textContent = formatShortDM(weekDates[0]) + " - " + formatShortDM(weekDates[weekDates.length - 1]);
+    weeklyDateRow.innerHTML = '';
+    const dateKeys = weekDates.map(dt => { weeklyDateRow.innerHTML += `<th>${formatShortDM(dt)}</th>`; return formatDateKey(dt); });
+    weeklyHeaderSpan.colSpan = dateKeys.length;
+    Promise.all(dateKeys.map(k => db.ref('kehadiran/' + k).once('value'))).then(snaps => {
+      const allByDate = {};
+      snaps.forEach((snap, i) => { allByDate[dateKeys[i]] = snap.val() || {}; });
+      weeklyTableBody.innerHTML = '';
+      let bil = 1;
+      summaryConfig.forEach(cfg => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td class="main-row-cell">${bil++}</td><td class="main-row-cell darjah-col">${cfg.darjah}</td><td class="main-row-cell">${cfg.kelasLabel}</td>`;
+        dateKeys.forEach(k => {
+          const rec = allByDate[k]?.[cfg.code];
+          const td = document.createElement('td');
+          td.className = 'main-row-cell';
+          if(rec){
+  const p = (rec.present || 0);
+  const t = (rec.total || 0);
+  if(p < t){
+    td.innerHTML = `<span style="cursor:pointer;color:#2563eb;" onclick="toggleAbsentListFromDaily('${k}','${cfg.code}', this)">${p}/${t}</span>`;
+  } else {
+    td.textContent = `${p}/${t}`;
+  }
+} else { td.textContent = '-'; td.style.color = '#9ca3af'; }
+          if (!rec) td.style.color = '#9ca3af';
+          tr.appendChild(td);
+        });
+        weeklyTableBody.appendChild(tr);
       });
-      weeklyTableBody.appendChild(tr);
-    });
-    weeklyInfo.textContent = 'Data minggu ' + weeklyRangeLabel.textContent;
-  }).catch(err => { console.error(err); weeklyInfo.textContent = 'Ralat: ' + err.message; });
-}
+      weeklyInfo.textContent = 'Data minggu ' + weeklyRangeLabel.textContent;
+    }).catch(err => { console.error(err); weeklyInfo.textContent = 'Ralat: ' + err.message; });
+  }
 
-
-// Monthly summary
-
+  // Monthly summary
   function getMonthDates(baseDate) {
     const y = baseDate.getFullYear();
     const m = baseDate.getMonth();
@@ -1474,48 +1467,33 @@ function loadWeeklySummary() {
     return arr;
   }
 
-  
-function loadMonthlySummary() {
-  const monthDates = getMonthDates(today);
-  const y = today.getFullYear();
-  const m = today.getMonth();
-  monthlyHeaderSpan.colSpan = monthDates.length;
-  monthlyDateRow.innerHTML = '';
-  monthDates.forEach(dt => monthlyDateRow.innerHTML += `<th>${dt.getDate()}</th>`);
-  monthlyTableBody.innerHTML = '';
-  let bil = 1;
-  const database = window.db || firebase.database();
-  const monthKey = getMonthKeyFromDateKey(formatDateKey(monthDates[0]));
-  database.ref('monthlySummary/' + monthKey).once('value').then(snap => {
-    const data = snap.val() || {};
-    summaryConfig.forEach(cfg => {
-      const tr = document.createElement('tr');
-      tr.innerHTML = `<td class="main-row-cell">${bil++}</td><td class="main-row-cell">${cfg.darjah}</td><td class="main-row-cell">${cfg.kelasLabel}</td>`;
-      const classKey = cfg.code;
-      monthDates.forEach(dt => {
-        const k = formatDateKey(dt);
-        const td = document.createElement('td');
-        td.className = 'main-row-cell';
-        const rec = data[classKey];
-        if(rec && rec.absent && rec.absent[k]){
-          const p = rec.present || 0;
-          const t = rec.total || 0;
-          if((rec.absent[k] || []).length > 0){
-            td.innerHTML = `<span style="cursor:pointer;color:#2563eb;" onclick="showAbsentInline_2B('${k}','${classKey}', this)">${p}/${t}</span>`;
-          } else {
-            td.textContent = `${p}/${t}`;
-          }
-        } else {
-          td.textContent = '-';
-          td.style.color = '#9ca3af';
-        }
-        tr.appendChild(td);
-      });
-      monthlyTableBody.appendChild(tr);
-    });
-    monthlyInfo.textContent = 'Data bulan ' + (m+1) + '/' + y;
-  }).catch(err => { console.error(err); monthlyInfo.textContent = 'Ralat: ' + err.message; });
-}
+  function loadMonthlySummary() {
+    const monthDates = getMonthDates(today);
+    if (!monthDates.length) return;
+    monthlyLabel.textContent = MONTH_NAMES_MS[today.getMonth()] + " " + today.getFullYear();
+    monthlyDateRow.innerHTML = '';
+    const dateKeys = monthDates.map(dt => { monthlyDateRow.innerHTML += `<th>${dt.getDate()}</th>`; return formatDateKey(dt); });
+    monthlyHeaderSpan.colSpan = dateKeys.length;
+    Promise.all(dateKeys.map(k => db.ref('kehadiran/' + k).once('value'))).then(snaps => {
+      const allByDate = {};
+      snaps.forEach((snap, i) => { allByDate[dateKeys[i]] = snap.val() || {}; });
+      monthlyTableBody.innerHTML = '';
+      let bil = 1;
+      summaryConfig.forEach(cfg => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td class="main-row-cell">${bil++}</td><td class="main-row-cell darjah-col">${cfg.darjah}</td><td class="main-row-cell">${cfg.kelasLabel}</td>`;
+        dateKeys.forEach(k => {
+          const rec = allByDate[k]?.[cfg.code];
+          const td = document.createElement('td');
+          td.className = 'main-row-cell';
+          if(rec){
+  const p = (rec.present || 0);
+  const t = (rec.total || 0);
+  if(p < t){
+    td.innerHTML = `<span style="cursor:pointer;color:#2563eb;" onclick="toggleAbsentListFromDaily('${k}','${cfg.code}', this)">${p}/${t}</span>`;
+  } else {
+    td.textContent = `${p}/${t}`;
+  }
 } else { td.textContent = '-'; td.style.color = '#9ca3af'; }
           if (!rec) td.style.color = '#9ca3af';
           tr.appendChild(td);
@@ -1845,8 +1823,8 @@ function loadMonthlySummary() {
   function initApp() {
     populateClassDropdown();
     loadDailySummary();
-    loadWeeklySummary();
-    loadMonthlySummary();
+    loadWeeklySummary_2B();
+    loadMonthlySummary_2B();
     renderAdminClassTable();
     populateAdminClassSelect();
     
@@ -2007,8 +1985,8 @@ function renderMatrixCuti() {
 function toggleMatrixHoliday(dateKey) {
   toggleHoliday(dateKey).then(() => {
     renderMatrixCuti();
-    loadMonthlySummary();
-    loadWeeklySummary();
+    loadMonthlySummary_2B();
+    loadWeeklySummary_2B();
     loadDailySummary();
     recomputeNotificationsForYear(String(currentYear));
   });
@@ -2072,27 +2050,37 @@ async function toggleAbsentListFromDaily(dateKey, classCode, el){
   el.parentElement.appendChild(div);
 }
 
-function getWeekKeyFromDateKey(dateKey){
-  const parts = dateKey.split('-');
-  const d = new Date(Date.UTC(parseInt(parts[0]), parseInt(parts[1])-1, parseInt(parts[2])));
+
+/* =========================
+   WEEKLY & MONTHLY SUMMARY (2B/5C KEYS ONLY)
+   Clean standalone block – no patching existing logic
+   ========================= */
+
+function _getWeekKeyFromDateKey(dateKey){
+  const p = dateKey.split('-');
+  const d = new Date(Date.UTC(parseInt(p[0]), parseInt(p[1])-1, parseInt(p[2])));
   const dayNum = d.getUTCDay() || 7;
   d.setUTCDate(d.getUTCDate() + 4 - dayNum);
   const yearStart = new Date(Date.UTC(d.getUTCFullYear(),0,1));
   const weekNo = Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
   return d.getUTCFullYear() + '-W' + String(weekNo).padStart(2,'0');
 }
-function getMonthKeyFromDateKey(dateKey){
-  const parts = dateKey.split('-');
-  return parts[0] + '-' + parts[1];
+
+function _getMonthKeyFromDateKey(dateKey){
+  const p = dateKey.split('-');
+  return p[0] + '-' + p[1];
 }
-function upsertWeeklyMonthlyFromDaily_2B(dateKey, classKey, present, total, absentArr){
+
+function _upsertWeeklyMonthly_2B(dateKey, classKey, present, total, absentArr){
   const database = window.db || firebase.database();
-  const weekKey = getWeekKeyFromDateKey(dateKey);
-  const monthKey = getMonthKeyFromDateKey(dateKey);
+  const weekKey = _getWeekKeyFromDateKey(dateKey);
+  const monthKey = _getMonthKeyFromDateKey(dateKey);
   const payloadForDay = {};
   payloadForDay[dateKey] = absentArr || [];
+
   const weekRef = database.ref('weeklySummary/' + weekKey + '/' + classKey);
   const monthRef = database.ref('monthlySummary/' + monthKey + '/' + classKey);
+
   weekRef.transaction(curr => {
     const next = curr ? Object.assign({}, curr) : { present: 0, total: 0, absent: {} };
     next.present = (next.present || 0) + (present || 0);
@@ -2100,6 +2088,7 @@ function upsertWeeklyMonthlyFromDaily_2B(dateKey, classKey, present, total, abse
     next.absent = Object.assign({}, next.absent || {}, payloadForDay);
     return next;
   });
+
   monthRef.transaction(curr => {
     const next = curr ? Object.assign({}, curr) : { present: 0, total: 0, absent: {} };
     next.present = (next.present || 0) + (present || 0);
@@ -2109,37 +2098,139 @@ function upsertWeeklyMonthlyFromDaily_2B(dateKey, classKey, present, total, abse
   });
 }
 
+// Wrapper to call after daily save (safe)
+function onDailySaved_2B(dateKey, classKey, payload){
+  try{
+    const present = payload.present || 0;
+    const total = payload.total || 0;
+    const absentArr = payload.absent || [];
+    _upsertWeeklyMonthly_2B(dateKey, classKey, present, total, absentArr);
+  }catch(e){ console.error('Weekly/Monthly upsert error', e); }
+}
+
+// Inline viewer for weekly/monthly
 function showAbsentInline_2B(dateKey, classKey, el){
   const existing = el.parentElement.querySelector('.absent-dropdown');
   if(existing){ existing.remove(); return; }
   const database = window.db || firebase.database();
-  const weekKey = getWeekKeyFromDateKey(dateKey);
-  const monthKey = getMonthKeyFromDateKey(dateKey);
-  database.ref('weeklySummary/' + weekKey + '/' + classKey + '/absent/' + dateKey).once('value').then(snap => {
-    let val = snap.val();
-    if(!val){
-      return database.ref('monthlySummary/' + monthKey + '/' + classKey + '/absent/' + dateKey).once('value');
-    }
-    return snap;
-  }).then(snap2 => {
-    const val = snap2 && snap2.val ? snap2.val() : [];
-    const names = Array.isArray(val) ? val : (val && typeof val === 'object' ? Object.values(val) : []);
-    const div = document.createElement('div');
-    div.className = 'absent-dropdown';
-    div.style.marginTop = '6px';
-    div.style.padding = '8px';
-    div.style.background = '#f9fafb';
-    div.style.border = '1px solid #e5e7eb';
-    div.style.borderRadius = '8px';
-    div.style.fontSize = '13px';
-    if(names.length > 0){
-      div.innerHTML = '<strong>Tidak hadir:</strong><br>' + names.map((n,i)=> (i+1)+') '+n).join('<br>');
-    } else {
-      div.innerHTML = '<em>Tiada murid tidak hadir.</em>';
-    }
-    el.parentElement.appendChild(div);
-  }).catch(err => console.error(err));
+  const weekKey = _getWeekKeyFromDateKey(dateKey);
+  const monthKey = _getMonthKeyFromDateKey(dateKey);
+
+  database.ref('weeklySummary/' + weekKey + '/' + classKey + '/absent/' + dateKey).once('value')
+    .then(snap => {
+      const v = snap.val();
+      if(v) return v;
+      return database.ref('monthlySummary/' + monthKey + '/' + classKey + '/absent/' + dateKey).once('value').then(s => s.val());
+    })
+    .then(val => {
+      const names = Array.isArray(val) ? val : (val && typeof val === 'object' ? Object.values(val) : []);
+      const div = document.createElement('div');
+      div.className = 'absent-dropdown';
+      div.style.marginTop = '6px';
+      div.style.padding = '8px';
+      div.style.background = '#f9fafb';
+      div.style.border = '1px solid #e5e7eb';
+      div.style.borderRadius = '8px';
+      div.style.fontSize = '13px';
+      if(names.length > 0){
+        div.innerHTML = '<strong>Tidak hadir:</strong><br>' + names.map((n,i)=> (i+1)+') '+n).join('<br>');
+      } else {
+        div.innerHTML = '<em>Tiada murid tidak hadir.</em>';
+      }
+      el.parentElement.appendChild(div);
+    })
+    .catch(err => console.error(err));
 }
+
+// Load Weekly from Firebase (2B keys)
+function loadWeeklySummary_2B(){
+  const weekDates = getWeekDates(today);
+  if (!weekDates || !weekDates.length) return;
+  weeklyRangeLabel.textContent = formatShortDM(weekDates[0]) + " - " + formatShortDM(weekDates[weekDates.length - 1]);
+  weeklyDateRow.innerHTML = '';
+  const dateKeys = weekDates.map(dt => { weeklyDateRow.innerHTML += `<th>${formatShortDM(dt)}</th>`; return formatDateKey(dt); });
+  weeklyHeaderSpan.colSpan = dateKeys.length;
+  weeklyTableBody.innerHTML = '';
+  let bil = 1;
+
+  const database = window.db || firebase.database();
+  const weekKey = _getWeekKeyFromDateKey(formatDateKey(weekDates[0]));
+
+  database.ref('weeklySummary/' + weekKey).once('value').then(snap => {
+    const data = snap.val() || {};
+    summaryConfig.forEach(cfg => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `<td class="main-row-cell">${bil++}</td><td class="main-row-cell">${cfg.darjah}</td><td class="main-row-cell">${cfg.kelasLabel}</td>`;
+      const classKey = cfg.code; // 2B, 5C
+      dateKeys.forEach(k => {
+        const td = document.createElement('td');
+        td.className = 'main-row-cell';
+        const rec = data[classKey];
+        if(rec && rec.absent && rec.absent[k]){
+          const p = rec.present || 0;
+          const t = rec.total || 0;
+          if((rec.absent[k] || []).length > 0){
+            td.innerHTML = `<span style="cursor:pointer;color:#2563eb;" onclick="showAbsentInline_2B('${k}','${classKey}', this)">${p}/${t}</span>`;
+          } else {
+            td.textContent = `${p}/${t}`;
+          }
+        } else {
+          td.textContent = '-';
+          td.style.color = '#9ca3af';
+        }
+        tr.appendChild(td);
+      });
+      weeklyTableBody.appendChild(tr);
+    });
+    weeklyInfo.textContent = 'Data minggu ' + weeklyRangeLabel.textContent;
+  }).catch(err => { console.error(err); weeklyInfo.textContent = 'Ralat: ' + err.message; });
+}
+
+// Load Monthly from Firebase (2B keys)
+function loadMonthlySummary_2B(){
+  const monthDates = getMonthDates(today);
+  const y = today.getFullYear();
+  const m = today.getMonth();
+  monthlyHeaderSpan.colSpan = monthDates.length;
+  monthlyDateRow.innerHTML = '';
+  monthDates.forEach(dt => monthlyDateRow.innerHTML += `<th>${dt.getDate()}</th>`);
+  monthlyTableBody.innerHTML = '';
+  let bil = 1;
+
+  const database = window.db || firebase.database();
+  const monthKey = _getMonthKeyFromDateKey(formatDateKey(monthDates[0]));
+
+  database.ref('monthlySummary/' + monthKey).once('value').then(snap => {
+    const data = snap.val() || {};
+    summaryConfig.forEach(cfg => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `<td class="main-row-cell">${bil++}</td><td class="main-row-cell">${cfg.darjah}</td><td class="main-row-cell">${cfg.kelasLabel}</td>`;
+      const classKey = cfg.code; // 2B, 5C
+      monthDates.forEach(dt => {
+        const k = formatDateKey(dt);
+        const td = document.createElement('td');
+        td.className = 'main-row-cell';
+        const rec = data[classKey];
+        if(rec && rec.absent && rec.absent[k]){
+          const p = rec.present || 0;
+          const t = rec.total || 0;
+          if((rec.absent[k] || []).length > 0){
+            td.innerHTML = `<span style="cursor:pointer;color:#2563eb;" onclick="showAbsentInline_2B('${k}','${classKey}', this)">${p}/${t}</span>`;
+          } else {
+            td.textContent = `${p}/${t}`;
+          }
+        } else {
+          td.textContent = '-';
+          td.style.color = '#9ca3af';
+        }
+        tr.appendChild(td);
+      });
+      monthlyTableBody.appendChild(tr);
+    });
+    monthlyInfo.textContent = 'Data bulan ' + (m+1) + '/' + y;
+  }).catch(err => { console.error(err); monthlyInfo.textContent = 'Ralat: ' + err.message; });
+}
+
 </script>
 </body>
 </html>
