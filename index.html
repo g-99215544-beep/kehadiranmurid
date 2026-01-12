@@ -1437,7 +1437,15 @@ if (_origAdminTabHandler) {
           const rec = allByDate[k]?.[cfg.code];
           const td = document.createElement('td');
           td.className = 'main-row-cell';
-          if(rec){ td.innerHTML = `<span class="attendance-link" onclick="toggleAbsentList('${k}','${cfg.code}', this)">${(rec.present || 0)}/${(rec.total || 0)}</span>`; } else { td.textContent='-'; td.style.color='#9ca3af'; }
+          if(rec){
+  const p = (rec.present || 0);
+  const t = (rec.total || 0);
+  if(p < t){
+    td.innerHTML = `<span style="cursor:pointer;color:#2563eb;" onclick="toggleAbsentListFromDaily('${k}','${cfg.code}', this)">${p}/${t}</span>`;
+  } else {
+    td.textContent = `${p}/${t}`;
+  }
+} else { td.textContent = '-'; td.style.color = '#9ca3af'; }
           if (!rec) td.style.color = '#9ca3af';
           tr.appendChild(td);
         });
@@ -1476,7 +1484,15 @@ if (_origAdminTabHandler) {
           const rec = allByDate[k]?.[cfg.code];
           const td = document.createElement('td');
           td.className = 'main-row-cell';
-          if(rec){ td.innerHTML = `<span class="attendance-link" onclick="toggleAbsentList('${k}','${cfg.code}', this)">${(rec.present || 0)}/${(rec.total || 0)}</span>`; } else { td.textContent='-'; td.style.color='#9ca3af'; }
+          if(rec){
+  const p = (rec.present || 0);
+  const t = (rec.total || 0);
+  if(p < t){
+    td.innerHTML = `<span style="cursor:pointer;color:#2563eb;" onclick="toggleAbsentListFromDaily('${k}','${cfg.code}', this)">${p}/${t}</span>`;
+  } else {
+    td.textContent = `${p}/${t}`;
+  }
+} else { td.textContent = '-'; td.style.color = '#9ca3af'; }
           if (!rec) td.style.color = '#9ca3af';
           tr.appendChild(td);
         });
@@ -1994,10 +2010,25 @@ if (_origAdminTabHandler) {
 }
 
 
-function toggleAbsentList(dateKey, classCode, el){
+async function fetchAbsentListFromDaily(dateKey, classCode) {
+  try {
+    const snap = await db.ref(`kehadiran/${dateKey}/${classCode}/absent`).once('value');
+    const val = snap.val();
+    if (Array.isArray(val)) return val;
+    if (val && typeof val === 'object') return Object.values(val);
+    return [];
+  } catch (e) {
+    console.error('Fetch absent error', e);
+    return [];
+  }
+}
+
+async function toggleAbsentListFromDaily(dateKey, classCode, el){
   const existing = el.parentElement.querySelector('.absent-dropdown');
   if(existing){ existing.remove(); return; }
-  const rec = (window.yearlyRaw && yearlyRaw[dateKey] && yearlyRaw[dateKey][classCode]) || null;
+
+  const names = await fetchAbsentListFromDaily(dateKey, classCode);
+
   const div = document.createElement('div');
   div.className = 'absent-dropdown';
   div.style.marginTop = '6px';
@@ -2005,11 +2036,14 @@ function toggleAbsentList(dateKey, classCode, el){
   div.style.background = '#f9fafb';
   div.style.border = '1px solid #e5e7eb';
   div.style.borderRadius = '8px';
-  if(!rec || !rec.absentNames || rec.absentNames.length===0){
-    div.innerHTML = '<em>Tiada murid tidak hadir.</em>'; // fallback only when truly empty
+  div.style.fontSize = '13px';
+
+  if(names.length > 0){
+    div.innerHTML = '<strong>Tidak hadir:</strong><br>' + names.map((n,i)=> (i+1)+') '+n).join('<br>');
   } else {
-    div.innerHTML = '<strong>Tidak hadir:</strong><br>' + rec.absentNames.map((n,i)=> (i+1)+') '+n).join('<br>');
+    div.innerHTML = '<em>Tiada murid tidak hadir.</em>';
   }
+
   el.parentElement.appendChild(div);
 }
 </script>
