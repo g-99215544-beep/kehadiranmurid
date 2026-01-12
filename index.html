@@ -2049,6 +2049,79 @@ async function toggleAbsentListFromDaily(dateKey, classCode, el){
 
   el.parentElement.appendChild(div);
 }
+
+function getWeekKey(dateObj){
+  const d = new Date(Date.UTC(dateObj.getFullYear(), dateObj.getMonth(), dateObj.getDate()));
+  const dayNum = d.getUTCDay() || 7;
+  d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+  const yearStart = new Date(Date.UTC(d.getUTCFullYear(),0,1));
+  const weekNo = Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+  return d.getUTCFullYear() + '-W' + String(weekNo).padStart(2,'0');
+}
+function getMonthKey(dateObj){
+  const y = dateObj.getFullYear();
+  const m = String(dateObj.getMonth()+1).padStart(2,'0');
+  return y + '-' + m;
+}
+function upsertWeeklyMonthlyFromDaily(dateKey, darjah, kelas, present, total, absentArr){
+  const database = window.db || firebase.database();
+  const fullKey = darjah + '_' + kelas;
+  const d = new Date(dateKey);
+  const weekKey = getWeekKey(d);
+  const monthKey = getMonthKey(d);
+  const payloadForDay = {};
+  payloadForDay[dateKey] = absentArr || [];
+  const weekRef = database.ref('weeklySummary/' + weekKey + '/' + fullKey);
+  const monthRef = database.ref('monthlySummary/' + monthKey + '/' + fullKey);
+  weekRef.transaction(curr => {
+    const next = curr ? Object.assign({}, curr) : { present: 0, total: 0, absent: {} };
+    next.present = (next.present || 0) + (present || 0);
+    next.total = (next.total || 0) + (total || 0);
+    next.absent = Object.assign({}, next.absent || {}, payloadForDay);
+    return next;
+  });
+  monthRef.transaction(curr => {
+    const next = curr ? Object.assign({}, curr) : { present: 0, total: 0, absent: {} };
+    next.present = (next.present || 0) + (present || 0);
+    next.total = (next.total || 0) + (total || 0);
+    next.absent = Object.assign({}, next.absent || {}, payloadForDay);
+    return next;
+  });
+}
+
+function showAbsentInline(dateKey, darjah, kelas, el){
+  const existing = el.parentElement.querySelector('.absent-dropdown');
+  if(existing){ existing.remove(); return; }
+  const database = window.db || firebase.database();
+  const fullKey = darjah + '_' + kelas;
+  const d = new Date(dateKey);
+  const weekKey = getWeekKey(d);
+  const monthKey = getMonthKey(d);
+  database.ref('weeklySummary/' + weekKey + '/' + fullKey + '/absent/' + dateKey).once('value').then(snap => {
+    let val = snap.val();
+    if(!val){
+      return database.ref('monthlySummary/' + monthKey + '/' + fullKey + '/absent/' + dateKey).once('value');
+    }
+    return snap;
+  }).then(snap2 => {
+    const val = snap2 && snap2.val ? snap2.val() : [];
+    const names = Array.isArray(val) ? val : (val && typeof val === 'object' ? Object.values(val) : []);
+    const div = document.createElement('div');
+    div.className = 'absent-dropdown';
+    div.style.marginTop = '6px';
+    div.style.padding = '8px';
+    div.style.background = '#f9fafb';
+    div.style.border = '1px solid #e5e7eb';
+    div.style.borderRadius = '8px';
+    div.style.fontSize = '13px';
+    if(names.length > 0){
+      div.innerHTML = '<strong>Tidak hadir:</strong><br>' + names.map((n,i)=> (i+1)+') '+n).join('<br>');
+    } else {
+      div.innerHTML = '<em>Tiada murid tidak hadir.</em>';
+    }
+    el.parentElement.appendChild(div);
+  }).catch(err => console.error(err));
+}
 </script>
 </body>
 </html>
