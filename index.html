@@ -727,7 +727,9 @@ if (_origAdminTabHandler) {
 (function() {
   'use strict';
   firebase.initializeApp(firebaseConfig);
-  const db = firebase.database();
+  
+    window.db = firebase.database();
+const db = firebase.database();
 
   const MONTH_NAMES_MS = ["Januari","Februari","Mac","April","Mei","Jun","Julai","Ogos","September","Oktober","November","Disember"];
 
@@ -2012,7 +2014,8 @@ if (_origAdminTabHandler) {
 
 async function fetchAbsentListFromDaily(dateKey, classCode) {
   try {
-    const snap = await db.ref(`kehadiran/${dateKey}/${classCode}/absent`).once('value');
+    const database = window.db || (firebase && firebase.database && firebase.database());
+      const snap = await database.ref(`kehadiran/${dateKey}/${classCode}/absent`).once('value');
     const val = snap.val();
     if (Array.isArray(val)) return val;
     if (val && typeof val === 'object') return Object.values(val);
