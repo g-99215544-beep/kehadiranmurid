@@ -2006,7 +2006,7 @@ function toggleAbsentList(dateKey, classCode, el){
   div.style.border = '1px solid #e5e7eb';
   div.style.borderRadius = '8px';
   if(!rec || !rec.absentNames || rec.absentNames.length===0){
-    div.innerHTML = '<em>Tiada murid tidak hadir.</em>';
+    div.innerHTML = '<em>Tiada murid tidak hadir.</em>'; // fallback only when truly empty
   } else {
     div.innerHTML = '<strong>Tidak hadir:</strong><br>' + rec.absentNames.map((n,i)=> (i+1)+') '+n).join('<br>');
   }
