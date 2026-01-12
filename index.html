@@ -2231,6 +2231,183 @@ function loadMonthlySummary_2B(){
   }).catch(err => { console.error(err); monthlyInfo.textContent = 'Ralat: ' + err.message; });
 }
 
+
+/* =========================
+   WEEKLY & MONTHLY SUMMARY (2B/5C KEYS ONLY)
+   FINAL STABLE VERSION – standalone
+   ========================= */
+
+function _getWeekDates_2B(baseDate){
+  const start = new Date(baseDate);
+  start.setDate(start.getDate() - (start.getDay() || 7) + 1); // Monday
+  const dates = [];
+  for(let i=0;i<5;i++){
+    const d = new Date(start);
+    d.setDate(start.getDate() + i);
+    dates.push(d);
+  }
+  return dates;
+}
+
+function _getMonthDates_2B(baseDate){
+  const y = baseDate.getFullYear();
+  const m = baseDate.getMonth();
+  const last = new Date(y, m+1, 0).getDate();
+  const dates = [];
+  for(let i=1;i<=last;i++){
+    dates.push(new Date(y, m, i));
+  }
+  return dates;
+}
+
+function _formatDateKey_2B(date){
+  return date.toISOString().slice(0,10);
+}
+
+function _formatShortDM_2B(date){
+  return date.getDate().toString().padStart(2,'0') + '/' + (date.getMonth()+1).toString().padStart(2,'0');
+}
+
+function _getWeekKeyFromDateKey(dateKey){
+  const p = dateKey.split('-');
+  const d = new Date(Date.UTC(p[0], p[1]-1, p[2]));
+  const dayNum = d.getUTCDay() || 7;
+  d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+  const yearStart = new Date(Date.UTC(d.getUTCFullYear(),0,1));
+  const weekNo = Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+  return d.getUTCFullYear() + '-W' + String(weekNo).padStart(2,'0');
+}
+
+function _getMonthKeyFromDateKey(dateKey){
+  const p = dateKey.split('-');
+  return p[0] + '-' + p[1];
+}
+
+function _upsertWeeklyMonthly_2B(dateKey, classKey, present, total, absentArr){
+  const db = window.db || firebase.database();
+  const weekKey = _getWeekKeyFromDateKey(dateKey);
+  const monthKey = _getMonthKeyFromDateKey(dateKey);
+  const payload = {};
+  payload[dateKey] = absentArr || [];
+
+  db.ref('weeklySummary/'+weekKey+'/'+classKey).transaction(curr=>{
+    const n = curr || {present:0,total:0,absent:{}};
+    n.present += present || 0;
+    n.total += total || 0;
+    n.absent = Object.assign({}, n.absent, payload);
+    return n;
+  });
+
+  db.ref('monthlySummary/'+monthKey+'/'+classKey).transaction(curr=>{
+    const n = curr || {present:0,total:0,absent:{}};
+    n.present += present || 0;
+    n.total += total || 0;
+    n.absent = Object.assign({}, n.absent, payload);
+    return n;
+  });
+}
+
+function onDailySaved_2B(dateKey, classKey, payload){
+  _upsertWeeklyMonthly_2B(dateKey, classKey, payload.present || 0, payload.total || 0, payload.absent || []);
+}
+
+function loadWeeklySummary_2B(){
+  const weekDates = _getWeekDates_2B(today);
+  const dateKeys = weekDates.map(d=>_formatDateKey_2B(d));
+
+  weeklyRangeLabel.textContent = _formatShortDM_2B(weekDates[0])+" - "+_formatShortDM_2B(weekDates[weekDates.length-1]);
+  weeklyDateRow.innerHTML = dateKeys.map(d=>`<th>${d.slice(8,10)}/${d.slice(5,7)}</th>`).join('');
+  weeklyHeaderSpan.colSpan = dateKeys.length;
+  weeklyTableBody.innerHTML = '';
+
+  const db = window.db || firebase.database();
+  const weekKey = _getWeekKeyFromDateKey(dateKeys[0]);
+
+  db.ref('weeklySummary/'+weekKey).once('value').then(snap=>{
+    const data = snap.val() || {};
+    let bil = 1;
+    summaryConfig.forEach(cfg=>{
+      const tr = document.createElement('tr');
+      tr.innerHTML = `<td class="main-row-cell">${bil++}</td><td class="main-row-cell">${cfg.darjah}</td><td class="main-row-cell">${cfg.kelasLabel}</td>`;
+      dateKeys.forEach(dk=>{
+        const rec = data[cfg.code];
+        if(rec && rec.absent && rec.absent[dk]){
+          const p = rec.present || 0;
+          const t = rec.total || 0;
+          tr.innerHTML += `<td class="main-row-cell"><span style="color:#2563eb;cursor:pointer" onclick="showAbsentInline_2B('${dk}','${cfg.code}',this)">${p}/${t}</span></td>`;
+        } else {
+          tr.innerHTML += `<td class="main-row-cell" style="color:#9ca3af">-</td>`;
+        }
+      });
+      weeklyTableBody.appendChild(tr);
+    });
+  });
+}
+
+function loadMonthlySummary_2B(){
+  const monthDates = _getMonthDates_2B(today);
+  const dateKeys = monthDates.map(d=>_formatDateKey_2B(d));
+
+  monthlyDateRow.innerHTML = monthDates.map(d=>`<th>${d.getDate()}</th>`).join('');
+  monthlyHeaderSpan.colSpan = monthDates.length;
+  monthlyTableBody.innerHTML = '';
+
+  const db = window.db || firebase.database();
+  const monthKey = _getMonthKeyFromDateKey(dateKeys[0]);
+
+  db.ref('monthlySummary/'+monthKey).once('value').then(snap=>{
+    const data = snap.val() || {};
+    let bil = 1;
+    summaryConfig.forEach(cfg=>{
+      const tr = document.createElement('tr');
+      tr.innerHTML = `<td class="main-row-cell">${bil++}</td><td class="main-row-cell">${cfg.darjah}</td><td class="main-row-cell">${cfg.kelasLabel}</td>`;
+      dateKeys.forEach(dk=>{
+        const rec = data[cfg.code];
+        if(rec && rec.absent && rec.absent[dk]){
+          const p = rec.present || 0;
+          const t = rec.total || 0;
+          tr.innerHTML += `<td class="main-row-cell"><span style="color:#2563eb;cursor:pointer" onclick="showAbsentInline_2B('${dk}','${cfg.code}',this)">${p}/${t}</span></td>`;
+        } else {
+          tr.innerHTML += `<td class="main-row-cell" style="color:#9ca3af">-</td>`;
+        }
+      });
+      monthlyTableBody.appendChild(tr);
+    });
+  });
+}
+
+function showAbsentInline_2B(dateKey, classKey, el){
+  const db = window.db || firebase.database();
+  const weekKey = _getWeekKeyFromDateKey(dateKey);
+  const monthKey = _getMonthKeyFromDateKey(dateKey);
+  const existing = el.parentElement.querySelector('.absent-dropdown');
+  if(existing){ existing.remove(); return; }
+
+  const container = document.createElement('div');
+  container.className = 'absent-dropdown';
+  container.style.background = '#f9fafb';
+  container.style.padding = '8px';
+  container.style.marginTop = '6px';
+  container.style.border = '1px solid #e5e7eb';
+  container.style.borderRadius = '8px';
+
+  db.ref('weeklySummary/'+weekKey+'/'+classKey+'/absent/'+dateKey).once('value').then(snap=>{
+    let names = snap.val();
+    if(!names){
+      return db.ref('monthlySummary/'+monthKey+'/'+classKey+'/absent/'+dateKey).once('value');
+    }
+    return snap;
+  }).then(s=>{
+    const val = s && s.val ? s.val() : [];
+    const arr = Array.isArray(val) ? val : (val && typeof val === 'object' ? Object.values(val) : []);
+    if(arr.length){
+      container.innerHTML = '<strong>Tidak hadir:</strong><br>' + arr.map((n,i)=>`${i+1}) ${n}`).join('<br>');
+    } else {
+      container.innerHTML = '<em>Tiada murid tidak hadir.</em>';
+    }
+    el.parentElement.appendChild(container);
+  });
+}
 </script>
 </body>
 </html>
