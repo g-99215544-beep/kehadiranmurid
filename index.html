@@ -401,7 +401,7 @@ function buildMatrixRows(y, m, allByDate) {
       const dt = new Date(y, m, d);
       const isWeekendDay = dt.getDay() === 0 || dt.getDay() === 6;
       const isHolidayDay = holidaysCache[dateKey];
-      const rec = (window.yearlyRaw && yearlyRaw[dateKey] && yearlyRaw[dateKey][classCode]) || null;
+      const rec = allByDate[dateKey]?.[cfg.code];
       let content = '-';
       let style = 'text-align:center;';
       if (isWeekendDay) style += 'background:#f3f4f6;color:#9ca3af;';
@@ -521,7 +521,7 @@ function buildMatrixRows(y, m, allByDate) {
       const dt = new Date(y, m, d);
       const isWeekendDay = dt.getDay() === 0 || dt.getDay() === 6;
       const isHolidayDay = holidaysCache[dateKey];
-      const rec = (window.yearlyRaw && yearlyRaw[dateKey] && yearlyRaw[dateKey][classCode]) || null;
+      const rec = allByDate[dateKey]?.[cfg.code];
       let content = '-';
       let style = 'text-align:center;';
       if (isWeekendDay) style += 'background:#f3f4f6;color:#9ca3af;';
@@ -641,7 +641,7 @@ function buildMatrixRows(y, m, allByDate) {
       const dt = new Date(y, m, d);
       const isWeekendDay = dt.getDay() === 0 || dt.getDay() === 6;
       const isHolidayDay = holidaysCache[dateKey];
-      const rec = (window.yearlyRaw && yearlyRaw[dateKey] && yearlyRaw[dateKey][classCode]) || null;
+      const rec = allByDate[dateKey]?.[cfg.code];
       let content = '-';
       let style = 'text-align:center;';
       if (isWeekendDay) style += 'background:#f3f4f6;color:#9ca3af;';
@@ -1213,7 +1213,7 @@ if (_origAdminTabHandler) {
     statusAbsentList.innerHTML = '';
     if (!classCode || !dateKey || !yearlyRaw) return;
 
-    const rec = (window.yearlyRaw && yearlyRaw[dateKey] && yearlyRaw[dateKey][classCode]) || null;
+    const rec = yearlyRaw[dateKey]?.[classCode];
     if (!rec || !rec.absentNames?.length) {
       statusAbsentList.innerHTML = '<div class="pill">Tiada murid tidak hadir pada tarikh ini.</div>';
       return;
@@ -1373,7 +1373,7 @@ if (_origAdminTabHandler) {
       summaryTableBody.innerHTML = '';
       let totalPresent = 0, totalStudents = 0, bil = 1;
       summaryConfig.forEach(cfg => {
-        const rec = (window.yearlyRaw && yearlyRaw[dateKey] && yearlyRaw[dateKey][classCode]) || null;
+        const rec = all[cfg.code];
         const tr = document.createElement('tr');
         tr.className = 'main-row';
         let c4Content = '';
@@ -1434,7 +1434,7 @@ if (_origAdminTabHandler) {
         const tr = document.createElement('tr');
         tr.innerHTML = `<td class="main-row-cell">${bil++}</td><td class="main-row-cell darjah-col">${cfg.darjah}</td><td class="main-row-cell">${cfg.kelasLabel}</td>`;
         dateKeys.forEach(k => {
-          const rec = (window.yearlyRaw && yearlyRaw[dateKey] && yearlyRaw[dateKey][classCode]) || null;
+          const rec = allByDate[k]?.[cfg.code];
           const td = document.createElement('td');
           td.className = 'main-row-cell';
           if(rec){ td.innerHTML = `<span class="attendance-link" onclick="toggleAbsentList('${k}','${cfg.code}', this)">${(rec.present || 0)}/${(rec.total || 0)}</span>`; } else { td.textContent='-'; td.style.color='#9ca3af'; }
@@ -1473,7 +1473,7 @@ if (_origAdminTabHandler) {
         const tr = document.createElement('tr');
         tr.innerHTML = `<td class="main-row-cell">${bil++}</td><td class="main-row-cell darjah-col">${cfg.darjah}</td><td class="main-row-cell">${cfg.kelasLabel}</td>`;
         dateKeys.forEach(k => {
-          const rec = (window.yearlyRaw && yearlyRaw[dateKey] && yearlyRaw[dateKey][classCode]) || null;
+          const rec = allByDate[k]?.[cfg.code];
           const td = document.createElement('td');
           td.className = 'main-row-cell';
           if(rec){ td.innerHTML = `<span class="attendance-link" onclick="toggleAbsentList('${k}','${cfg.code}', this)">${(rec.present || 0)}/${(rec.total || 0)}</span>`; } else { td.textContent='-'; td.style.color='#9ca3af'; }
@@ -1549,7 +1549,7 @@ if (_origAdminTabHandler) {
       
       const dayObj = yearlyRaw[dateKey] || {};
       Object.keys(dayObj).forEach(classCode => {
-        const rec = (window.yearlyRaw && yearlyRaw[dateKey] && yearlyRaw[dateKey][classCode]) || null;
+        const rec = dayObj[classCode];
         if (!rec?.absentNames) return;
         rec.absentNames.forEach(name => {
           const status = getAbsenceStatus(dateKey, classCode, name);
@@ -1913,7 +1913,7 @@ function buildMatrixRows(y, m, allByDate) {
       const dt = new Date(y, m, d);
       const isWeekendDay = dt.getDay() === 0 || dt.getDay() === 6;
       const isHolidayDay = holidaysCache[dateKey];
-      const rec = (window.yearlyRaw && yearlyRaw[dateKey] && yearlyRaw[dateKey][classCode]) || null;
+      const rec = allByDate[dateKey]?.[cfg.code];
       let content = '-';
       let style = 'text-align:center;';
       if (isWeekendDay) style += 'background:#f3f4f6;color:#9ca3af;';
