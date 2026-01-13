@@ -2041,7 +2041,7 @@ if (_origAdminTabHandler) {
 async function fetchAbsentListFromDaily(dateKey, classCode) {
   try {
     const database = window.db || (firebase && firebase.database && firebase.database());
-      const snap = await database.ref(`kehadiran/${dateKey}/${classCode}/absent`).once('value');
+    const snap = await database.ref(`kehadiran/${dateKey}/${classCode}/absentNames`).once('value');
     const val = snap.val();
     if (Array.isArray(val)) return val;
     if (val && typeof val === 'object') return Object.values(val);
