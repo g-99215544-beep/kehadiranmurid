@@ -455,8 +455,8 @@ function renderMatrixCuti() {
 function toggleMatrixHoliday(dateKey) {
   toggleHoliday(dateKey).then(() => {
     renderMatrixCuti();
-    loadMonthlySummary_2B();
-    loadWeeklySummary_2B();
+    loadMonthlySummary();
+    loadWeeklySummary();
     loadDailySummary();
     recomputeNotificationsForYear(String(currentYear));
   });
@@ -583,8 +583,8 @@ function renderMatrixCuti() {
 function toggleMatrixHoliday(dateKey) {
   toggleHoliday(dateKey).then(() => {
     renderMatrixCuti();
-    loadMonthlySummary_2B();
-    loadWeeklySummary_2B();
+    loadMonthlySummary();
+    loadWeeklySummary();
     loadDailySummary();
     recomputeNotificationsForYear(String(currentYear));
   });
@@ -711,8 +711,8 @@ function renderMatrixCuti() {
 function toggleMatrixHoliday(dateKey) {
   toggleHoliday(dateKey).then(() => {
     renderMatrixCuti();
-    loadMonthlySummary_2B();
-    loadWeeklySummary_2B();
+    loadMonthlySummary();
+    loadWeeklySummary();
     loadDailySummary();
     recomputeNotificationsForYear(String(currentYear));
   });
@@ -1165,8 +1165,8 @@ const db = firebase.database();
         renderNotificationBadge();
         renderAdminNotifications(String(currentYear));
         loadDailySummary();
-        loadWeeklySummary_2B();
-        loadMonthlySummary_2B();
+        loadWeeklySummary();
+        loadMonthlySummary();
       }).catch(err => {
         resetMsg.textContent = 'Ralat: ' + err.message;
         resetMsg.style.color = '#b91c1c';
@@ -1368,8 +1368,8 @@ const db = firebase.database();
       setStatus('Kehadiran berjaya disimpan.', '');
       updateSummaryBox(kelas, absentNames);
       loadDailySummary();
-      loadWeeklySummary_2B();
-      loadMonthlySummary_2B();
+      loadWeeklySummary();
+      loadMonthlySummary();
       yearlyRaw = null;
       yearlyInitialised = false;
       ensureYearlyData().then(() => recomputeNotificationsForYear(String(currentYear)));
@@ -1849,8 +1849,8 @@ const db = firebase.database();
   function initApp() {
     populateClassDropdown();
     loadDailySummary();
-    loadWeeklySummary_2B();
-    loadMonthlySummary_2B();
+    loadWeeklySummary();
+    loadMonthlySummary();
     renderAdminClassTable();
     populateAdminClassSelect();
     
@@ -2011,8 +2011,8 @@ function renderMatrixCuti() {
 function toggleMatrixHoliday(dateKey) {
   toggleHoliday(dateKey).then(() => {
     renderMatrixCuti();
-    loadMonthlySummary_2B();
-    loadWeeklySummary_2B();
+    loadMonthlySummary();
+    loadWeeklySummary();
     loadDailySummary();
     recomputeNotificationsForYear(String(currentYear));
   });
@@ -2169,7 +2169,7 @@ function showAbsentInline_2B(dateKey, classKey, el){
 }
 
 // Load Weekly from Firebase (2B keys)
-function loadWeeklySummary_2B(){
+function loadWeeklySummary(){
   const weekDates = getWeekDates(today);
   if (!weekDates || !weekDates.length) return;
   weeklyRangeLabel.textContent = formatShortDM(weekDates[0]) + " - " + formatShortDM(weekDates[weekDates.length - 1]);
@@ -2213,7 +2213,7 @@ function loadWeeklySummary_2B(){
 }
 
 // Load Monthly from Firebase (2B keys)
-function loadMonthlySummary_2B(){
+function loadMonthlySummary(){
   const monthDates = getMonthDates(today);
   const y = today.getFullYear();
   const m = today.getMonth();
@@ -2337,7 +2337,7 @@ function onDailySaved_2B(dateKey, classKey, payload){
   _upsertWeeklyMonthly_2B(dateKey, classKey, payload.present || 0, payload.total || 0, payload.absent || []);
 }
 
-function loadWeeklySummary_2B(){
+function loadWeeklySummary(){
   const weekDates = _getWeekDates_2B(today);
   const dateKeys = weekDates.map(d=>_formatDateKey_2B(d));
 
@@ -2370,7 +2370,7 @@ function loadWeeklySummary_2B(){
   });
 }
 
-function loadMonthlySummary_2B(){
+function loadMonthlySummary(){
   const monthDates = _getMonthDates_2B(today);
   const dateKeys = monthDates.map(d=>_formatDateKey_2B(d));
 
