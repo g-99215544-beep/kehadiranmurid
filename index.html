@@ -115,6 +115,20 @@
     .alert-warning { background:#fef3c7; border:1px solid #fcd34d; color:#b45309; }
     .notification-row { transition: background 0.15s; }
     .notification-row:hover { background:#eff6ff !important; }
+    /* Full attendance green cell */
+    .cell-full-attendance { background:#d1fae5 !important; color:#047857; font-weight:600; }
+    /* Admin panel styles */
+    .admin-panel { animation: fadeIn 0.2s ease-out; }
+    @keyframes fadeIn { from { opacity:0; transform:translateY(-10px); } to { opacity:1; transform:translateY(0); } }
+    /* Absence report styles */
+    .absence-card { background:#fff; border:1px solid #e5e7eb; border-radius:12px; padding:12px; margin-bottom:10px; transition:box-shadow 0.15s; }
+    .absence-card:hover { box-shadow:0 4px 12px rgba(0,0,0,0.1); }
+    .absence-card-header { display:flex; justify-content:space-between; align-items:center; cursor:pointer; }
+    .absence-card-name { font-weight:600; color:#1f2937; }
+    .absence-card-class { font-size:.85rem; color:#6b7280; }
+    .absence-card-count { background:#fee2e2; color:#b91c1c; padding:4px 10px; border-radius:999px; font-weight:700; font-size:.9rem; }
+    .absence-card-dates { margin-top:10px; padding-top:10px; border-top:1px solid #e5e7eb; font-size:.85rem; color:#4b5563; display:none; }
+    .absence-card-dates.show { display:block; }
     @media (max-width:640px) { .header-text h1 { font-size:1.15rem; } .students-header, .student-row { grid-template-columns:42px 1fr 80px; } .students-container { max-height:360px; } }
   </style>
 </head>
@@ -229,18 +243,31 @@
     <div id="tab-admin" class="tab-panel" style="display:none;">
       <div class="summary-box"><div class="summary-main"><div><strong>Mod Admin</strong></div><div>Anda boleh urus kelas, murid, cuti sekolah dan status ketidakhadiran.</div></div></div>
       
-      <!-- Pengurusan Cuti Sekolah - Jadual Bulanan -->
+      <!-- Admin Function Selector Dropdown -->
       <div style="margin-top:16px;">
+        <label for="adminFunctionSelect" style="font-size:.9rem;font-weight:600;color:#374151;">Pilih Fungsi Admin:</label>
+        <select id="adminFunctionSelect" style="margin-top:6px;font-size:1rem;padding:10px 14px;">
+          <option value="">— Sila pilih fungsi —</option>
+          <option value="holidaySettings">📅 Tetapan Cuti Sekolah</option>
+          <option value="absenceChecker">📊 Semak Murid Tidak Hadir</option>
+          <option value="pontengNotif">🔔 Notifikasi Murid Ponteng</option>
+          <option value="statusManager">📋 Urus Status Ketidakhadiran</option>
+          <option value="classList">🏫 Senarai Kelas</option>
+          <option value="studentEditor">✏️ Sunting Senarai Murid</option>
+          <option value="resetData">⚠️ Reset Data</option>
+        </select>
+      </div>
+
+      <!-- Admin Function Panels -->
+      
+      <!-- 1. Tetapan Cuti Sekolah -->
+      <div id="adminPanel-holidaySettings" class="admin-panel" style="display:none;margin-top:16px;">
         <h3 style="margin:0 0 6px;font-size:1rem;">📅 Tetapan Cuti Sekolah</h3>
-        <div id="matrixCutiContainer" style="margin-top:12px;"></div>
-    
         <div class="alert-box alert-info" style="margin-top:8px;">
           <strong>Cara Penggunaan:</strong> Klik pada tarikh untuk tandakan sebagai <strong>CUTI</strong>. Klik sekali lagi untuk batalkan.<br>
           <span style="display:inline-block;width:20px;height:20px;background:#fecaca;border:1px solid #f87171;border-radius:4px;vertical-align:middle;margin:0 4px;text-align:center;line-height:20px;font-size:.7rem;">X</span> = Cuti Sekolah &nbsp;
           <span style="display:inline-block;width:20px;height:20px;background:#e5e7eb;border:1px solid #d1d5db;border-radius:4px;vertical-align:middle;margin:0 4px;text-align:center;line-height:20px;font-size:.7rem;color:#9ca3af;">5</span> = Sabtu/Ahad (auto skip)
         </div>
-        
-        <!-- Month Navigation -->
         <div class="summary-header-row" style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-top:12px;">
           <span>Bulan: <span id="holidayMonthLabel" style="font-weight:600;"></span></span>
           <div style="display:flex;gap:6px;">
@@ -248,26 +275,46 @@
             <button type="button" class="btn btn-outline btn-sm" id="nextMonthBtn">▶</button>
           </div>
         </div>
-        
-        <!-- Holiday Calendar Grid - Same format as Monthly Summary -->
         <div class="summary-table-wrapper" style="margin-top:10px;">
           <table class="summary-table">
             <thead>
-              <tr>
-                <th colspan="31" id="holidayHeaderSpan">Tarikh</th>
-              </tr>
+              <tr><th colspan="31" id="holidayHeaderSpan">Tarikh</th></tr>
               <tr id="holidayDateRow"></tr>
             </thead>
-            <tbody>
-              <tr id="holidayClickRow"></tr>
-            </tbody>
+            <tbody><tr id="holidayClickRow"></tr></tbody>
           </table>
         </div>
         <div class="summary-footer" id="holidayInfo">Klik pada tarikh untuk tandakan sebagai cuti sekolah.</div>
       </div>
 
-      <!-- Notifikasi Ponteng -->
-      <div id="adminNotificationSection" style="margin-top:20px;">
+      <!-- 2. Semak Murid Tidak Hadir (NEW) -->
+      <div id="adminPanel-absenceChecker" class="admin-panel" style="display:none;margin-top:16px;">
+        <h3 style="margin:0 0 6px;font-size:1rem;">📊 Semak Murid Tidak Hadir</h3>
+        <div class="alert-box alert-info" style="margin-top:8px;">
+          <strong>Paparan:</strong> Senarai murid mengikut bilangan ketidakhadiran (tertinggi di atas). Klik pada nama untuk lihat tarikh tidak hadir.
+        </div>
+        <div class="flex-row" style="margin-top:12px;gap:12px;">
+          <div style="flex:1;">
+            <label style="font-size:.85rem;">Jenis Laporan:</label>
+            <select id="absenceReportType" style="margin-top:4px;">
+              <option value="monthly">Bulanan</option>
+              <option value="yearly">Tahunan</option>
+            </select>
+          </div>
+          <div style="flex:1;" id="absenceMonthSelectWrapper">
+            <label style="font-size:.85rem;">Pilih Bulan:</label>
+            <select id="absenceMonthSelect" style="margin-top:4px;"></select>
+          </div>
+          <div style="flex:0;">
+            <label style="font-size:.85rem;">&nbsp;</label>
+            <button type="button" class="btn btn-primary" id="loadAbsenceReportBtn" style="margin-top:4px;">🔍 Jana Laporan</button>
+          </div>
+        </div>
+        <div id="absenceReportResult" style="margin-top:16px;"></div>
+      </div>
+
+      <!-- 3. Notifikasi Ponteng -->
+      <div id="adminPanel-pontengNotif" class="admin-panel" style="display:none;margin-top:16px;">
         <h3 style="margin:0 0 6px;font-size:1rem;">🔔 Notifikasi Murid Ponteng (Tidak Bersebab)</h3>
         <div class="alert-box alert-info" style="margin-top:8px;">
           <strong>Cara Penggunaan:</strong><br>
@@ -285,8 +332,8 @@
         <div class="summary-footer" id="adminNotificationInfo">Tiada notifikasi ponteng.</div>
       </div>
 
-      <!-- Urus Status Ketidakhadiran -->
-      <div style="margin-top:20px;">
+      <!-- 4. Urus Status Ketidakhadiran -->
+      <div id="adminPanel-statusManager" class="admin-panel" style="display:none;margin-top:16px;">
         <h3 style="margin:0 0 6px;font-size:1rem;">📋 Urus Status Ketidakhadiran Murid</h3>
         <div class="flex-row" style="margin-top:8px;">
           <div style="flex:1;">
@@ -301,8 +348,8 @@
         <div id="statusAbsentList" style="margin-top:12px;"></div>
       </div>
 
-      <!-- Senarai kelas -->
-      <div style="margin-top:20px;">
+      <!-- 5. Senarai Kelas -->
+      <div id="adminPanel-classList" class="admin-panel" style="display:none;margin-top:16px;">
         <h3 style="margin:0 0 6px;font-size:1rem;">🏫 Senarai Kelas</h3>
         <div class="summary-table-wrapper">
           <table class="summary-table"><thead><tr><th>Bil</th><th>Darjah</th><th>Kod</th><th>Nama Kelas</th><th>Bil. Murid</th><th>Tindakan</th></tr></thead><tbody id="adminClassTableBody"></tbody></table>
@@ -319,8 +366,8 @@
         </div>
       </div>
 
-      <!-- Sunting murid -->
-      <div style="margin-top:20px;">
+      <!-- 6. Sunting Senarai Murid -->
+      <div id="adminPanel-studentEditor" class="admin-panel" style="display:none;margin-top:16px;">
         <h3 style="margin:0 0 6px;font-size:1rem;">✏️ Sunting Senarai Murid</h3>
         <label for="adminStudentClassSelect" style="font-size:.85rem;">Pilih kelas:</label>
         <select id="adminStudentClassSelect" style="margin-top:4px;margin-bottom:8px;"></select>
@@ -332,16 +379,19 @@
         <div id="adminStudentMsg" style="margin-top:6px;font-size:.8rem;color:#6b7280;">Perubahan akan disimpan di Firebase Realtime Database.</div>
       </div>
 
-      <!-- Reset Data -->
-      <div style="margin-top:20px;padding:16px;border-radius:12px;background:#fef2f2;border:1px solid #fecaca;">
-        <h3 style="margin:0 0 6px;font-size:1rem;color:#b91c1c;">⚠️ Reset Data Kehadiran</h3>
-        <p style="font-size:.85rem;color:#7f1d1d;margin:0 0 12px;">Padam SEMUA rekod kehadiran dan status ketidakhadiran. Tindakan ini <strong>tidak boleh dibatalkan</strong>.</p>
-        <div class="flex-row" style="gap:8px;">
-          <button type="button" class="btn btn-danger" id="resetAttendanceBtn">🗑️ Reset Semua Data Kehadiran</button>
-          <button type="button" class="btn btn-outline" id="resetHolidaysBtn" style="border-color:#f87171;color:#b91c1c;">🗑️ Reset Senarai Cuti</button>
+      <!-- 7. Reset Data -->
+      <div id="adminPanel-resetData" class="admin-panel" style="display:none;margin-top:16px;">
+        <div style="padding:16px;border-radius:12px;background:#fef2f2;border:1px solid #fecaca;">
+          <h3 style="margin:0 0 6px;font-size:1rem;color:#b91c1c;">⚠️ Reset Data Kehadiran</h3>
+          <p style="font-size:.85rem;color:#7f1d1d;margin:0 0 12px;">Padam SEMUA rekod kehadiran dan status ketidakhadiran. Tindakan ini <strong>tidak boleh dibatalkan</strong>.</p>
+          <div class="flex-row" style="gap:8px;">
+            <button type="button" class="btn btn-danger" id="resetAttendanceBtn">🗑️ Reset Semua Data Kehadiran</button>
+            <button type="button" class="btn btn-outline" id="resetHolidaysBtn" style="border-color:#f87171;color:#b91c1c;">🗑️ Reset Senarai Cuti</button>
+          </div>
+          <div id="resetMsg" style="margin-top:8px;font-size:.8rem;color:#6b7280;"></div>
         </div>
-        <div id="resetMsg" style="margin-top:8px;font-size:.8rem;color:#6b7280;"></div>
       </div>
+
     </div>
   </section>
   <footer>SK Sri Aman · Modul Kehadiran Harian Murid (Firebase Realtime Database)</footer>
@@ -1405,20 +1455,27 @@ const db = firebase.database();
         const tr = document.createElement('tr');
         tr.className = 'main-row';
         let c4Content = '';
+        let c4Class = 'main-row-cell';
         if (rec) {
-          const ratio = (rec.present || 0) + "/" + (rec.total || 0);
+          const p = rec.present || 0;
+          const t = rec.total || 0;
+          const ratio = p + "/" + t;
           if (rec.absentCount > 0 && rec.absentNames?.length) {
             c4Content = `<span class="attendance-link" onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'block':'none'">${ratio}</span><div style="display:none;font-size:.8rem;color:#b45309;margin-top:4px;">Tidak hadir: ${rec.absentNames.map((n,i)=> (i+1)+') '+n).join('<br>')}</div>`;
           } else {
             c4Content = ratio;
+            // Full attendance - green background
+            if (p === t && t > 0) {
+              c4Class += ' cell-full-attendance';
+            }
           }
-          totalPresent += rec.present || 0;
-          totalStudents += rec.total || 0;
+          totalPresent += p;
+          totalStudents += t;
         } else {
           tr.classList.add('row-not-updated');
           c4Content = '<span class="cell-not-updated">Belum dikemaskini</span>';
         }
-        tr.innerHTML = `<td class="main-row-cell">${bil++}</td><td class="main-row-cell darjah-col">${cfg.darjah}</td><td class="main-row-cell">${cfg.kelasLabel}</td><td class="main-row-cell">${c4Content}</td>`;
+        tr.innerHTML = `<td class="main-row-cell">${bil++}</td><td class="main-row-cell darjah-col">${cfg.darjah}</td><td class="main-row-cell">${cfg.kelasLabel}</td><td class="${c4Class}">${c4Content}</td>`;
         summaryTableBody.appendChild(tr);
       });
       if (totalStudents > 0) {
@@ -1466,15 +1523,24 @@ const db = firebase.database();
           const td = document.createElement('td');
           td.className = 'main-row-cell';
           if(rec){
-  const p = (rec.present || 0);
-  const t = (rec.total || 0);
-  if(p < t){
-    td.innerHTML = `<span style="cursor:pointer;color:#2563eb;" onclick="toggleAbsentListFromDaily('${k}','${cfg.code}', this)">${p}/${t}</span>`;
-  } else {
-    td.textContent = `${p}/${t}`;
-  }
-} else { td.textContent = '-'; td.style.color = '#9ca3af'; }
-          if (!rec) td.style.color = '#9ca3af';
+            const p = (rec.present || 0);
+            const t = (rec.total || 0);
+            const absentNames = rec.absentNames || [];
+            const absentArr = Array.isArray(absentNames) ? absentNames : Object.values(absentNames || {});
+            if(p < t && absentArr.length > 0){
+              const escapedNames = JSON.stringify(absentArr).replace(/'/g, "\\'").replace(/"/g, '&quot;');
+              td.innerHTML = `<span class="attendance-link" data-absent="${escapedNames}" onclick="showAbsentDropdown(this)">${p}/${t}</span>`;
+            } else {
+              td.textContent = `${p}/${t}`;
+              // Full attendance - green background
+              if (p === t && t > 0) {
+                td.classList.add('cell-full-attendance');
+              }
+            }
+          } else { 
+            td.textContent = '-'; 
+            td.style.color = '#9ca3af'; 
+          }
           tr.appendChild(td);
         });
         weeklyTableBody.appendChild(tr);
@@ -1513,15 +1579,24 @@ const db = firebase.database();
           const td = document.createElement('td');
           td.className = 'main-row-cell';
           if(rec){
-  const p = (rec.present || 0);
-  const t = (rec.total || 0);
-  if(p < t){
-    td.innerHTML = `<span style="cursor:pointer;color:#2563eb;" onclick="toggleAbsentListFromDaily('${k}','${cfg.code}', this)">${p}/${t}</span>`;
-  } else {
-    td.textContent = `${p}/${t}`;
-  }
-} else { td.textContent = '-'; td.style.color = '#9ca3af'; }
-          if (!rec) td.style.color = '#9ca3af';
+            const p = (rec.present || 0);
+            const t = (rec.total || 0);
+            const absentNames = rec.absentNames || [];
+            const absentArr = Array.isArray(absentNames) ? absentNames : Object.values(absentNames || {});
+            if(p < t && absentArr.length > 0){
+              const escapedNames = JSON.stringify(absentArr).replace(/'/g, "\\'").replace(/"/g, '&quot;');
+              td.innerHTML = `<span class="attendance-link" data-absent="${escapedNames}" onclick="showAbsentDropdown(this)">${p}/${t}</span>`;
+            } else {
+              td.textContent = `${p}/${t}`;
+              // Full attendance - green background
+              if (p === t && t > 0) {
+                td.classList.add('cell-full-attendance');
+              }
+            }
+          } else { 
+            td.textContent = '-'; 
+            td.style.color = '#9ca3af'; 
+          }
           tr.appendChild(td);
         });
         monthlyTableBody.appendChild(tr);
@@ -1845,6 +1920,168 @@ const db = firebase.database();
     summaryBox.style.display = 'none';
   });
 
+  // ============ Admin Function Dropdown Handler ============
+  const adminFunctionSelect = document.getElementById('adminFunctionSelect');
+  const adminPanels = document.querySelectorAll('.admin-panel');
+  
+  if (adminFunctionSelect) {
+    adminFunctionSelect.addEventListener('change', () => {
+      const selected = adminFunctionSelect.value;
+      // Hide all panels
+      adminPanels.forEach(panel => panel.style.display = 'none');
+      // Show selected panel
+      if (selected) {
+        const panel = document.getElementById('adminPanel-' + selected);
+        if (panel) {
+          panel.style.display = 'block';
+          // Trigger specific panel init if needed
+          if (selected === 'holidaySettings') {
+            renderHolidayCalendar();
+          } else if (selected === 'absenceChecker') {
+            initAbsenceChecker();
+          } else if (selected === 'pontengNotif') {
+            recomputeNotificationsForYear(String(currentYear));
+          } else if (selected === 'statusManager') {
+            loadStatusManagement();
+          }
+        }
+      }
+    });
+  }
+
+  // ============ Absence Checker Functions ============
+  const absenceReportType = document.getElementById('absenceReportType');
+  const absenceMonthSelect = document.getElementById('absenceMonthSelect');
+  const absenceMonthSelectWrapper = document.getElementById('absenceMonthSelectWrapper');
+  const loadAbsenceReportBtn = document.getElementById('loadAbsenceReportBtn');
+  const absenceReportResult = document.getElementById('absenceReportResult');
+
+  function initAbsenceChecker() {
+    // Populate month select
+    if (absenceMonthSelect) {
+      absenceMonthSelect.innerHTML = '';
+      for (let m = 0; m < 12; m++) {
+        const opt = document.createElement('option');
+        opt.value = m;
+        opt.textContent = MONTH_NAMES_MS[m] + ' ' + currentYear;
+        if (m === today.getMonth()) opt.selected = true;
+        absenceMonthSelect.appendChild(opt);
+      }
+    }
+    // Show/hide month select based on report type
+    if (absenceReportType) {
+      absenceReportType.addEventListener('change', () => {
+        absenceMonthSelectWrapper.style.display = absenceReportType.value === 'monthly' ? 'block' : 'none';
+      });
+    }
+  }
+
+  if (loadAbsenceReportBtn) {
+    loadAbsenceReportBtn.addEventListener('click', generateAbsenceReport);
+  }
+
+  async function generateAbsenceReport() {
+    if (!absenceReportResult) return;
+    absenceReportResult.innerHTML = '<div style="text-align:center;padding:20px;color:#6b7280;">⏳ Memuatkan data...</div>';
+    
+    const reportType = absenceReportType?.value || 'monthly';
+    const selectedMonth = parseInt(absenceMonthSelect?.value || today.getMonth());
+    
+    try {
+      // Fetch all attendance data for the year
+      const snap = await db.ref('kehadiran').once('value');
+      const allData = snap.val() || {};
+      
+      // Build absence map: { studentName: { class, dates: [], count } }
+      const absenceMap = {};
+      
+      Object.keys(allData).forEach(dateKey => {
+        const dateObj = new Date(dateKey);
+        const isValidDate = reportType === 'yearly' || dateObj.getMonth() === selectedMonth;
+        
+        if (!isValidDate) return;
+        
+        const dayData = allData[dateKey];
+        Object.keys(dayData).forEach(classCode => {
+          const rec = dayData[classCode];
+          const absentNames = rec.absentNames || [];
+          const absentArr = Array.isArray(absentNames) ? absentNames : Object.values(absentNames || {});
+          
+          absentArr.forEach(name => {
+            if (!name) return;
+            const key = name + '|' + classCode;
+            if (!absenceMap[key]) {
+              absenceMap[key] = {
+                name: name,
+                classCode: classCode,
+                classLabel: summaryConfig.find(c => c.code === classCode)?.kelasLabel || classCode,
+                darjah: summaryConfig.find(c => c.code === classCode)?.darjah || '',
+                dates: [],
+                count: 0
+              };
+            }
+            absenceMap[key].dates.push(dateKey);
+            absenceMap[key].count++;
+          });
+        });
+      });
+      
+      // Convert to array and sort by count (highest first)
+      const absenceList = Object.values(absenceMap).sort((a, b) => b.count - a.count);
+      
+      if (absenceList.length === 0) {
+        absenceReportResult.innerHTML = `
+          <div style="text-align:center;padding:30px;background:#d1fae5;border-radius:12px;color:#047857;">
+            <div style="font-size:2rem;margin-bottom:8px;">🎉</div>
+            <strong>Tiada rekod ketidakhadiran untuk tempoh ini!</strong>
+          </div>
+        `;
+        return;
+      }
+      
+      // Generate report HTML
+      const periodLabel = reportType === 'yearly' 
+        ? 'Tahun ' + currentYear 
+        : MONTH_NAMES_MS[selectedMonth] + ' ' + currentYear;
+      
+      let html = `
+        <div style="margin-bottom:12px;">
+          <strong>Laporan Ketidakhadiran: ${periodLabel}</strong>
+          <span class="pill" style="margin-left:8px;">${absenceList.length} murid</span>
+        </div>
+      `;
+      
+      absenceList.forEach((item, idx) => {
+        const datesFormatted = item.dates.sort().map(d => {
+          const dt = new Date(d);
+          return dt.getDate() + '/' + (dt.getMonth() + 1);
+        }).join(', ');
+        
+        html += `
+          <div class="absence-card" onclick="this.querySelector('.absence-card-dates').classList.toggle('show')">
+            <div class="absence-card-header">
+              <div>
+                <div class="absence-card-name">${idx + 1}. ${item.name}</div>
+                <div class="absence-card-class">${item.darjah} ${item.classLabel} (${item.classCode})</div>
+              </div>
+              <div class="absence-card-count">${item.count} hari</div>
+            </div>
+            <div class="absence-card-dates">
+              <strong>Tarikh tidak hadir:</strong><br>
+              ${datesFormatted}
+            </div>
+          </div>
+        `;
+      });
+      
+      absenceReportResult.innerHTML = html;
+      
+    } catch (err) {
+      console.error('Error generating absence report:', err);
+      absenceReportResult.innerHTML = '<div style="color:#b91c1c;padding:20px;">❌ Ralat: ' + err.message + '</div>';
+    }
+  }
+
   // Init
   function initApp() {
     populateClassDropdown();
@@ -1853,6 +2090,7 @@ const db = firebase.database();
     loadMonthlySummary();
     renderAdminClassTable();
     populateAdminClassSelect();
+    initAbsenceChecker();
     
     // Load holidays first, then yearly data and notifications
     loadHolidays().then(() => {
@@ -2041,15 +2279,64 @@ if (_origAdminTabHandler) {
 async function fetchAbsentListFromDaily(dateKey, classCode) {
   try {
     const database = window.db || (firebase && firebase.database && firebase.database());
-    const snap = await database.ref(`kehadiran/${dateKey}/${classCode}/absentNames`).once('value');
-    const val = snap.val();
-    if (Array.isArray(val)) return val;
-    if (val && typeof val === 'object') return Object.values(val);
+    // Fetch the entire record to be safe
+    const snap = await database.ref(`kehadiran/${dateKey}/${classCode}`).once('value');
+    const record = snap.val();
+    
+    if (!record) {
+      console.log('No record found for', dateKey, classCode);
+      return [];
+    }
+    
+    const absentNames = record.absentNames;
+    
+    // Handle various formats Firebase might return
+    if (!absentNames) return [];
+    if (Array.isArray(absentNames)) return absentNames.filter(n => n); // filter out nulls
+    if (typeof absentNames === 'object') return Object.values(absentNames).filter(n => n);
+    if (typeof absentNames === 'string') return [absentNames];
+    
     return [];
   } catch (e) {
     console.error('Fetch absent error', e);
     return [];
   }
+}
+
+// Show absent dropdown using data attribute (no async fetch needed)
+function showAbsentDropdown(el) {
+  const existing = el.parentElement.querySelector('.absent-dropdown');
+  if(existing){ existing.remove(); return; }
+  
+  // Get absent names from data attribute
+  let names = [];
+  try {
+    const dataAttr = el.getAttribute('data-absent');
+    if (dataAttr) {
+      names = JSON.parse(dataAttr.replace(/&quot;/g, '"'));
+    }
+  } catch(e) {
+    console.error('Error parsing absent names:', e);
+  }
+  
+  const div = document.createElement('div');
+  div.className = 'absent-dropdown';
+  div.style.marginTop = '6px';
+  div.style.padding = '8px';
+  div.style.background = '#fef3c7';
+  div.style.border = '1px solid #f59e0b';
+  div.style.borderRadius = '8px';
+  div.style.fontSize = '13px';
+  div.style.position = 'relative';
+  div.style.zIndex = '10';
+  
+  if(names.length > 0){
+    div.innerHTML = '<strong style="color:#b45309;">Tidak hadir:</strong><br>' + names.map((n,i)=> `<span style="color:#78350f;">${i+1}) ${n}</span>`).join('<br>');
+  } else {
+    div.innerHTML = '<em>Tiada data.</em>';
+  }
+  
+  el.parentElement.appendChild(div);
 }
 
 async function toggleAbsentListFromDaily(dateKey, classCode, el){
