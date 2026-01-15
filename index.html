@@ -1177,7 +1177,12 @@ const db = firebase.database();
   // Global function for onclick
   window.toggleHolidayDate = function(dateKey) {
     toggleHoliday(dateKey).then(() => {
+      updateDateDisplayWithHolidayCheck();
       renderHolidayCalendar();
+      // Reload summaries to reflect holiday changes
+      loadDailySummary();
+      loadWeeklySummary();
+      loadMonthlySummary();
       recomputeNotificationsForYear(String(currentYear));
     });
   };
@@ -2121,16 +2126,17 @@ const db = firebase.database();
   // Init
   function initApp() {
     populateClassDropdown();
-    loadDailySummary();
-    loadWeeklySummary();
-    loadMonthlySummary();
     renderAdminClassTable();
     populateAdminClassSelect();
     initAbsenceChecker();
-    
-    // Load holidays first, then yearly data and notifications
+
+    // Load holidays first, then load summaries and other data
     loadHolidays().then(() => {
       updateDateDisplayWithHolidayCheck();
+      // Load summaries after holidays are loaded so holiday check works
+      loadDailySummary();
+      loadWeeklySummary();
+      loadMonthlySummary();
       renderHolidayCalendar();
       ensureYearlyData().then(() => {
         loadAbsenceStatus().then(() => {
