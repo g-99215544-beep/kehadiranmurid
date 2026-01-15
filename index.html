@@ -1542,12 +1542,12 @@ const db = firebase.database();
           const td = document.createElement('td');
           td.className = 'main-row-cell';
 
-          // Check if this date is a holiday
-          if(isHoliday(k)) {
-            td.textContent = 'Cuti';
+          // Check if this date is a holiday or weekend
+          if(isHoliday(k) || isWeekend(k)) {
+            td.textContent = '-';
             td.style.background = '#e5e7eb';
-            td.style.color = '#6b7280';
-            td.style.fontWeight = '600';
+            td.style.color = '#9ca3af';
+            td.style.fontWeight = '400';
             td.style.textAlign = 'center';
           } else if(rec){
             const p = (rec.present || 0);
@@ -1606,12 +1606,12 @@ const db = firebase.database();
           const td = document.createElement('td');
           td.className = 'main-row-cell';
 
-          // Check if this date is a holiday
-          if(isHoliday(k)) {
-            td.textContent = 'Cuti';
+          // Check if this date is a holiday or weekend
+          if(isHoliday(k) || isWeekend(k)) {
+            td.textContent = '-';
             td.style.background = '#e5e7eb';
-            td.style.color = '#6b7280';
-            td.style.fontWeight = '600';
+            td.style.color = '#9ca3af';
+            td.style.fontWeight = '400';
             td.style.textAlign = 'center';
           } else if(rec){
             const p = (rec.present || 0);
