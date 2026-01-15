@@ -34,7 +34,7 @@
     .card-header { display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:12px; flex-wrap:wrap; }
     .card-header h2 { margin:0; font-size:1.1rem; display:flex; align-items:center; gap:8px; }
     .badge { display:inline-block; padding:2px 10px; border-radius:999px; font-size:.75rem; background:#e0f2fe; color:#0369a1; font-weight:600; }
-    .date-display { font-size:.9rem; color:#e5e7eb; }
+    .date-display { font-size:1.15rem; color:#111827; font-weight:600; }
     label { font-size:.9rem; color:#374151; }
     select, button { font-size:.9rem; }
     select { width:100%; padding:8px 10px; border-radius:999px; border:1px solid #d1d5db; outline:none; background:#f9fafb; transition:border-color .15s, box-shadow .15s, background .15s; }
@@ -907,6 +907,14 @@ const db = firebase.database();
   todayDisplay.textContent = "Tarikh: " + todayHuman;
   summaryDateLink.textContent = todayHuman;
 
+  function updateDateDisplayWithHolidayCheck() {
+    if (isHoliday(todayKey)) {
+      todayDisplay.innerHTML = "Tarikh: " + todayHuman + " <span style='color:#dc2626;font-weight:700;'>🏖️ CUTI</span>";
+    } else {
+      todayDisplay.textContent = "Tarikh: " + todayHuman;
+    }
+  }
+
   function setStatus(msg, type) {
     statusBar.innerHTML = "";
     if (!msg) return;
@@ -1390,6 +1398,12 @@ const db = firebase.database();
   searchInput.addEventListener('input', applySearchFilter);
 
   function saveAttendance() {
+    // Check if today is a holiday
+    if (isHoliday(todayKey)) {
+      setStatus('Tidak boleh simpan kehadiran pada hari cuti sekolah.', 'error');
+      return;
+    }
+
     const kelas = classSelect.value;
     if (!kelas) { setStatus('Sila pilih kelas dahulu.', 'error'); return; }
     const names = classData[kelas] || [];
@@ -1522,7 +1536,15 @@ const db = firebase.database();
           const rec = allByDate[k]?.[cfg.code];
           const td = document.createElement('td');
           td.className = 'main-row-cell';
-          if(rec){
+
+          // Check if this date is a holiday
+          if(isHoliday(k)) {
+            td.textContent = 'Cuti';
+            td.style.background = '#e5e7eb';
+            td.style.color = '#6b7280';
+            td.style.fontWeight = '600';
+            td.style.textAlign = 'center';
+          } else if(rec){
             const p = (rec.present || 0);
             const t = (rec.total || 0);
             const absentNames = rec.absentNames || [];
@@ -1537,9 +1559,9 @@ const db = firebase.database();
                 td.classList.add('cell-full-attendance');
               }
             }
-          } else { 
-            td.textContent = '-'; 
-            td.style.color = '#9ca3af'; 
+          } else {
+            td.textContent = '-';
+            td.style.color = '#9ca3af';
           }
           tr.appendChild(td);
         });
@@ -1578,7 +1600,15 @@ const db = firebase.database();
           const rec = allByDate[k]?.[cfg.code];
           const td = document.createElement('td');
           td.className = 'main-row-cell';
-          if(rec){
+
+          // Check if this date is a holiday
+          if(isHoliday(k)) {
+            td.textContent = 'Cuti';
+            td.style.background = '#e5e7eb';
+            td.style.color = '#6b7280';
+            td.style.fontWeight = '600';
+            td.style.textAlign = 'center';
+          } else if(rec){
             const p = (rec.present || 0);
             const t = (rec.total || 0);
             const absentNames = rec.absentNames || [];
@@ -1593,9 +1623,9 @@ const db = firebase.database();
                 td.classList.add('cell-full-attendance');
               }
             }
-          } else { 
-            td.textContent = '-'; 
-            td.style.color = '#9ca3af'; 
+          } else {
+            td.textContent = '-';
+            td.style.color = '#9ca3af';
           }
           tr.appendChild(td);
         });
@@ -1904,6 +1934,12 @@ const db = firebase.database();
   classSelect.addEventListener('change', () => {
     const kelas = classSelect.value;
     if (!kelas) { studentsSection.style.display = 'none'; summaryBox.style.display = 'none'; clearStatus(); return; }
+
+    // Check if today is a holiday and show warning
+    if (isHoliday(todayKey)) {
+      setStatus('⚠️ Hari ini adalah cuti sekolah. Kehadiran tidak boleh direkod.', 'error');
+    }
+
     renderStudentsForClass(kelas);
     loadExistingAttendance(kelas);
   });
@@ -2094,6 +2130,7 @@ const db = firebase.database();
     
     // Load holidays first, then yearly data and notifications
     loadHolidays().then(() => {
+      updateDateDisplayWithHolidayCheck();
       renderHolidayCalendar();
       ensureYearlyData().then(() => {
         loadAbsenceStatus().then(() => {
