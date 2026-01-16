@@ -67,13 +67,16 @@
     .search-row input[type="text"] { flex:1 1 220px; padding:8px 10px; border-radius:999px; border:1px solid #d1d5db; background:#f9fafb; font-size:.9rem; outline:none; transition:border-color .15s, box-shadow .15s, background .15s; }
     .search-row input[type="text"]:focus { border-color:#2563eb; box-shadow:0 0 0 2px rgba(37,99,235,.25); background:#fff; }
     .students-container { margin-top:12px; max-height:420px; overflow-y:auto; border-radius:12px; border:1px solid #e5e7eb; background:#f9fafb; }
-    .students-header { display:grid; grid-template-columns:52px 1fr 90px; padding:8px 12px; border-bottom:1px solid #e5e7eb; font-size:.8rem; font-weight:600; color:#6b7280; background:#f3f4f6; position:sticky; top:0; z-index:2; }
-    .student-row { display:grid; grid-template-columns:52px 1fr 90px; padding:7px 12px; align-items:center; font-size:.9rem; border-bottom:1px solid #e5e7eb; background:#fff; }
+    .students-header { display:grid; grid-template-columns:52px 1fr 90px 100px; padding:8px 12px; border-bottom:1px solid #e5e7eb; font-size:.8rem; font-weight:600; color:#6b7280; background:#f3f4f6; position:sticky; top:0; z-index:2; }
+    .student-row { display:grid; grid-template-columns:52px 1fr 90px 100px; padding:7px 12px; align-items:center; font-size:.9rem; border-bottom:1px solid #e5e7eb; background:#fff; }
     .student-row:nth-child(even) { background:#f9fafb; }
     .student-row:hover { background:#eff6ff; }
     .student-name { font-weight:500; color:#111827; }
     .checkbox-wrapper { display:flex; justify-content:center; }
     .checkbox-wrapper input { width:18px; height:18px; cursor:pointer; }
+    .bersebab-wrapper { display:flex; align-items:center; justify-content:center; gap:4px; font-size:.75rem; color:#6b7280; }
+    .bersebab-wrapper input { width:16px; height:16px; cursor:pointer; }
+    .bersebab-wrapper.hidden { visibility:hidden; }
     .summary-box { margin-top:16px; padding:12px 14px; border-radius:12px; background:#eff6ff; border:1px solid #bfdbfe; font-size:.9rem; color:#1e3a8a; }
     .summary-main { display:flex; flex-wrap:wrap; gap:10px; align-items:center; justify-content:space-between; }
     .summary-main strong { font-size:1rem; }
@@ -178,7 +181,7 @@
           <input id="searchInput" type="text" placeholder='Taip nama murid...' />
         </div>
         <div class="students-container">
-          <div class="students-header"><div>No.</div><div>Nama Murid</div><div style="text-align:center;">Tidak hadir</div></div>
+          <div class="students-header"><div>No.</div><div>Nama Murid</div><div style="text-align:center;">Tidak hadir</div><div style="text-align:center;">Bersebab</div></div>
           <div id="studentsList"></div>
         </div>
         <div class="flex-row">
@@ -1367,8 +1370,21 @@ const db = firebase.database();
       const row = document.createElement('div');
       row.className = 'student-row';
       row.dataset.name = (nama || '').toLowerCase();
-      row.innerHTML = `<div>${idx + 1}</div><div class="student-name">${nama}</div><div class="checkbox-wrapper"><input type="checkbox" data-nama="${nama}"></div>`;
+      row.innerHTML = `<div>${idx + 1}</div><div class="student-name">${nama}</div><div class="checkbox-wrapper"><input type="checkbox" data-nama="${nama}" class="absent-checkbox"></div><div class="bersebab-wrapper hidden"><input type="checkbox" data-nama="${nama}" class="bersebab-checkbox"><label style="font-size:.75rem;">Ada sebab</label></div>`;
       studentsList.appendChild(row);
+
+      // Toggle bersebab visibility when absent checkbox changes
+      const absentChk = row.querySelector('.absent-checkbox');
+      const bersebabWrapper = row.querySelector('.bersebab-wrapper');
+      absentChk.addEventListener('change', () => {
+        if (absentChk.checked) {
+          bersebabWrapper.classList.remove('hidden');
+        } else {
+          bersebabWrapper.classList.add('hidden');
+          const bersebabChk = bersebabWrapper.querySelector('.bersebab-checkbox');
+          bersebabChk.checked = false;
+        }
+      });
     });
     countInfo.innerHTML = "👥 Jumlah murid: <strong>" + names.length + "</strong>";
     searchInput.value = '';
@@ -1376,7 +1392,7 @@ const db = firebase.database();
 
   function getAbsentNames() {
     const arr = [];
-    studentsList.querySelectorAll('input[type="checkbox"]').forEach(chk => { if (chk.checked) arr.push(chk.dataset.nama); });
+    studentsList.querySelectorAll('.absent-checkbox').forEach(chk => { if (chk.checked) arr.push(chk.dataset.nama); });
     return arr;
   }
 
@@ -1433,7 +1449,24 @@ const db = firebase.database();
     };
 
     setStatus('Menyimpan kehadiran...', 'info');
+
+    // Save attendance data first
     db.ref("kehadiran/" + todayKey + "/" + kelas).set(data).then(() => {
+      // Save absence status for each absent student
+      const statusPromises = [];
+      studentsList.querySelectorAll('.student-row').forEach(row => {
+        const absentChk = row.querySelector('.absent-checkbox');
+        const bersebabChk = row.querySelector('.bersebab-checkbox');
+        const nama = absentChk.dataset.nama;
+
+        if (absentChk.checked) {
+          const status = bersebabChk.checked ? 'bersebab' : 'tidak_bersebab';
+          statusPromises.push(setAbsenceStatus(todayKey, kelas, nama, status));
+        }
+      });
+
+      return Promise.all(statusPromises);
+    }).then(() => {
       setStatus('Kehadiran berjaya disimpan.', '');
       updateSummaryBox(kelas, absentNames);
       loadDailySummary();
@@ -1451,10 +1484,35 @@ const db = firebase.database();
   function loadExistingAttendance(kelas) {
     db.ref("kehadiran/" + todayKey + "/" + kelas).once('value').then(snap => {
       const data = snap.val();
-      studentsList.querySelectorAll('input[type="checkbox"]').forEach(chk => chk.checked = false);
+
+      // Reset all checkboxes and hide bersebab wrappers
+      studentsList.querySelectorAll('.student-row').forEach(row => {
+        const absentChk = row.querySelector('.absent-checkbox');
+        const bersebabChk = row.querySelector('.bersebab-checkbox');
+        const bersebabWrapper = row.querySelector('.bersebab-wrapper');
+        absentChk.checked = false;
+        bersebabChk.checked = false;
+        bersebabWrapper.classList.add('hidden');
+      });
+
       if (data?.absentNames) {
-        studentsList.querySelectorAll('input[type="checkbox"]').forEach(chk => {
-          if (data.absentNames.includes(chk.dataset.nama)) chk.checked = true;
+        // Check absent students and load their status
+        studentsList.querySelectorAll('.student-row').forEach(row => {
+          const absentChk = row.querySelector('.absent-checkbox');
+          const bersebabChk = row.querySelector('.bersebab-checkbox');
+          const bersebabWrapper = row.querySelector('.bersebab-wrapper');
+          const nama = absentChk.dataset.nama;
+
+          if (data.absentNames.includes(nama)) {
+            absentChk.checked = true;
+            bersebabWrapper.classList.remove('hidden');
+
+            // Load absence status
+            const status = getAbsenceStatus(todayKey, kelas, nama);
+            if (status === 'bersebab') {
+              bersebabChk.checked = true;
+            }
+          }
         });
         updateSummaryBox(kelas, data.absentNames);
       } else {
