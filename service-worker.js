@@ -1,7 +1,7 @@
 // service-worker.js
 
 // 🔥 CHANGE VERSION EVERY TIME YOU UPDATE SYSTEM
-const CACHE_NAME = 'kehadiran-sksa-v16';
+const CACHE_NAME = 'kehadiran-sksa-v17';
 
 const urlsToCache = [
   './',
