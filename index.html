@@ -132,6 +132,11 @@
     .absence-card-count { background:#fee2e2; color:#b91c1c; padding:4px 10px; border-radius:999px; font-weight:700; font-size:.9rem; }
     .absence-card-dates { margin-top:10px; padding-top:10px; border-top:1px solid #e5e7eb; font-size:.85rem; color:#4b5563; display:none; }
     .absence-card-dates.show { display:block; }
+    .absence-date-item { display:flex; justify-content:space-between; align-items:center; padding:8px; margin:6px 0; background:#f9fafb; border-radius:8px; border:1px solid #e5e7eb; }
+    .absence-date-label { font-weight:500; color:#374151; }
+    .absence-status-toggle { padding:4px 10px; border-radius:999px; font-size:.75rem; font-weight:600; cursor:pointer; border:none; transition:all 0.2s; }
+    .absence-status-toggle.bersebab { background:#d1fae5; color:#047857; }
+    .absence-status-toggle.tidak_bersebab { background:#fee2e2; color:#b91c1c; }
     @media (max-width:640px) { .header-text h1 { font-size:1.15rem; } .students-header, .student-row { grid-template-columns:42px 1fr 80px; } .students-container { max-height:360px; } }
   </style>
 </head>
@@ -254,7 +259,6 @@
           <option value="holidaySettings">📅 Tetapan Cuti Sekolah</option>
           <option value="absenceChecker">📊 Semak Murid Tidak Hadir</option>
           <option value="pontengNotif">🔔 Notifikasi Murid Ponteng</option>
-          <option value="statusManager">📋 Urus Status Ketidakhadiran</option>
           <option value="classList">🏫 Senarai Kelas</option>
           <option value="studentEditor">✏️ Sunting Senarai Murid</option>
           <option value="resetData">⚠️ Reset Data</option>
@@ -328,30 +332,14 @@
         </div>
         <div class="summary-table-wrapper" style="margin-top:12px;">
           <table class="summary-table">
-            <thead><tr><th>Bil</th><th>Nama Murid</th><th>Kelas</th><th>Hari Ponteng</th><th>Jenis</th><th>Cadangan Surat</th><th>Tindakan</th></tr></thead>
+            <thead><tr><th>Bil</th><th>Nama Murid</th><th>Kelas</th><th>Hari Ponteng</th><th>Jenis</th><th>Cadangan Surat</th></tr></thead>
             <tbody id="adminNotificationBody"></tbody>
           </table>
         </div>
         <div class="summary-footer" id="adminNotificationInfo">Tiada notifikasi ponteng.</div>
       </div>
 
-      <!-- 4. Urus Status Ketidakhadiran -->
-      <div id="adminPanel-statusManager" class="admin-panel" style="display:none;margin-top:16px;">
-        <h3 style="margin:0 0 6px;font-size:1rem;">📋 Urus Status Ketidakhadiran Murid</h3>
-        <div class="flex-row" style="margin-top:8px;">
-          <div style="flex:1;">
-            <label for="statusClassSelect" style="font-size:.85rem;">Pilih Kelas:</label>
-            <select id="statusClassSelect" style="margin-top:4px;"></select>
-          </div>
-          <div style="flex:1;">
-            <label for="statusDateSelect" style="font-size:.85rem;">Pilih Tarikh:</label>
-            <select id="statusDateSelect" style="margin-top:4px;"></select>
-          </div>
-        </div>
-        <div id="statusAbsentList" style="margin-top:12px;"></div>
-      </div>
-
-      <!-- 5. Senarai Kelas -->
+      <!-- 4. Senarai Kelas -->
       <div id="adminPanel-classList" class="admin-panel" style="display:none;margin-top:16px;">
         <h3 style="margin:0 0 6px;font-size:1rem;">🏫 Senarai Kelas</h3>
         <div class="summary-table-wrapper">
@@ -886,10 +874,7 @@ const db = firebase.database();
   const adminStudentCount = document.getElementById('adminStudentCount');
   const adminSaveStudentsBtn = document.getElementById('adminSaveStudentsBtn');
   const adminStudentMsg = document.getElementById('adminStudentMsg');
-  const statusClassSelect = document.getElementById('statusClassSelect');
-  const statusDateSelect = document.getElementById('statusDateSelect');
-  const statusAbsentList = document.getElementById('statusAbsentList');
-  
+
   // Holiday Calendar DOM refs
   const holidayMonthLabel = document.getElementById('holidayMonthLabel');
   const holidayHeaderSpan = document.getElementById('holidayHeaderSpan');
@@ -1258,92 +1243,6 @@ const db = firebase.database();
         resetMsg.style.color = '#b91c1c';
       });
     });
-  }
-
-  // Status management UI
-  function loadStatusManagement() {
-    populateStatusClassSelect();
-  }
-
-  function populateStatusClassSelect() {
-    statusClassSelect.innerHTML = '<option value="">— Pilih kelas —</option>';
-    summaryConfig.forEach(cfg => {
-      const opt = document.createElement('option');
-      opt.value = cfg.code;
-      opt.textContent = cfg.code + " - " + cfg.kelasLabel;
-      statusClassSelect.appendChild(opt);
-    });
-  }
-
-  statusClassSelect.addEventListener('change', loadStatusDates);
-
-  function loadStatusDates() {
-    const classCode = statusClassSelect.value;
-    statusDateSelect.innerHTML = '<option value="">— Pilih tarikh —</option>';
-    statusAbsentList.innerHTML = '';
-    if (!classCode || !yearlyRaw) return;
-
-    const dates = [];
-    Object.keys(yearlyRaw).forEach(dateKey => {
-      if (yearlyRaw[dateKey]?.[classCode]?.absentNames?.length > 0) {
-        dates.push(dateKey);
-      }
-    });
-    dates.sort().reverse();
-
-    dates.forEach(dk => {
-      const opt = document.createElement('option');
-      opt.value = dk;
-      opt.textContent = formatHumanDate(dateFromKey(dk));
-      statusDateSelect.appendChild(opt);
-    });
-  }
-
-  statusDateSelect.addEventListener('change', loadAbsentStudentsForDate);
-
-  function loadAbsentStudentsForDate() {
-    const classCode = statusClassSelect.value;
-    const dateKey = statusDateSelect.value;
-    statusAbsentList.innerHTML = '';
-    if (!classCode || !dateKey || !yearlyRaw) return;
-
-    const rec = yearlyRaw[dateKey]?.[classCode];
-    if (!rec || !rec.absentNames?.length) {
-      statusAbsentList.innerHTML = '<div class="pill">Tiada murid tidak hadir pada tarikh ini.</div>';
-      return;
-    }
-
-    const table = document.createElement('table');
-    table.className = 'summary-table';
-    table.innerHTML = '<thead><tr><th>Bil</th><th>Nama Murid</th><th>Status Semasa</th><th>Tukar Status</th></tr></thead>';
-    const tbody = document.createElement('tbody');
-
-    rec.absentNames.forEach((name, idx) => {
-      const status = getAbsenceStatus(dateKey, classCode, name);
-      const tr = document.createElement('tr');
-      tr.innerHTML = `
-        <td>${idx + 1}</td>
-        <td>${name}</td>
-        <td><span class="${status === 'bersebab' ? 'status-bersebab' : 'status-tidak-bersebab'}">${status === 'bersebab' ? 'Bersebab' : 'Tidak Bersebab'}</span></td>
-        <td></td>
-      `;
-      const btnCell = tr.querySelector('td:last-child');
-      const btn = document.createElement('button');
-      btn.className = status === 'bersebab' ? 'btn btn-danger btn-sm' : 'btn btn-success btn-sm';
-      btn.textContent = status === 'bersebab' ? 'Tandai Ponteng' : 'Tandai Bersebab';
-      btn.addEventListener('click', () => {
-        const newStatus = status === 'bersebab' ? 'tidak_bersebab' : 'bersebab';
-        setAbsenceStatus(dateKey, classCode, name, newStatus).then(() => {
-          loadAbsentStudentsForDate();
-          recomputeNotificationsForYear(String(currentYear));
-        });
-      });
-      btnCell.appendChild(btn);
-      tbody.appendChild(tr);
-    });
-
-    table.appendChild(tbody);
-    statusAbsentList.appendChild(table);
   }
 
   // UI functions
@@ -1740,7 +1639,6 @@ const db = firebase.database();
         <td><strong>${n.totalPonteng}</strong> hari</td>
         <td>${n.mode === 'berturut-turut' ? 'Berturut-turut (' + n.consecutiveMax + ' hari)' : 'Berselang'}</td>
         <td><span class="${n.letter === 'Buang Sekolah' ? 'status-tidak-bersebab' : 'status-bersebab'}">${n.letter}</span></td>
-        <td><button class="btn btn-outline btn-sm" onclick="document.getElementById('statusClassSelect').value='${n.classCode}';document.getElementById('statusClassSelect').dispatchEvent(new Event('change'));">Urus Status</button></td>
       `;
       adminNotificationBody.appendChild(tr);
     });
@@ -2040,8 +1938,6 @@ const db = firebase.database();
             initAbsenceChecker();
           } else if (selected === 'pontengNotif') {
             recomputeNotificationsForYear(String(currentYear));
-          } else if (selected === 'statusManager') {
-            loadStatusManagement();
           }
         }
       }
@@ -2151,14 +2047,28 @@ const db = firebase.database();
       `;
       
       absenceList.forEach((item, idx) => {
-        const datesFormatted = item.dates.sort().map(d => {
-          const dt = new Date(d);
-          return dt.getDate() + '/' + (dt.getMonth() + 1);
-        }).join(', ');
-        
+        // Generate date items with status toggle
+        const dateItems = item.dates.sort().map(dateKey => {
+          const dt = new Date(dateKey);
+          const dateLabel = dt.getDate() + '/' + (dt.getMonth() + 1);
+          const status = getAbsenceStatus(dateKey, item.classCode, item.name);
+          const statusClass = status === 'bersebab' ? 'bersebab' : 'tidak_bersebab';
+          const statusText = status === 'bersebab' ? 'Bersebab' : 'Tidak Bersebab';
+
+          return `
+            <div class="absence-date-item">
+              <span class="absence-date-label">${dateLabel}</span>
+              <button class="absence-status-toggle ${statusClass}"
+                      onclick="toggleAbsenceStatus('${dateKey}', '${item.classCode}', '${item.name.replace(/'/g, "\\'")}', this, event)">
+                ${statusText}
+              </button>
+            </div>
+          `;
+        }).join('');
+
         html += `
-          <div class="absence-card" onclick="this.querySelector('.absence-card-dates').classList.toggle('show')">
-            <div class="absence-card-header">
+          <div class="absence-card">
+            <div class="absence-card-header" onclick="this.parentElement.querySelector('.absence-card-dates').classList.toggle('show')">
               <div>
                 <div class="absence-card-name">${idx + 1}. ${item.name}</div>
                 <div class="absence-card-class">${item.darjah} ${item.classLabel} (${item.classCode})</div>
@@ -2166,8 +2076,8 @@ const db = firebase.database();
               <div class="absence-card-count">${item.count} hari</div>
             </div>
             <div class="absence-card-dates">
-              <strong>Tarikh tidak hadir:</strong><br>
-              ${datesFormatted}
+              <strong style="display:block;margin-bottom:8px;">Tarikh tidak hadir:</strong>
+              ${dateItems}
             </div>
           </div>
         `;
@@ -2179,6 +2089,37 @@ const db = firebase.database();
       console.error('Error generating absence report:', err);
       absenceReportResult.innerHTML = '<div style="color:#b91c1c;padding:20px;">❌ Ralat: ' + err.message + '</div>';
     }
+  }
+
+  // Toggle absence status for a specific date
+  function toggleAbsenceStatus(dateKey, classCode, studentName, buttonEl, event) {
+    event.stopPropagation(); // Prevent card from collapsing
+
+    const currentStatus = getAbsenceStatus(dateKey, classCode, studentName);
+    const newStatus = currentStatus === 'bersebab' ? 'tidak_bersebab' : 'bersebab';
+
+    // Update button UI immediately for better UX
+    buttonEl.disabled = true;
+    buttonEl.style.opacity = '0.5';
+
+    setAbsenceStatus(dateKey, classCode, studentName, newStatus).then(() => {
+      // Update button classes and text
+      buttonEl.classList.remove('bersebab', 'tidak_bersebab');
+      buttonEl.classList.add(newStatus);
+      buttonEl.textContent = newStatus === 'bersebab' ? 'Bersebab' : 'Tidak Bersebab';
+      buttonEl.disabled = false;
+      buttonEl.style.opacity = '1';
+
+      // Recompute notifications after status change
+      yearlyRaw = null;
+      yearlyInitialised = false;
+      ensureYearlyData().then(() => recomputeNotificationsForYear(String(currentYear)));
+    }).catch(err => {
+      console.error('Error toggling absence status:', err);
+      alert('Gagal menukar status: ' + err.message);
+      buttonEl.disabled = false;
+      buttonEl.style.opacity = '1';
+    });
   }
 
   // Init
