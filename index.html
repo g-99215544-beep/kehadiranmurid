@@ -2045,7 +2045,7 @@ const db = firebase.database();
           <span class="pill" style="margin-left:8px;">${absenceList.length} murid</span>
         </div>
       `;
-      
+
       absenceList.forEach((item, idx) => {
         // Generate date items with status toggle
         const dateItems = item.dates.sort().map(dateKey => {
@@ -2055,11 +2055,15 @@ const db = firebase.database();
           const statusClass = status === 'bersebab' ? 'bersebab' : 'tidak_bersebab';
           const statusText = status === 'bersebab' ? 'Bersebab' : 'Tidak Bersebab';
 
+          // Use data attributes instead of inline onclick to avoid escaping issues
+          const safeName = item.name.replace(/"/g, '&quot;');
           return `
             <div class="absence-date-item">
               <span class="absence-date-label">${dateLabel}</span>
               <button class="absence-status-toggle ${statusClass}"
-                      onclick="toggleAbsenceStatus('${dateKey}', '${item.classCode}', '${item.name.replace(/'/g, "\\'")}', this, event)">
+                      data-date="${dateKey}"
+                      data-class="${item.classCode}"
+                      data-student="${safeName}">
                 ${statusText}
               </button>
             </div>
@@ -2082,8 +2086,20 @@ const db = firebase.database();
           </div>
         `;
       });
-      
+
       absenceReportResult.innerHTML = html;
+
+      // Attach click event listeners to all toggle buttons
+      document.querySelectorAll('.absence-status-toggle').forEach(button => {
+        button.addEventListener('click', function(event) {
+          event.stopPropagation(); // Prevent card from collapsing
+          const dateKey = this.getAttribute('data-date');
+          const classCode = this.getAttribute('data-class');
+          const studentName = this.getAttribute('data-student');
+          toggleAbsenceStatus(dateKey, classCode, studentName, this);
+        });
+      });
+
       
     } catch (err) {
       console.error('Error generating absence report:', err);
@@ -2092,9 +2108,7 @@ const db = firebase.database();
   }
 
   // Toggle absence status for a specific date
-  function toggleAbsenceStatus(dateKey, classCode, studentName, buttonEl, event) {
-    event.stopPropagation(); // Prevent card from collapsing
-
+  function toggleAbsenceStatus(dateKey, classCode, studentName, buttonEl) {
     const currentStatus = getAbsenceStatus(dateKey, classCode, studentName);
     const newStatus = currentStatus === 'bersebab' ? 'tidak_bersebab' : 'bersebab';
 
@@ -2148,13 +2162,13 @@ const db = firebase.database();
   loadClassConfigFromDB().then(initApp).catch(err => { console.error(err); initApp(); });
 
   // ============ PWA Service Worker & Install Prompt ============
-  
-  // Register Service Worker
+
+  // Unregister any existing service workers
   if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-      navigator.serviceWorker.register('./service-worker.js')
-        .then(reg => console.log('Service Worker berjaya didaftarkan:', reg.scope))
-        .catch(err => console.log('Service Worker gagal didaftarkan:', err));
+    navigator.serviceWorker.getRegistrations().then(registrations => {
+      registrations.forEach(registration => {
+        registration.unregister().then(() => console.log('Service Worker unregistered'));
+      });
     });
   }
 
