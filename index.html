@@ -261,7 +261,6 @@
           <option value="pontengNotif">🔔 Notifikasi Murid Ponteng</option>
           <option value="classList">🏫 Senarai Kelas</option>
           <option value="studentEditor">✏️ Sunting Senarai Murid</option>
-          <option value="resetData">⚠️ Reset Data</option>
         </select>
       </div>
 
@@ -368,19 +367,6 @@
           <button type="button" class="btn btn-primary" id="adminSaveStudentsBtn">💾 Simpan ke Firebase</button>
         </div>
         <div id="adminStudentMsg" style="margin-top:6px;font-size:.8rem;color:#6b7280;">Perubahan akan disimpan di Firebase Realtime Database.</div>
-      </div>
-
-      <!-- 7. Reset Data -->
-      <div id="adminPanel-resetData" class="admin-panel" style="display:none;margin-top:16px;">
-        <div style="padding:16px;border-radius:12px;background:#fef2f2;border:1px solid #fecaca;">
-          <h3 style="margin:0 0 6px;font-size:1rem;color:#b91c1c;">⚠️ Reset Data Kehadiran</h3>
-          <p style="font-size:.85rem;color:#7f1d1d;margin:0 0 12px;">Padam SEMUA rekod kehadiran dan status ketidakhadiran. Tindakan ini <strong>tidak boleh dibatalkan</strong>.</p>
-          <div class="flex-row" style="gap:8px;">
-            <button type="button" class="btn btn-danger" id="resetAttendanceBtn">🗑️ Reset Semua Data Kehadiran</button>
-            <button type="button" class="btn btn-outline" id="resetHolidaysBtn" style="border-color:#f87171;color:#b91c1c;">🗑️ Reset Senarai Cuti</button>
-          </div>
-          <div id="resetMsg" style="margin-top:8px;font-size:.8rem;color:#6b7280;"></div>
-        </div>
       </div>
 
     </div>
@@ -883,10 +869,7 @@ const db = firebase.database();
   const holidayInfo = document.getElementById('holidayInfo');
   const prevMonthBtn = document.getElementById('prevMonthBtn');
   const nextMonthBtn = document.getElementById('nextMonthBtn');
-  const resetAttendanceBtn = document.getElementById('resetAttendanceBtn');
-  const resetHolidaysBtn = document.getElementById('resetHolidaysBtn');
-  const resetMsg = document.getElementById('resetMsg');
-  
+
   // Calendar state
   let calendarYear = currentYear;
   let calendarMonth = today.getMonth();
@@ -1189,59 +1172,6 @@ const db = firebase.database();
       calendarMonth++;
       if (calendarMonth > 11) { calendarMonth = 0; calendarYear++; }
       renderHolidayCalendar();
-    });
-  }
-
-  // ============ Reset Data Functions ============
-  if (resetAttendanceBtn) {
-    resetAttendanceBtn.addEventListener('click', () => {
-      if (!confirm('⚠️ AMARAN!\n\nAnda akan MEMADAM SEMUA:\n• Rekod kehadiran\n• Status ketidakhadiran (bersebab/tidak bersebab)\n\nTindakan ini TIDAK BOLEH dibatalkan!\n\nTeruskan?')) return;
-      if (!confirm('Sahkan sekali lagi: Padam SEMUA data kehadiran?')) return;
-      
-      resetMsg.textContent = 'Memadam data...';
-      resetMsg.style.color = '#b91c1c';
-      
-      Promise.all([
-        db.ref('kehadiran').remove(),
-        db.ref('absenceStatus').remove()
-      ]).then(() => {
-        absenceStatusCache = {};
-        yearlyRaw = null;
-        yearlyInitialised = false;
-        notifications = [];
-        
-        resetMsg.textContent = 'Semua data kehadiran telah dipadam!';
-        resetMsg.style.color = '#047857';
-        
-        renderNotificationBadge();
-        renderAdminNotifications(String(currentYear));
-        loadDailySummary();
-        loadWeeklySummary();
-        loadMonthlySummary();
-      }).catch(err => {
-        resetMsg.textContent = 'Ralat: ' + err.message;
-        resetMsg.style.color = '#b91c1c';
-      });
-    });
-  }
-
-  if (resetHolidaysBtn) {
-    resetHolidaysBtn.addEventListener('click', () => {
-      if (!confirm('Padam semua senarai cuti sekolah?')) return;
-      
-      resetMsg.textContent = 'Memadam senarai cuti...';
-      resetMsg.style.color = '#b91c1c';
-      
-      db.ref('holidays').remove().then(() => {
-        holidaysCache = {};
-        renderHolidayCalendar();
-        recomputeNotificationsForYear(String(currentYear));
-        resetMsg.textContent = 'Senarai cuti telah dipadam!';
-        resetMsg.style.color = '#047857';
-      }).catch(err => {
-        resetMsg.textContent = 'Ralat: ' + err.message;
-        resetMsg.style.color = '#b91c1c';
-      });
     });
   }
 
