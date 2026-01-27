@@ -340,6 +340,11 @@
           • <strong>Sabtu, Ahad & Cuti Sekolah</strong> tidak dikira sebagai hari ponteng<br>
           • Klik <strong>Urus Ketidakhadiran</strong> untuk lihat semua tarikh dan ubah status
         </div>
+        <div style="margin-top:12px;text-align:right;">
+          <button type="button" class="btn btn-primary" id="printPontengReportBtn" style="font-size:.9rem;">
+            🖨️ Cetak Laporan Ponteng
+          </button>
+        </div>
         <div class="summary-table-wrapper" style="margin-top:12px;overflow-x:auto;">
           <table class="summary-table" style="font-size:.85rem;">
             <thead>
@@ -1788,6 +1793,230 @@ const db = firebase.database();
       buttonEl.style.opacity = '1';
       alert('Ralat: ' + err.message);
     });
+  }
+
+  // Print Ponteng Report
+  async function printPontengReport() {
+    if (!notifications || notifications.length === 0) {
+      alert('Tiada murid ponteng untuk dicetak.');
+      return;
+    }
+
+    try {
+      // Fetch all attendance data
+      const snap = await db.ref('kehadiran').once('value');
+      const allData = snap.val() || {};
+
+      // Build print content
+      let printContent = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="UTF-8">
+          <title>Laporan Murid Ponteng ${currentYear}</title>
+          <style>
+            @media print {
+              @page { margin: 1cm; }
+              body { margin: 0; }
+            }
+            body {
+              font-family: Arial, sans-serif;
+              font-size: 11pt;
+              line-height: 1.4;
+              color: #000;
+            }
+            h1 {
+              text-align: center;
+              font-size: 16pt;
+              margin-bottom: 5px;
+              text-transform: uppercase;
+            }
+            h2 {
+              text-align: center;
+              font-size: 14pt;
+              margin-top: 0;
+              margin-bottom: 20px;
+              font-weight: normal;
+            }
+            .student-section {
+              margin-bottom: 25px;
+              page-break-inside: avoid;
+              border: 1px solid #000;
+              padding: 10px;
+            }
+            .student-header {
+              background: #f0f0f0;
+              padding: 8px;
+              margin-bottom: 10px;
+              border: 1px solid #000;
+            }
+            .student-info {
+              display: flex;
+              justify-content: space-between;
+              margin-bottom: 5px;
+            }
+            .dates-grid {
+              display: grid;
+              grid-template-columns: repeat(5, 1fr);
+              gap: 5px;
+              margin-top: 10px;
+            }
+            .date-box {
+              border: 1px solid #000;
+              padding: 5px;
+              text-align: center;
+              font-size: 10pt;
+            }
+            .checkbox {
+              display: inline-block;
+              width: 15px;
+              height: 15px;
+              border: 1px solid #000;
+              margin-right: 5px;
+              vertical-align: middle;
+            }
+            .footer {
+              margin-top: 30px;
+              page-break-inside: avoid;
+            }
+            .signature-section {
+              display: flex;
+              justify-content: space-between;
+              margin-top: 40px;
+            }
+            .signature-box {
+              text-align: center;
+              width: 45%;
+            }
+            table {
+              width: 100%;
+              border-collapse: collapse;
+              margin-bottom: 10px;
+            }
+            table td {
+              padding: 3px 5px;
+            }
+          </style>
+        </head>
+        <body>
+          <h1>SK Sri Aman</h1>
+          <h2>Laporan Murid Ponteng (Tidak Bersebab) Tahun ${currentYear}</h2>
+          <p style="text-align:center;margin-bottom:20px;">Tarikh Cetakan: ${new Date().toLocaleDateString('ms-MY', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
+      `;
+
+      // Sort notifications by severity
+      const sorted = [...notifications].sort((a, b) => {
+        const rank = { 'Amaran Pertama': 1, 'Amaran Kedua': 2, 'Amaran Terakhir': 3, 'Buang Sekolah': 4 };
+        if (rank[b.letter] !== rank[a.letter]) return rank[b.letter] - rank[a.letter];
+        if (a.classCode !== b.classCode) return a.classCode.localeCompare(b.classCode);
+        return a.name.localeCompare(b.name);
+      });
+
+      // Generate content for each student
+      for (let i = 0; i < sorted.length; i++) {
+        const n = sorted[i];
+
+        // Find all absence dates for this student
+        const absenceDates = [];
+        Object.keys(allData).forEach(dateKey => {
+          const dayData = allData[dateKey];
+          if (!dayData || !dayData[n.classCode]) return;
+
+          const rec = dayData[n.classCode];
+          const absentNames = rec.absentNames || [];
+          const absentArr = Array.isArray(absentNames) ? absentNames : Object.values(absentNames);
+
+          if (absentArr.includes(n.name)) {
+            absenceDates.push(dateKey);
+          }
+        });
+
+        absenceDates.sort();
+
+        printContent += `
+          <div class="student-section">
+            <div class="student-header">
+              <strong style="font-size:12pt;">${i + 1}. ${n.name}</strong>
+            </div>
+            <table>
+              <tr>
+                <td style="width:30%;"><strong>Kelas:</strong> ${n.classCode}</td>
+                <td style="width:35%;"><strong>Jumlah Hari Ponteng:</strong> ${n.totalPonteng} hari</td>
+                <td style="width:35%;"><strong>Jenis:</strong> ${n.mode === 'berturut-turut' ? 'Berturut-turut (' + n.consecutiveMax + ' hari)' : 'Berselang'}</td>
+              </tr>
+              <tr>
+                <td colspan="3"><strong>Cadangan Surat:</strong> <span style="padding:2px 8px;background:#f0f0f0;border:1px solid #000;">${n.letter}</span></td>
+              </tr>
+            </table>
+
+            <div style="margin-top:10px;">
+              <strong>Tarikh Tidak Hadir (${absenceDates.length} hari):</strong>
+              <div class="dates-grid">
+        `;
+
+        absenceDates.forEach(dateKey => {
+          const dt = new Date(dateKey);
+          const dateLabel = dt.getDate() + '/' + (dt.getMonth() + 1) + '/' + dt.getFullYear();
+          printContent += `
+            <div class="date-box">
+              <span class="checkbox"></span>${dateLabel}
+            </div>
+          `;
+        });
+
+        printContent += `
+              </div>
+            </div>
+
+            <div style="margin-top:10px;border-top:1px dashed #000;padding-top:8px;">
+              <strong>Catatan Guru Kelas:</strong>
+              <div style="border:1px solid #000;min-height:50px;padding:5px;margin-top:5px;"></div>
+            </div>
+          </div>
+        `;
+      }
+
+      printContent += `
+          <div class="footer">
+            <p><strong>Jumlah Murid:</strong> ${notifications.length} orang</p>
+            <div class="signature-section">
+              <div class="signature-box">
+                <div style="border-bottom:1px solid #000;width:200px;margin:0 auto 5px;"></div>
+                <p style="margin:0;">Guru Kelas</p>
+              </div>
+              <div class="signature-box">
+                <div style="border-bottom:1px solid #000;width:200px;margin:0 auto 5px;"></div>
+                <p style="margin:0;">Pengetua</p>
+              </div>
+            </div>
+            <p style="margin-top:30px;font-size:9pt;text-align:center;color:#666;">
+              *Sila tandakan (✓) pada tarikh yang BERSEBAB (ada alasan sah)
+            </p>
+          </div>
+        </body>
+        </html>
+      `;
+
+      // Open print dialog
+      const printWindow = window.open('', '_blank');
+      printWindow.document.write(printContent);
+      printWindow.document.close();
+
+      // Wait for content to load then print
+      printWindow.onload = function() {
+        printWindow.print();
+      };
+
+    } catch (err) {
+      console.error('Error generating print report:', err);
+      alert('Ralat: ' + err.message);
+    }
+  }
+
+  // Attach print button handler
+  const printPontengReportBtn = document.getElementById('printPontengReportBtn');
+  if (printPontengReportBtn) {
+    printPontengReportBtn.addEventListener('click', printPontengReport);
   }
 
   function recomputeNotificationsForYear(yearStr) {
