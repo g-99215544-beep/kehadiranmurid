@@ -340,17 +340,17 @@
           • <strong>Sabtu, Ahad & Cuti Sekolah</strong> tidak dikira sebagai hari ponteng<br>
           • Klik <strong>Urus Ketidakhadiran</strong> untuk lihat semua tarikh dan ubah status
         </div>
-        <div class="summary-table-wrapper" style="margin-top:12px;">
-          <table class="summary-table">
+        <div class="summary-table-wrapper" style="margin-top:12px;overflow-x:auto;">
+          <table class="summary-table" style="font-size:.85rem;">
             <thead>
               <tr>
-                <th>Bil</th>
-                <th>Nama Murid</th>
-                <th>Kelas</th>
-                <th>Hari Ponteng</th>
-                <th>Jenis</th>
-                <th>Cadangan Surat</th>
-                <th>Urus Ketidakhadiran</th>
+                <th style="width:30px;">Bil</th>
+                <th style="min-width:120px;">Nama Murid</th>
+                <th style="width:50px;">Kelas</th>
+                <th style="width:45px;">Hari</th>
+                <th style="width:80px;">Jenis</th>
+                <th style="width:90px;">Surat</th>
+                <th style="width:60px;">Urus</th>
               </tr>
             </thead>
             <tbody id="adminNotificationBody"></tbody>
@@ -1552,14 +1552,22 @@ const db = firebase.database();
     notifications.forEach((n, idx) => {
       const tr = document.createElement('tr');
       tr.className = 'notification-row';
+      tr.style.fontSize = '.85rem';
+
+      // Simplify Jenis display
+      const jenisShort = n.mode === 'berturut-turut' ? `Berturut (${n.consecutiveMax})` : 'Berselang';
+
+      // Simplify Surat display
+      const suratShort = n.letter.replace('Amaran ', 'A.').replace('Buang Sekolah', 'B.Sekolah');
+
       tr.innerHTML = `
-        <td>${idx + 1}</td>
-        <td>${n.name}</td>
-        <td>${n.classCode}</td>
-        <td><strong>${n.totalPonteng}</strong> hari</td>
-        <td>${n.mode === 'berturut-turut' ? 'Berturut-turut (' + n.consecutiveMax + ' hari)' : 'Berselang'}</td>
-        <td><span class="${n.letter === 'Buang Sekolah' ? 'status-tidak-bersebab' : 'status-bersebab'}">${n.letter}</span></td>
-        <td><button class="btn btn-primary btn-sm manage-absence-btn" data-student="${n.name.replace(/"/g, '&quot;')}" data-class="${n.classCode}">📅 Urus</button></td>
+        <td style="text-align:center;">${idx + 1}</td>
+        <td style="padding:6px 8px;">${n.name}</td>
+        <td style="text-align:center;">${n.classCode}</td>
+        <td style="text-align:center;"><strong>${n.totalPonteng}</strong></td>
+        <td style="font-size:.8rem;padding:4px;">${jenisShort}</td>
+        <td style="font-size:.8rem;"><span class="${n.letter === 'Buang Sekolah' ? 'status-tidak-bersebab' : 'status-bersebab'}" style="font-size:.75rem;padding:2px 6px;">${suratShort}</span></td>
+        <td style="text-align:center;"><button class="btn btn-primary btn-sm manage-absence-btn" data-student="${n.name.replace(/"/g, '&quot;')}" data-class="${n.classCode}" style="font-size:.75rem;padding:4px 8px;">Urus</button></td>
       `;
       adminNotificationBody.appendChild(tr);
 
@@ -1581,6 +1589,9 @@ const db = firebase.database();
 
     // Add click handlers for "Urus" buttons
     attachAbsenceManagementHandlers();
+
+    // Re-expand previously expanded rows
+    restoreExpandedRows();
   }
 
   // Handle clicks on "Urus Ketidakhadiran" buttons
@@ -1600,6 +1611,7 @@ const db = firebase.database();
 
       const studentName = btn.getAttribute('data-student');
       const classCode = btn.getAttribute('data-class');
+      const expandKey = classCode + '|' + studentName;
 
       // Find the expand row (next sibling)
       const currentRow = btn.closest('tr');
@@ -1611,17 +1623,44 @@ const db = firebase.database();
       if (expandRow.style.display === 'none') {
         // Expand and load data
         expandRow.style.display = '';
-        btn.textContent = '📅 Tutup';
+        btn.textContent = 'Tutup';
+        expandedNotificationRows.add(expandKey);
         await loadAbsenceDatesForStudent(studentName, classCode, expandRow);
       } else {
         // Collapse
         expandRow.style.display = 'none';
-        btn.textContent = '📅 Urus';
+        btn.textContent = 'Urus';
+        expandedNotificationRows.delete(expandKey);
       }
     };
 
     adminNotificationBody.addEventListener('click', handler);
     adminNotificationBody._absenceHandler = handler; // Store reference
+  }
+
+  // Restore previously expanded rows after re-render
+  async function restoreExpandedRows() {
+    if (!adminNotificationBody || expandedNotificationRows.size === 0) return;
+
+    // Find all manage buttons and check if they should be expanded
+    const buttons = adminNotificationBody.querySelectorAll('.manage-absence-btn');
+
+    for (const btn of buttons) {
+      const studentName = btn.getAttribute('data-student');
+      const classCode = btn.getAttribute('data-class');
+      const expandKey = classCode + '|' + studentName;
+
+      if (expandedNotificationRows.has(expandKey)) {
+        const currentRow = btn.closest('tr');
+        const expandRow = currentRow.nextElementSibling;
+
+        if (expandRow && expandRow.classList.contains('absence-expand-row')) {
+          expandRow.style.display = '';
+          btn.textContent = 'Tutup';
+          await loadAbsenceDatesForStudent(studentName, classCode, expandRow);
+        }
+      }
+    }
   }
 
   // Load all absence dates for a specific student
@@ -1707,6 +1746,9 @@ const db = firebase.database();
     }
   }
 
+  // Global variable to track expanded rows
+  let expandedNotificationRows = new Set();
+
   // Toggle absence status inline (similar to existing toggleAbsenceStatus but simpler)
   function toggleAbsenceStatusInline(dateKey, classCode, studentName, buttonEl) {
     const currentStatus = getAbsenceStatus(dateKey, classCode, studentName);
@@ -1723,6 +1765,10 @@ const db = firebase.database();
       buttonEl.textContent = newStatus === 'bersebab' ? 'Bersebab' : 'Tidak Bersebab';
       buttonEl.disabled = false;
       buttonEl.style.opacity = '1';
+
+      // Save currently expanded rows before re-render
+      const expandKey = classCode + '|' + studentName;
+      expandedNotificationRows.add(expandKey);
 
       // Recompute notifications to update the table
       recomputeNotificationsForYear(String(currentYear));
