@@ -258,7 +258,7 @@
           <option value="">— Sila pilih fungsi —</option>
           <option value="holidaySettings">📅 Tetapan Cuti Sekolah</option>
           <option value="classManager">🏫 Urus Kelas & Murid</option>
-          <option value="absenceManager">📊 Semak & Urus Ketidakhadiran</option>
+          <option value="absenceManager">📋 Urus Murid Ponteng</option>
         </select>
       </div>
 
@@ -330,33 +330,33 @@
         </div>
       </div>
 
-      <!-- 3. Semak & Urus Ketidakhadiran (Combined: Absence Checker + Ponteng Notif + Toggle Status) -->
+      <!-- 3. Urus Murid Ponteng (Notification-focused with absence management) -->
       <div id="adminPanel-absenceManager" class="admin-panel" style="display:none;margin-top:16px;">
-        <h3 style="margin:0 0 6px;font-size:1rem;">📊 Semak & Urus Ketidakhadiran</h3>
+        <h3 style="margin:0 0 6px;font-size:1rem;">📋 Urus Murid Ponteng</h3>
         <div class="alert-box alert-info" style="margin-top:8px;">
-          <strong>Cara Penggunaan:</strong> Pilih tempoh laporan untuk melihat senarai murid tidak hadir. Klik <strong>Urus Kehadiran</strong> untuk lihat tarikh dan ubah status.<br>
+          <strong>Cara Penggunaan:</strong><br>
           • <span class="status-bersebab">Bersebab</span> = Tidak hadir dengan alasan (sakit, hal keluarga) - <strong>TIDAK DIKIRA PONTENG</strong><br>
           • <span class="status-tidak-bersebab">Tidak Bersebab</span> = Ponteng tanpa alasan - <strong>DIKIRA PONTENG</strong><br>
-          • <strong>Sabtu, Ahad & Cuti Sekolah</strong> tidak dikira sebagai hari ponteng
+          • <strong>Sabtu, Ahad & Cuti Sekolah</strong> tidak dikira sebagai hari ponteng<br>
+          • Klik <strong>Urus Ketidakhadiran</strong> untuk lihat semua tarikh dan ubah status
         </div>
-        <div class="flex-row" style="margin-top:12px;gap:12px;">
-          <div style="flex:1;">
-            <label style="font-size:.85rem;">Jenis Laporan:</label>
-            <select id="absenceReportType" style="margin-top:4px;">
-              <option value="monthly">Bulanan</option>
-              <option value="yearly">Tahunan</option>
-            </select>
-          </div>
-          <div style="flex:1;" id="absenceMonthSelectWrapper">
-            <label style="font-size:.85rem;">Pilih Bulan:</label>
-            <select id="absenceMonthSelect" style="margin-top:4px;"></select>
-          </div>
-          <div style="flex:0;">
-            <label style="font-size:.85rem;">&nbsp;</label>
-            <button type="button" class="btn btn-primary" id="loadAbsenceReportBtn" style="margin-top:4px;">🔍 Jana Laporan</button>
-          </div>
+        <div class="summary-table-wrapper" style="margin-top:12px;">
+          <table class="summary-table">
+            <thead>
+              <tr>
+                <th>Bil</th>
+                <th>Nama Murid</th>
+                <th>Kelas</th>
+                <th>Hari Ponteng</th>
+                <th>Jenis</th>
+                <th>Cadangan Surat</th>
+                <th>Urus Ketidakhadiran</th>
+              </tr>
+            </thead>
+            <tbody id="adminNotificationBody"></tbody>
+          </table>
         </div>
-        <div id="absenceReportResult" style="margin-top:16px;"></div>
+        <div class="summary-footer" id="adminNotificationInfo">Tiada notifikasi ponteng.</div>
       </div>
 
     </div>
@@ -1559,11 +1559,189 @@ const db = firebase.database();
         <td><strong>${n.totalPonteng}</strong> hari</td>
         <td>${n.mode === 'berturut-turut' ? 'Berturut-turut (' + n.consecutiveMax + ' hari)' : 'Berselang'}</td>
         <td><span class="${n.letter === 'Buang Sekolah' ? 'status-tidak-bersebab' : 'status-bersebab'}">${n.letter}</span></td>
+        <td><button class="btn btn-primary btn-sm manage-absence-btn" data-student="${n.name.replace(/"/g, '&quot;')}" data-class="${n.classCode}">📅 Urus</button></td>
       `;
       adminNotificationBody.appendChild(tr);
+
+      // Create expandable row for absence dates (initially hidden)
+      const expandRow = document.createElement('tr');
+      expandRow.className = 'absence-expand-row';
+      expandRow.style.display = 'none';
+      expandRow.innerHTML = `
+        <td colspan="7" style="padding:12px 16px;background:#f9fafb;">
+          <div class="absence-dates-container" data-student="${n.name.replace(/"/g, '&quot;')}" data-class="${n.classCode}">
+            <div style="text-align:center;color:#6b7280;">⏳ Memuatkan...</div>
+          </div>
+        </td>
+      `;
+      adminNotificationBody.appendChild(expandRow);
     });
 
     adminNotificationInfo.textContent = 'Senarai murid yang melepasi had ponteng (tidak bersebab) tahun ' + yearStr + '.';
+
+    // Add click handlers for "Urus" buttons
+    attachAbsenceManagementHandlers();
+  }
+
+  // Handle clicks on "Urus Ketidakhadiran" buttons
+  function attachAbsenceManagementHandlers() {
+    if (!adminNotificationBody) return;
+
+    // Remove old listener if exists (to avoid duplicate handlers)
+    const oldHandler = adminNotificationBody._absenceHandler;
+    if (oldHandler) {
+      adminNotificationBody.removeEventListener('click', oldHandler);
+    }
+
+    // Create new handler
+    const handler = async function(e) {
+      const btn = e.target.closest('.manage-absence-btn');
+      if (!btn) return;
+
+      const studentName = btn.getAttribute('data-student');
+      const classCode = btn.getAttribute('data-class');
+
+      // Find the expand row (next sibling)
+      const currentRow = btn.closest('tr');
+      const expandRow = currentRow.nextElementSibling;
+
+      if (!expandRow || !expandRow.classList.contains('absence-expand-row')) return;
+
+      // Toggle expand/collapse
+      if (expandRow.style.display === 'none') {
+        // Expand and load data
+        expandRow.style.display = '';
+        btn.textContent = '📅 Tutup';
+        await loadAbsenceDatesForStudent(studentName, classCode, expandRow);
+      } else {
+        // Collapse
+        expandRow.style.display = 'none';
+        btn.textContent = '📅 Urus';
+      }
+    };
+
+    adminNotificationBody.addEventListener('click', handler);
+    adminNotificationBody._absenceHandler = handler; // Store reference
+  }
+
+  // Load all absence dates for a specific student
+  async function loadAbsenceDatesForStudent(studentName, classCode, expandRow) {
+    const container = expandRow.querySelector('.absence-dates-container');
+    if (!container) return;
+
+    try {
+      container.innerHTML = '<div style="text-align:center;color:#6b7280;">⏳ Memuatkan data...</div>';
+
+      // Fetch all attendance data
+      const snap = await db.ref('kehadiran').once('value');
+      const allData = snap.val() || {};
+
+      // Find all dates where this student was absent
+      const absenceDates = [];
+      Object.keys(allData).forEach(dateKey => {
+        const dayData = allData[dateKey];
+        if (!dayData || !dayData[classCode]) return;
+
+        const rec = dayData[classCode];
+        const absentNames = rec.absentNames || [];
+        const absentArr = Array.isArray(absentNames) ? absentNames : Object.values(absentNames);
+
+        if (absentArr.includes(studentName)) {
+          absenceDates.push(dateKey);
+        }
+      });
+
+      if (absenceDates.length === 0) {
+        container.innerHTML = '<div style="text-align:center;color:#6b7280;">Tiada rekod ketidakhadiran</div>';
+        return;
+      }
+
+      // Sort dates
+      absenceDates.sort();
+
+      // Build HTML with toggle buttons
+      let html = `
+        <div style="margin-bottom:8px;">
+          <strong>Tarikh tidak hadir (${absenceDates.length} hari):</strong>
+        </div>
+        <div style="display:flex;flex-wrap:wrap;gap:8px;">
+      `;
+
+      absenceDates.forEach(dateKey => {
+        const dt = new Date(dateKey);
+        const dateLabel = dt.getDate() + '/' + (dt.getMonth() + 1) + '/' + dt.getFullYear();
+        const status = getAbsenceStatus(dateKey, classCode, studentName);
+        const statusClass = status === 'bersebab' ? 'bersebab' : 'tidak_bersebab';
+        const statusText = status === 'bersebab' ? 'Bersebab' : 'Tidak Bersebab';
+
+        html += `
+          <div style="display:flex;align-items:center;gap:4px;padding:4px 8px;border:1px solid #d1d5db;border-radius:8px;background:#fff;">
+            <span style="font-size:.85rem;color:#374151;">${dateLabel}</span>
+            <button class="absence-status-toggle ${statusClass}"
+                    data-date="${dateKey}"
+                    data-class="${classCode}"
+                    data-student="${studentName.replace(/"/g, '&quot;')}"
+                    style="font-size:.75rem;padding:2px 6px;">
+              ${statusText}
+            </button>
+          </div>
+        `;
+      });
+
+      html += '</div>';
+      container.innerHTML = html;
+
+      // Attach toggle handlers
+      container.querySelectorAll('.absence-status-toggle').forEach(button => {
+        button.addEventListener('click', function() {
+          const dateKey = this.getAttribute('data-date');
+          const classCode = this.getAttribute('data-class');
+          const studentName = this.getAttribute('data-student');
+          toggleAbsenceStatusInline(dateKey, classCode, studentName, this);
+        });
+      });
+
+    } catch (err) {
+      console.error('Error loading absence dates:', err);
+      container.innerHTML = '<div style="color:#b91c1c;">❌ Ralat: ' + err.message + '</div>';
+    }
+  }
+
+  // Toggle absence status inline (similar to existing toggleAbsenceStatus but simpler)
+  function toggleAbsenceStatusInline(dateKey, classCode, studentName, buttonEl) {
+    const currentStatus = getAbsenceStatus(dateKey, classCode, studentName);
+    const newStatus = currentStatus === 'bersebab' ? 'tidak_bersebab' : 'bersebab';
+
+    // Update button UI immediately
+    buttonEl.disabled = true;
+    buttonEl.style.opacity = '0.5';
+
+    setAbsenceStatus(dateKey, classCode, studentName, newStatus).then(() => {
+      // Update button
+      buttonEl.classList.remove('bersebab', 'tidak_bersebab');
+      buttonEl.classList.add(newStatus);
+      buttonEl.textContent = newStatus === 'bersebab' ? 'Bersebab' : 'Tidak Bersebab';
+      buttonEl.disabled = false;
+      buttonEl.style.opacity = '1';
+
+      // Recompute notifications to update the table
+      recomputeNotificationsForYear(String(currentYear));
+
+      // Show update message
+      const container = buttonEl.closest('.absence-dates-container');
+      if (container) {
+        const msg = document.createElement('div');
+        msg.style.cssText = 'margin-top:8px;padding:6px 10px;background:#d1fae5;color:#047857;border-radius:6px;font-size:.85rem;';
+        msg.textContent = '✓ Status dikemaskini. Notifikasi telah dikira semula.';
+        container.appendChild(msg);
+        setTimeout(() => msg.remove(), 3000);
+      }
+    }).catch(err => {
+      console.error('Error toggling status:', err);
+      buttonEl.disabled = false;
+      buttonEl.style.opacity = '1';
+      alert('Ralat: ' + err.message);
+    });
   }
 
   function recomputeNotificationsForYear(yearStr) {
@@ -1876,7 +2054,10 @@ const db = firebase.database();
             renderAdminClassTable();
             populateAdminClassSelect();
           } else if (selected === 'absenceManager') {
-            initAbsenceChecker();
+            // Load yearly data and compute notifications
+            ensureYearlyData().then(() => {
+              recomputeNotificationsForYear(String(currentYear));
+            });
           }
         }
       }
