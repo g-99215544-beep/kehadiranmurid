@@ -257,10 +257,8 @@
         <select id="adminFunctionSelect" style="margin-top:6px;font-size:1rem;padding:10px 14px;">
           <option value="">— Sila pilih fungsi —</option>
           <option value="holidaySettings">📅 Tetapan Cuti Sekolah</option>
-          <option value="absenceChecker">📊 Semak Murid Tidak Hadir</option>
-          <option value="pontengNotif">🔔 Notifikasi Murid Ponteng</option>
-          <option value="classList">🏫 Senarai Kelas</option>
-          <option value="studentEditor">✏️ Sunting Senarai Murid</option>
+          <option value="classManager">🏫 Urus Kelas & Murid</option>
+          <option value="absenceManager">📊 Semak & Urus Ketidakhadiran</option>
         </select>
       </div>
 
@@ -293,11 +291,53 @@
         <div class="summary-footer" id="holidayInfo">Klik pada tarikh untuk tandakan sebagai cuti sekolah.</div>
       </div>
 
-      <!-- 2. Semak Murid Tidak Hadir (NEW) -->
-      <div id="adminPanel-absenceChecker" class="admin-panel" style="display:none;margin-top:16px;">
-        <h3 style="margin:0 0 6px;font-size:1rem;">📊 Semak Murid Tidak Hadir</h3>
+      <!-- 2. Urus Kelas & Murid (Combined: Senarai Kelas + Sunting Senarai Murid) -->
+      <div id="adminPanel-classManager" class="admin-panel" style="display:none;margin-top:16px;">
+        <h3 style="margin:0 0 6px;font-size:1rem;">🏫 Urus Kelas & Murid</h3>
+
+        <!-- Senarai Kelas Section -->
+        <div style="margin-bottom:20px;">
+          <h4 style="margin:12px 0 8px;font-size:.95rem;color:#374151;">Senarai Kelas</h4>
+          <div class="summary-table-wrapper">
+            <table class="summary-table">
+              <thead><tr><th>Bil</th><th>Darjah</th><th>Kod</th><th>Nama Kelas</th><th>Bil. Murid</th><th>Tindakan</th></tr></thead>
+              <tbody id="adminClassTableBody"></tbody>
+            </table>
+          </div>
+          <div style="margin-top:10px;padding:10px 12px;border-radius:12px;background:#f9fafb;border:1px dashed #cbd5e1;">
+            <h4 style="margin:0 0 8px;font-size:.95rem;">Tambah Kelas Baharu</h4>
+            <div class="flex-row" style="gap:8px;">
+              <input id="adminNewDarjah" type="text" placeholder="Darjah (D4)" style="flex:0 0 80px;padding:6px 8px;border-radius:999px;border:1px solid #d1d5db;font-size:.85rem;">
+              <input id="adminNewCode" type="text" placeholder="Kod (4B)" style="flex:0 0 80px;padding:6px 8px;border-radius:999px;border:1px solid #d1d5db;font-size:.85rem;">
+              <input id="adminNewLabel" type="text" placeholder="Nama (BESTARI)" style="flex:1;padding:6px 8px;border-radius:999px;border:1px solid #d1d5db;font-size:.85rem;">
+              <button type="button" class="btn btn-primary btn-sm" id="adminAddClassBtn">+ Tambah</button>
+            </div>
+            <div id="adminClassMsg" style="margin-top:6px;font-size:.8rem;color:#6b7280;"></div>
+          </div>
+        </div>
+
+        <!-- Sunting Senarai Murid Section -->
+        <div style="border-top:2px solid #e5e7eb;padding-top:16px;">
+          <h4 style="margin:0 0 8px;font-size:.95rem;color:#374151;">Sunting Senarai Murid</h4>
+          <label for="adminStudentClassSelect" style="font-size:.85rem;">Pilih kelas:</label>
+          <select id="adminStudentClassSelect" style="margin-top:4px;margin-bottom:8px;"></select>
+          <textarea id="adminStudentTextarea" rows="10" style="width:100%;padding:8px 10px;border-radius:12px;border:1px solid #d1d5db;font-size:.9rem;resize:vertical;" placeholder="Satu nama murid bagi setiap baris."></textarea>
+          <div class="flex-row" style="margin-top:8px;">
+            <div id="adminStudentCount" class="pill">Bil. murid: 0</div>
+            <button type="button" class="btn btn-primary" id="adminSaveStudentsBtn">💾 Simpan ke Firebase</button>
+          </div>
+          <div id="adminStudentMsg" style="margin-top:6px;font-size:.8rem;color:#6b7280;">Perubahan akan disimpan di Firebase Realtime Database.</div>
+        </div>
+      </div>
+
+      <!-- 3. Semak & Urus Ketidakhadiran (Combined: Absence Checker + Ponteng Notif + Toggle Status) -->
+      <div id="adminPanel-absenceManager" class="admin-panel" style="display:none;margin-top:16px;">
+        <h3 style="margin:0 0 6px;font-size:1rem;">📊 Semak & Urus Ketidakhadiran</h3>
         <div class="alert-box alert-info" style="margin-top:8px;">
-          <strong>Paparan:</strong> Senarai murid mengikut bilangan ketidakhadiran (tertinggi di atas). Klik pada nama untuk lihat tarikh tidak hadir.
+          <strong>Cara Penggunaan:</strong> Pilih tempoh laporan untuk melihat senarai murid tidak hadir. Klik <strong>Urus Kehadiran</strong> untuk lihat tarikh dan ubah status.<br>
+          • <span class="status-bersebab">Bersebab</span> = Tidak hadir dengan alasan (sakit, hal keluarga) - <strong>TIDAK DIKIRA PONTENG</strong><br>
+          • <span class="status-tidak-bersebab">Tidak Bersebab</span> = Ponteng tanpa alasan - <strong>DIKIRA PONTENG</strong><br>
+          • <strong>Sabtu, Ahad & Cuti Sekolah</strong> tidak dikira sebagai hari ponteng
         </div>
         <div class="flex-row" style="margin-top:12px;gap:12px;">
           <div style="flex:1;">
@@ -317,56 +357,6 @@
           </div>
         </div>
         <div id="absenceReportResult" style="margin-top:16px;"></div>
-      </div>
-
-      <!-- 3. Notifikasi Ponteng -->
-      <div id="adminPanel-pontengNotif" class="admin-panel" style="display:none;margin-top:16px;">
-        <h3 style="margin:0 0 6px;font-size:1rem;">🔔 Notifikasi Murid Ponteng (Tidak Bersebab)</h3>
-        <div class="alert-box alert-info" style="margin-top:8px;">
-          <strong>Cara Penggunaan:</strong><br>
-          • <span class="status-bersebab">Bersebab</span> = Tidak hadir dengan alasan (sakit, hal keluarga) - <strong>TIDAK DIKIRA PONTENG</strong><br>
-          • <span class="status-tidak-bersebab">Tidak Bersebab</span> = Ponteng tanpa alasan - <strong>DIKIRA PONTENG</strong><br>
-          • <strong>Sabtu, Ahad & Cuti Sekolah</strong> tidak dikira sebagai hari ponteng<br>
-          • Default: Semua ketidakhadiran adalah <strong>Tidak Bersebab (Ponteng)</strong>
-        </div>
-        <div class="summary-table-wrapper" style="margin-top:12px;">
-          <table class="summary-table">
-            <thead><tr><th>Bil</th><th>Nama Murid</th><th>Kelas</th><th>Hari Ponteng</th><th>Jenis</th><th>Cadangan Surat</th></tr></thead>
-            <tbody id="adminNotificationBody"></tbody>
-          </table>
-        </div>
-        <div class="summary-footer" id="adminNotificationInfo">Tiada notifikasi ponteng.</div>
-      </div>
-
-      <!-- 4. Senarai Kelas -->
-      <div id="adminPanel-classList" class="admin-panel" style="display:none;margin-top:16px;">
-        <h3 style="margin:0 0 6px;font-size:1rem;">🏫 Senarai Kelas</h3>
-        <div class="summary-table-wrapper">
-          <table class="summary-table"><thead><tr><th>Bil</th><th>Darjah</th><th>Kod</th><th>Nama Kelas</th><th>Bil. Murid</th><th>Tindakan</th></tr></thead><tbody id="adminClassTableBody"></tbody></table>
-        </div>
-        <div style="margin-top:10px;padding:10px 12px;border-radius:12px;background:#f9fafb;border:1px dashed #cbd5e1;">
-          <h4 style="margin:0 0 8px;font-size:.95rem;">Tambah Kelas Baharu</h4>
-          <div class="flex-row" style="gap:8px;">
-            <input id="adminNewDarjah" type="text" placeholder="Darjah (D4)" style="flex:0 0 80px;padding:6px 8px;border-radius:999px;border:1px solid #d1d5db;font-size:.85rem;">
-            <input id="adminNewCode" type="text" placeholder="Kod (4B)" style="flex:0 0 80px;padding:6px 8px;border-radius:999px;border:1px solid #d1d5db;font-size:.85rem;">
-            <input id="adminNewLabel" type="text" placeholder="Nama (BESTARI)" style="flex:1;padding:6px 8px;border-radius:999px;border:1px solid #d1d5db;font-size:.85rem;">
-            <button type="button" class="btn btn-primary btn-sm" id="adminAddClassBtn">+ Tambah</button>
-          </div>
-          <div id="adminClassMsg" style="margin-top:6px;font-size:.8rem;color:#6b7280;"></div>
-        </div>
-      </div>
-
-      <!-- 6. Sunting Senarai Murid -->
-      <div id="adminPanel-studentEditor" class="admin-panel" style="display:none;margin-top:16px;">
-        <h3 style="margin:0 0 6px;font-size:1rem;">✏️ Sunting Senarai Murid</h3>
-        <label for="adminStudentClassSelect" style="font-size:.85rem;">Pilih kelas:</label>
-        <select id="adminStudentClassSelect" style="margin-top:4px;margin-bottom:8px;"></select>
-        <textarea id="adminStudentTextarea" rows="10" style="width:100%;padding:8px 10px;border-radius:12px;border:1px solid #d1d5db;font-size:.9rem;resize:vertical;" placeholder="Satu nama murid bagi setiap baris."></textarea>
-        <div class="flex-row" style="margin-top:8px;">
-          <div id="adminStudentCount" class="pill">Bil. murid: 0</div>
-          <button type="button" class="btn btn-primary" id="adminSaveStudentsBtn">💾 Simpan ke Firebase</button>
-        </div>
-        <div id="adminStudentMsg" style="margin-top:6px;font-size:.8rem;color:#6b7280;">Perubahan akan disimpan di Firebase Realtime Database.</div>
       </div>
 
     </div>
@@ -1737,20 +1727,38 @@ const db = firebase.database();
 
   adminClassTableBody.addEventListener('click', (e) => {
     const btn = e.target.closest('.admin-delete-class');
-    if (!btn) return;
-    const code = btn.dataset.code;
-    if (!confirm('Padam kelas ' + code + '?')) return;
-    const cfgIndex = summaryConfig.findIndex(c => c.code === code);
-    if (cfgIndex !== -1) summaryConfig.splice(cfgIndex, 1);
-    if (classData[code]) delete classData[code];
-    saveClassConfigToDB();
-    renderAdminClassTable();
-    populateClassDropdown();
-    populateAdminClassSelect();
-    populateStatusClassSelect();
-    if (classSelect.value === code) { classSelect.value = ''; studentsSection.style.display = 'none'; summaryBox.style.display = 'none'; }
-    adminClassMsg.textContent = 'Kelas ' + code + ' telah dipadam.';
-    adminClassMsg.style.color = '#b91c1c';
+    if (btn) {
+      // Handle delete button click
+      const code = btn.dataset.code;
+      if (!confirm('Padam kelas ' + code + '?')) return;
+      const cfgIndex = summaryConfig.findIndex(c => c.code === code);
+      if (cfgIndex !== -1) summaryConfig.splice(cfgIndex, 1);
+      if (classData[code]) delete classData[code];
+      saveClassConfigToDB();
+      renderAdminClassTable();
+      populateClassDropdown();
+      populateAdminClassSelect();
+      populateStatusClassSelect();
+      if (classSelect.value === code) { classSelect.value = ''; studentsSection.style.display = 'none'; summaryBox.style.display = 'none'; }
+      adminClassMsg.textContent = 'Kelas ' + code + ' telah dipadam.';
+      adminClassMsg.style.color = '#b91c1c';
+      return;
+    }
+
+    // Handle row click to auto-select class for editing
+    const row = e.target.closest('tr');
+    if (row && row.parentElement === adminClassTableBody) {
+      const cells = row.children;
+      if (cells.length >= 3) {
+        const code = cells[2].textContent.trim(); // Kod kelas is in 3rd column (index 2)
+        if (adminStudentClassSelect) {
+          adminStudentClassSelect.value = code;
+          loadAdminStudentsForClass();
+          // Scroll to student editor section
+          adminStudentTextarea.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+      }
+    }
   });
 
   function populateAdminClassSelect() {
@@ -1864,10 +1872,11 @@ const db = firebase.database();
           // Trigger specific panel init if needed
           if (selected === 'holidaySettings') {
             renderHolidayCalendar();
-          } else if (selected === 'absenceChecker') {
+          } else if (selected === 'classManager') {
+            renderAdminClassTable();
+            populateAdminClassSelect();
+          } else if (selected === 'absenceManager') {
             initAbsenceChecker();
-          } else if (selected === 'pontengNotif') {
-            recomputeNotificationsForYear(String(currentYear));
           }
         }
       }
