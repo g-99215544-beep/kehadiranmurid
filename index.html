@@ -228,7 +228,7 @@
       </div>
       <div id="summaryMonthlyPanel" class="subtab-panel" style="display:none;">
         <div class="summary-header-row" style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;">
-          <span>Ringkasan Bulanan: <span id="monthlyLabel"></span></span>
+          <div>Ringkasan Bulanan: <select id="monthlyMonthSelect" style="padding:4px 10px;border-radius:999px;border:1px solid #d1d5db;background:#f9fafb;font-size:.85rem;min-width:140px;"></select></div>
           <button type="button" class="btn btn-outline" id="btnPrintMonthly">🖨 Cetak</button>
         </div>
         <div class="summary-table-wrapper">
@@ -477,7 +477,7 @@ function renderMatrixCuti() {
 function toggleMatrixHoliday(dateKey) {
   toggleHoliday(dateKey).then(() => {
     renderMatrixCuti();
-    loadMonthlySummary();
+    loadMonthlySummary(monthlyInitialised ? monthlyMonthSelect.value : null);
     loadWeeklySummary();
     loadDailySummary();
     recomputeNotificationsForYear(String(currentYear));
@@ -605,7 +605,7 @@ function renderMatrixCuti() {
 function toggleMatrixHoliday(dateKey) {
   toggleHoliday(dateKey).then(() => {
     renderMatrixCuti();
-    loadMonthlySummary();
+    loadMonthlySummary(monthlyInitialised ? monthlyMonthSelect.value : null);
     loadWeeklySummary();
     loadDailySummary();
     recomputeNotificationsForYear(String(currentYear));
@@ -733,7 +733,7 @@ function renderMatrixCuti() {
 function toggleMatrixHoliday(dateKey) {
   toggleHoliday(dateKey).then(() => {
     renderMatrixCuti();
-    loadMonthlySummary();
+    loadMonthlySummary(monthlyInitialised ? monthlyMonthSelect.value : null);
     loadWeeklySummary();
     loadDailySummary();
     recomputeNotificationsForYear(String(currentYear));
@@ -825,6 +825,7 @@ const db = firebase.database();
   const weeklyTableBody = document.getElementById('weeklyTableBody');
   const weeklyInfo = document.getElementById('weeklyInfo');
   const monthlyLabel = document.getElementById('monthlyLabel');
+  const monthlyMonthSelect = document.getElementById('monthlyMonthSelect');
   const monthlyHeaderSpan = document.getElementById('monthlyHeaderSpan');
   const monthlyDateRow = document.getElementById('monthlyDateRow');
   const monthlyTableBody = document.getElementById('monthlyTableBody');
@@ -913,11 +914,20 @@ const db = firebase.database();
       document.getElementById('summaryWeeklyPanel').style.display = sub === 'weekly' ? 'block' : 'none';
       document.getElementById('summaryMonthlyPanel').style.display = sub === 'monthly' ? 'block' : 'none';
       document.getElementById('summaryYearlyPanel').style.display = sub === 'yearly' ? 'block' : 'none';
+      if (sub === 'monthly' && !monthlyInitialised) initMonthlySummary();
       if (sub === 'yearly' && !yearlyInitialised) initYearlySummary();
     });
   });
 
   btnPrintMonthly.addEventListener('click', () => window.print());
+
+  if (monthlyMonthSelect) {
+    monthlyMonthSelect.addEventListener('change', () => {
+      if (availableMonths.length) {
+        loadMonthlySummary(monthlyMonthSelect.value);
+      }
+    });
+  }
 
   // Admin login
   let isAdmin = false;
@@ -1148,7 +1158,7 @@ const db = firebase.database();
       // Reload summaries to reflect holiday changes
       loadDailySummary();
       loadWeeklySummary();
-      loadMonthlySummary();
+      loadMonthlySummary(monthlyInitialised ? monthlyMonthSelect.value : null);
       recomputeNotificationsForYear(String(currentYear));
     });
   };
@@ -1295,7 +1305,7 @@ const db = firebase.database();
       updateSummaryBox(kelas, absentNames);
       loadDailySummary();
       loadWeeklySummary();
-      loadMonthlySummary();
+      loadMonthlySummary(monthlyInitialised ? monthlyMonthSelect.value : null);
       yearlyRaw = null;
       yearlyInitialised = false;
       ensureYearlyData().then(() => recomputeNotificationsForYear(String(currentYear)));
@@ -1459,6 +1469,47 @@ const db = firebase.database();
   }
 
   // Monthly summary
+  let monthlyInitialised = false;
+  let availableMonths = [];
+
+  async function getAvailableMonths() {
+    try {
+      const snapshot = await db.ref('kehadiran').once('value');
+      const data = snapshot.val();
+      if (!data) return [];
+
+      const monthsSet = new Set();
+      Object.keys(data).forEach(dateKey => {
+        // dateKey format: YYYY-MM-DD
+        const [year, month] = dateKey.split('-');
+        if (year && month) {
+          monthsSet.add(`${year}-${month}`);
+        }
+      });
+
+      // Sort in descending order (newest first)
+      return Array.from(monthsSet).sort().reverse();
+    } catch (err) {
+      console.error('Error getting available months:', err);
+      return [];
+    }
+  }
+
+  function populateMonthlyMonthOptions() {
+    monthlyMonthSelect.innerHTML = '';
+    if (!availableMonths.length) {
+      monthlyMonthSelect.innerHTML = '<option value="">Tiada data</option>';
+      return;
+    }
+
+    availableMonths.forEach(monthKey => {
+      const [year, month] = monthKey.split('-');
+      const monthIndex = parseInt(month) - 1;
+      const monthLabel = MONTH_NAMES_MS[monthIndex] + ' ' + year;
+      monthlyMonthSelect.innerHTML += `<option value="${monthKey}">${monthLabel}</option>`;
+    });
+  }
+
   function getMonthDates(baseDate) {
     const y = baseDate.getFullYear();
     const m = baseDate.getMonth();
@@ -1468,10 +1519,20 @@ const db = firebase.database();
     return arr;
   }
 
-  function loadMonthlySummary() {
-    const monthDates = getMonthDates(today);
+  function loadMonthlySummary(monthKey) {
+    // If no monthKey provided, use current month
+    if (!monthKey) {
+      const y = today.getFullYear();
+      const m = String(today.getMonth() + 1).padStart(2, '0');
+      monthKey = `${y}-${m}`;
+    }
+
+    const [year, month] = monthKey.split('-');
+    const targetDate = new Date(parseInt(year), parseInt(month) - 1, 1);
+
+    const monthDates = getMonthDates(targetDate);
     if (!monthDates.length) return;
-    monthlyLabel.textContent = MONTH_NAMES_MS[today.getMonth()] + " " + today.getFullYear();
+
     monthlyDateRow.innerHTML = '';
     const dateKeys = monthDates.map(dt => { monthlyDateRow.innerHTML += `<th>${dt.getDate()}</th>`; return formatDateKey(dt); });
     monthlyHeaderSpan.colSpan = dateKeys.length;
@@ -1518,8 +1579,28 @@ const db = firebase.database();
         });
         monthlyTableBody.appendChild(tr);
       });
-      monthlyInfo.textContent = 'Ringkasan untuk ' + monthlyLabel.textContent;
+      const monthIndex = parseInt(month) - 1;
+      monthlyInfo.textContent = 'Ringkasan untuk ' + MONTH_NAMES_MS[monthIndex] + ' ' + year;
     }).catch(err => { console.error(err); monthlyInfo.textContent = 'Ralat: ' + err.message; });
+  }
+
+  async function initMonthlySummary() {
+    availableMonths = await getAvailableMonths();
+    populateMonthlyMonthOptions();
+
+    // Set default to current month if available, otherwise first available month
+    const currentYear = today.getFullYear();
+    const currentMonth = String(today.getMonth() + 1).padStart(2, '0');
+    const currentMonthKey = `${currentYear}-${currentMonth}`;
+
+    let defaultMonth = currentMonthKey;
+    if (!availableMonths.includes(currentMonthKey) && availableMonths.length) {
+      defaultMonth = availableMonths[0];
+    }
+
+    monthlyMonthSelect.value = defaultMonth;
+    loadMonthlySummary(defaultMonth);
+    monthlyInitialised = true;
   }
 
   // Yearly summary & notifications
@@ -2544,7 +2625,7 @@ const db = firebase.database();
       // Load summaries after holidays are loaded so holiday check works
       loadDailySummary();
       loadWeeklySummary();
-      loadMonthlySummary();
+      loadMonthlySummary(monthlyInitialised ? monthlyMonthSelect.value : null);
       renderHolidayCalendar();
       ensureYearlyData().then(() => {
         loadAbsenceStatus().then(() => {
@@ -2700,7 +2781,7 @@ function renderMatrixCuti() {
 function toggleMatrixHoliday(dateKey) {
   toggleHoliday(dateKey).then(() => {
     renderMatrixCuti();
-    loadMonthlySummary();
+    loadMonthlySummary(monthlyInitialised ? monthlyMonthSelect.value : null);
     loadWeeklySummary();
     loadDailySummary();
     recomputeNotificationsForYear(String(currentYear));
@@ -2950,8 +3031,8 @@ function loadWeeklySummary(){
   }).catch(err => { console.error(err); weeklyInfo.textContent = 'Ralat: ' + err.message; });
 }
 
-// Load Monthly from Firebase (2B keys)
-function loadMonthlySummary(){
+// Load Monthly from Firebase (2B keys) - OLD VERSION, NOT USED
+function loadMonthlySummary_OLD_2B(){
   const monthDates = getMonthDates(today);
   const y = today.getFullYear();
   const m = today.getMonth();
@@ -3108,7 +3189,7 @@ function loadWeeklySummary(){
   });
 }
 
-function loadMonthlySummary(){
+function loadMonthlySummary_OLD_2C(){
   const monthDates = _getMonthDates_2B(today);
   const dateKeys = monthDates.map(d=>_formatDateKey_2B(d));
 
