@@ -95,9 +95,11 @@
     .summary-table th { background:#e5f0ff; color:#1f2937; font-weight:600; }
     .summary-table td.main-row-cell { background:#fff; }
     .summary-table tr:nth-child(even) td.main-row-cell { background:#f9fafb; }
-    .summary-table .sticky-col { position:sticky; z-index:2; }
+    .summary-table .sticky-col { position:sticky; z-index:2; background:#fff; }
     .summary-table th.sticky-col { background:#e5f0ff; z-index:3; }
-    .summary-table td.sticky-col { background:inherit; }
+    .summary-table td.sticky-col { background:#fff; }
+    .summary-table tbody tr:nth-child(even) td.sticky-col { background:#f9fafb; }
+    .summary-table tbody tr.absent-row td.sticky-col { background:#fefce8; }
     .summary-table .sticky-darjah { left:0; }
     .summary-table .sticky-kelas { left:calc(70px + 16px); }
     .row-not-updated td.main-row-cell { background:#fff7ed; }
