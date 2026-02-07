@@ -95,6 +95,11 @@
     .summary-table th { background:#e5f0ff; color:#1f2937; font-weight:600; }
     .summary-table td.main-row-cell { background:#fff; }
     .summary-table tr:nth-child(even) td.main-row-cell { background:#f9fafb; }
+    .summary-table .sticky-col { position:sticky; z-index:2; }
+    .summary-table th.sticky-col { background:#e5f0ff; z-index:3; }
+    .summary-table td.sticky-col { background:inherit; }
+    .summary-table .sticky-darjah { left:0; }
+    .summary-table .sticky-kelas { left:calc(70px + 16px); }
     .row-not-updated td.main-row-cell { background:#fff7ed; }
     .cell-not-updated { font-weight:600; color:#b45309; }
     .attendance-link { cursor:pointer; text-decoration:underline; color:#111827; }
@@ -215,14 +220,14 @@
       <div id="summaryDailyPanel" class="subtab-panel" style="display:block;">
         <div class="summary-header-row">Rekod Kehadiran Pada <span id="summaryDateLink" class="summary-date-link"></span></div>
         <div class="summary-table-wrapper">
-          <table class="summary-table"><thead><tr><th>Bil</th><th class="darjah-col">Darjah</th><th>Kelas</th><th>Kehadiran</th></tr></thead><tbody id="summaryTableBody"></tbody></table>
+          <table class="summary-table"><thead><tr><th>Bil</th><th class="darjah-col sticky-col sticky-darjah">Darjah</th><th class="sticky-col sticky-kelas">Kelas</th><th>Kehadiran</th></tr></thead><tbody id="summaryTableBody"></tbody></table>
         </div>
         <div class="summary-footer" id="summaryFooter">Kehadiran : Tiada rekod</div>
       </div>
       <div id="summaryWeeklyPanel" class="subtab-panel" style="display:none;">
         <div class="summary-header-row">Ringkasan Mingguan: <span id="weeklyRangeLabel"></span></div>
         <div class="summary-table-wrapper">
-          <table class="summary-table"><thead><tr><th rowspan="2">Bil</th><th rowspan="2" class="darjah-col">Darjah</th><th rowspan="2">Kelas</th><th colspan="5" id="weeklyHeaderSpan">Kehadiran</th></tr><tr id="weeklyDateRow"></tr></thead><tbody id="weeklyTableBody"></tbody></table>
+          <table class="summary-table"><thead><tr><th rowspan="2">Bil</th><th rowspan="2" class="darjah-col sticky-col sticky-darjah">Darjah</th><th rowspan="2" class="sticky-col sticky-kelas">Kelas</th><th colspan="5" id="weeklyHeaderSpan">Kehadiran</th></tr><tr id="weeklyDateRow"></tr></thead><tbody id="weeklyTableBody"></tbody></table>
         </div>
         <div class="summary-footer" id="weeklyInfo">Tiada rekod.</div>
       </div>
@@ -232,7 +237,7 @@
           <button type="button" class="btn btn-outline" id="btnPrintMonthly">🖨 Cetak</button>
         </div>
         <div class="summary-table-wrapper">
-          <table class="summary-table"><thead><tr><th rowspan="2">Bil</th><th rowspan="2" class="darjah-col">Darjah</th><th rowspan="2">Kelas</th><th colspan="31" id="monthlyHeaderSpan">Kehadiran</th></tr><tr id="monthlyDateRow"></tr></thead><tbody id="monthlyTableBody"></tbody></table>
+          <table class="summary-table"><thead><tr><th rowspan="2">Bil</th><th rowspan="2" class="darjah-col sticky-col sticky-darjah">Darjah</th><th rowspan="2" class="sticky-col sticky-kelas">Kelas</th><th colspan="31" id="monthlyHeaderSpan">Kehadiran</th></tr><tr id="monthlyDateRow"></tr></thead><tbody id="monthlyTableBody"></tbody></table>
         </div>
         <div class="summary-footer" id="monthlyInfo">Tiada rekod.</div>
       </div>
@@ -1386,7 +1391,7 @@ const db = firebase.database();
           tr.classList.add('row-not-updated');
           c4Content = '<span class="cell-not-updated">Belum dikemaskini</span>';
         }
-        tr.innerHTML = `<td class="main-row-cell">${bil++}</td><td class="main-row-cell darjah-col">${cfg.darjah}</td><td class="main-row-cell">${cfg.kelasLabel}</td><td class="${c4Class}">${c4Content}</td>`;
+        tr.innerHTML = `<td class="main-row-cell">${bil++}</td><td class="main-row-cell darjah-col sticky-col sticky-darjah">${cfg.darjah}</td><td class="main-row-cell sticky-col sticky-kelas">${cfg.kelasLabel}</td><td class="${c4Class}">${c4Content}</td>`;
         summaryTableBody.appendChild(tr);
       });
       if (totalStudents > 0) {
@@ -1428,7 +1433,7 @@ const db = firebase.database();
       let bil = 1;
       summaryConfig.forEach(cfg => {
         const tr = document.createElement('tr');
-        tr.innerHTML = `<td class="main-row-cell">${bil++}</td><td class="main-row-cell darjah-col">${cfg.darjah}</td><td class="main-row-cell">${cfg.kelasLabel}</td>`;
+        tr.innerHTML = `<td class="main-row-cell">${bil++}</td><td class="main-row-cell darjah-col sticky-col sticky-darjah">${cfg.darjah}</td><td class="main-row-cell sticky-col sticky-kelas">${cfg.kelasLabel}</td>`;
         dateKeys.forEach(k => {
           const rec = allByDate[k]?.[cfg.code];
           const td = document.createElement('td');
@@ -1543,7 +1548,7 @@ const db = firebase.database();
       let bil = 1;
       summaryConfig.forEach(cfg => {
         const tr = document.createElement('tr');
-        tr.innerHTML = `<td class="main-row-cell">${bil++}</td><td class="main-row-cell darjah-col">${cfg.darjah}</td><td class="main-row-cell">${cfg.kelasLabel}</td>`;
+        tr.innerHTML = `<td class="main-row-cell">${bil++}</td><td class="main-row-cell darjah-col sticky-col sticky-darjah">${cfg.darjah}</td><td class="main-row-cell sticky-col sticky-kelas">${cfg.kelasLabel}</td>`;
         dateKeys.forEach(k => {
           const rec = allByDate[k]?.[cfg.code];
           const td = document.createElement('td');
