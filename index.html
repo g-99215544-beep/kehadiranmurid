@@ -355,6 +355,7 @@
           <table class="summary-table" style="font-size:.85rem;">
             <thead>
               <tr>
+                <th style="width:35px;"><input type="checkbox" id="selectAllPontengCheckbox" title="Pilih Semua" /></th>
                 <th style="width:30px;">Bil</th>
                 <th style="min-width:120px;">Nama Murid</th>
                 <th style="width:50px;">Kelas</th>
@@ -1656,6 +1657,7 @@ const db = firebase.database();
       const suratShort = n.letter.replace('Amaran ', 'A.').replace('Buang Sekolah', 'B.Sekolah');
 
       tr.innerHTML = `
+        <td style="text-align:center;"><input type="checkbox" class="ponteng-student-checkbox" data-student="${n.name.replace(/"/g, '&quot;')}" data-class="${n.classCode}" data-index="${idx}" /></td>
         <td style="text-align:center;">${idx + 1}</td>
         <td style="padding:6px 8px;">${n.name}</td>
         <td style="text-align:center;">${n.classCode}</td>
@@ -1671,7 +1673,7 @@ const db = firebase.database();
       expandRow.className = 'absence-expand-row';
       expandRow.style.display = 'none';
       expandRow.innerHTML = `
-        <td colspan="7" style="padding:12px 16px;background:#f9fafb;">
+        <td colspan="8" style="padding:12px 16px;background:#f9fafb;">
           <div class="absence-dates-container" data-student="${n.name.replace(/"/g, '&quot;')}" data-class="${n.classCode}">
             <div style="text-align:center;color:#6b7280;">⏳ Memuatkan...</div>
           </div>
@@ -1687,6 +1689,32 @@ const db = firebase.database();
 
     // Re-expand previously expanded rows
     restoreExpandedRows();
+
+    // Attach select all handler
+    attachSelectAllHandler();
+  }
+
+  // Handle Select All checkbox
+  function attachSelectAllHandler() {
+    const selectAllCheckbox = document.getElementById('selectAllPontengCheckbox');
+    if (!selectAllCheckbox) return;
+
+    // Remove old listener if exists
+    const oldHandler = selectAllCheckbox._selectAllHandler;
+    if (oldHandler) {
+      selectAllCheckbox.removeEventListener('change', oldHandler);
+    }
+
+    // Create new handler
+    const handler = function() {
+      const checkboxes = document.querySelectorAll('.ponteng-student-checkbox');
+      checkboxes.forEach(cb => {
+        cb.checked = selectAllCheckbox.checked;
+      });
+    };
+
+    selectAllCheckbox.addEventListener('change', handler);
+    selectAllCheckbox._selectAllHandler = handler;
   }
 
   // Handle clicks on "Urus Ketidakhadiran" buttons
@@ -1892,10 +1920,25 @@ const db = firebase.database();
       return;
     }
 
+    // Get selected students
+    const selectedCheckboxes = document.querySelectorAll('.ponteng-student-checkbox:checked');
+    if (selectedCheckboxes.length === 0) {
+      alert('Sila pilih sekurang-kurangnya satu murid untuk dicetak.');
+      return;
+    }
+
+    // Get selected student indices
+    const selectedIndices = Array.from(selectedCheckboxes).map(cb => parseInt(cb.getAttribute('data-index')));
+    const selectedStudents = notifications.filter((n, idx) => selectedIndices.includes(idx));
+
     try {
       // Fetch all attendance data
       const snap = await db.ref('kehadiran').once('value');
       const allData = snap.val() || {};
+
+      // Fetch all absence status data
+      const absenceStatusSnap = await db.ref('absenceStatus').once('value');
+      const absenceStatusData = absenceStatusSnap.val() || {};
 
       // Build print content
       let printContent = `
@@ -1931,8 +1974,12 @@ const db = firebase.database();
             .student-section {
               margin-bottom: 25px;
               page-break-inside: avoid;
+              page-break-after: always;
               border: 1px solid #000;
               padding: 10px;
+            }
+            .student-section:last-child {
+              page-break-after: auto;
             }
             .student-header {
               background: #f0f0f0;
@@ -1994,8 +2041,8 @@ const db = firebase.database();
           <p style="text-align:center;margin-bottom:20px;">Tarikh Cetakan: ${new Date().toLocaleDateString('ms-MY', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
       `;
 
-      // Sort notifications by severity
-      const sorted = [...notifications].sort((a, b) => {
+      // Sort selected students by severity
+      const sorted = [...selectedStudents].sort((a, b) => {
         const rank = { 'Amaran Pertama': 1, 'Amaran Kedua': 2, 'Amaran Terakhir': 3, 'Buang Sekolah': 4 };
         if (rank[b.letter] !== rank[a.letter]) return rank[b.letter] - rank[a.letter];
         if (a.classCode !== b.classCode) return a.classCode.localeCompare(b.classCode);
@@ -2047,9 +2094,17 @@ const db = firebase.database();
         absenceDates.forEach(dateKey => {
           const dt = new Date(dateKey);
           const dateLabel = dt.getDate() + '/' + (dt.getMonth() + 1) + '/' + dt.getFullYear();
+
+          // Get absence status for this date
+          const safeName = n.name.replace(/[.#$\/\[\]]/g, '_');
+          const status = absenceStatusData[dateKey]?.[n.classCode]?.[safeName] || 'tidak_bersebab';
+          const statusText = status === 'bersebab' ? 'Bersebab' : 'Tidak Bersebab';
+          const statusColor = status === 'bersebab' ? '#16a34a' : '#dc2626';
+
           printContent += `
             <div class="date-box">
-              <span class="checkbox"></span>${dateLabel}
+              <div style="font-weight:bold;">${dateLabel}</div>
+              <div style="font-size:8pt;color:${statusColor};margin-top:2px;">${statusText}</div>
             </div>
           `;
         });
@@ -2068,7 +2123,7 @@ const db = firebase.database();
 
       printContent += `
           <div class="footer">
-            <p><strong>Jumlah Murid:</strong> ${notifications.length} orang</p>
+            <p><strong>Jumlah Murid:</strong> ${selectedStudents.length} orang</p>
             <div class="signature-section">
               <div class="signature-box">
                 <div style="border-bottom:1px solid #000;width:200px;margin:0 auto 5px;"></div>
@@ -2080,7 +2135,7 @@ const db = firebase.database();
               </div>
             </div>
             <p style="margin-top:30px;font-size:9pt;text-align:center;color:#666;">
-              *Sila tandakan (✓) pada tarikh yang BERSEBAB (ada alasan sah)
+              *Status ketidakhadiran: <span style="color:#16a34a;font-weight:bold;">Bersebab</span> (ada alasan) dan <span style="color:#dc2626;font-weight:bold;">Tidak Bersebab</span> (ponteng)
             </p>
           </div>
         </body>
