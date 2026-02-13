@@ -175,9 +175,14 @@
 
     <!-- TAB: Mengikut kelas -->
     <div id="tab-byClass" class="tab-panel" style="display:block;">
-      <div>
-        <label for="classSelect">Pilih kelas:</label>
-        <select id="classSelect"><option value="">— Sila pilih kelas —</option></select>
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <div>
+          <label for="classSelect">Pilih kelas:</label>
+          <select id="classSelect"><option value="">— Sila pilih kelas —</option></select>
+        </div>
+        <button type="button" class="btn btn-primary" id="btnMuridPonteng" style="display:none;">
+          ⚠️ Murid Ponteng
+        </button>
       </div>
       <div class="flex-row">
         <div class="pill">🔁 <strong>Setiap hari baharu</strong> — kehadiran bermula semula.</div>
@@ -362,6 +367,7 @@
                 <th style="width:45px;">Hari</th>
                 <th style="width:80px;">Jenis</th>
                 <th style="width:90px;">Surat</th>
+                <th style="width:140px;">Tindakan</th>
                 <th style="width:60px;">Urus</th>
               </tr>
             </thead>
@@ -387,6 +393,37 @@
     <div class="modal-actions">
       <button type="button" class="btn btn-secondary" id="adminCancelBtn">Batal</button>
       <button type="button" class="btn btn-primary" id="adminLoginBtn">Log Masuk</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Murid Ponteng (untuk guru) -->
+<div id="muridPontengModal" class="modal-backdrop" style="display:none;">
+  <div class="modal-card" style="max-width:800px;width:90%;">
+    <h3>⚠️ Senarai Murid Ponteng - <span id="muridPontengClassName"></span></h3>
+    <div class="alert-box alert-info" style="margin-top:8px;font-size:.85rem;">
+      <strong>Cara Penggunaan:</strong><br>
+      • <span class="status-bersebab">Bersebab</span> = Tidak hadir dengan alasan (sakit, hal keluarga) - <strong>TIDAK DIKIRA PONTENG</strong><br>
+      • <span class="status-tidak-bersebab">Tidak Bersebab</span> = Ponteng tanpa alasan - <strong>DIKIRA PONTENG</strong><br>
+      • Klik <strong>Urus</strong> untuk lihat semua tarikh dan ubah status
+    </div>
+    <div class="summary-table-wrapper" style="margin-top:12px;overflow-x:auto;max-height:500px;">
+      <table class="summary-table" style="font-size:.85rem;">
+        <thead>
+          <tr>
+            <th style="width:30px;">Bil</th>
+            <th style="min-width:120px;">Nama Murid</th>
+            <th style="width:45px;">Hari</th>
+            <th style="width:80px;">Jenis</th>
+            <th style="width:90px;">Surat</th>
+            <th style="width:60px;">Urus</th>
+          </tr>
+        </thead>
+        <tbody id="muridPontengModalBody"></tbody>
+      </table>
+    </div>
+    <div class="modal-actions">
+      <button type="button" class="btn btn-secondary" id="muridPontengCloseBtn">Tutup</button>
     </div>
   </div>
 </div>
@@ -873,6 +910,13 @@ const db = firebase.database();
   const prevMonthBtn = document.getElementById('prevMonthBtn');
   const nextMonthBtn = document.getElementById('nextMonthBtn');
 
+  // Murid Ponteng Modal DOM refs
+  const btnMuridPonteng = document.getElementById('btnMuridPonteng');
+  const muridPontengModal = document.getElementById('muridPontengModal');
+  const muridPontengClassName = document.getElementById('muridPontengClassName');
+  const muridPontengModalBody = document.getElementById('muridPontengModalBody');
+  const muridPontengCloseBtn = document.getElementById('muridPontengCloseBtn');
+
   // Calendar state
   let calendarYear = currentYear;
   let calendarMonth = today.getMonth();
@@ -954,7 +998,11 @@ const db = firebase.database();
       adminTabBtn.style.display = 'inline-block';
       yearlySubtabBtn.style.display = 'inline-block';
       setStatus('Log masuk admin berjaya.', 'info');
-      ensureYearlyData().then(() => recomputeNotificationsForYear(String(currentYear)));
+      ensureYearlyData().then(() => {
+        loadActionStatus().then(() => {
+          recomputeNotificationsForYear(String(currentYear));
+        });
+      });
     } else {
       adminModalError.textContent = 'Kata laluan tidak sah.';
     }
@@ -1054,6 +1102,35 @@ const db = firebase.database();
       if (!absenceStatusCache[dateKey]) absenceStatusCache[dateKey] = {};
       if (!absenceStatusCache[dateKey][classCode]) absenceStatusCache[dateKey][classCode] = {};
       absenceStatusCache[dateKey][classCode][safeName] = status;
+    });
+  }
+
+  // ============ Action Status Management (Tindakan) ============
+  let actionStatusCache = {};
+
+  function loadActionStatus() {
+    return db.ref('truantActions').once('value').then(snap => {
+      actionStatusCache = snap.val() || {};
+    }).catch(err => { console.error('Gagal memuatkan status tindakan:', err); actionStatusCache = {}; });
+  }
+
+  function getActionStatus(yearStr, classCode, studentName) {
+    try {
+      const safeName = studentName.replace(/[.#$\/\[\]]/g, '_');
+      const key = classCode + '|' + safeName;
+      return (actionStatusCache[yearStr]?.[key]) || 'Pending';
+    } catch(e) { return 'Pending'; }
+  }
+
+  function setActionStatus(yearStr, classCode, studentName, actionStatus) {
+    const safeName = studentName.replace(/[.#$\/\[\]]/g, '_');
+    const key = classCode + '|' + safeName;
+    const path = `truantActions/${yearStr}/${key}`;
+    return db.ref(path).set(actionStatus).then(() => {
+      if (!actionStatusCache[yearStr]) actionStatusCache[yearStr] = {};
+      actionStatusCache[yearStr][key] = actionStatus;
+      // Recompute notifications after action status change
+      recomputeNotificationsForYear(yearStr);
     });
   }
 
@@ -1621,7 +1698,24 @@ const db = firebase.database();
 
   function renderNotificationBadge() {
     if (!notificationBadge) return;
-    const count = notifications.length;
+
+    // Filter notifications based on action status
+    const yearStr = String(currentYear);
+    const rank = { 'Amaran Pertama': 1, 'Amaran Kedua': 2, 'Amaran Terakhir': 3, 'Buang Sekolah': 4 };
+    const actionRank = { 'Pending': 0, 'Surat Amaran Pertama': 1, 'Surat Amaran Kedua': 2, 'Surat Buang Sekolah': 4 };
+
+    const pendingNotifications = notifications.filter(n => {
+      const actionStatus = getActionStatus(yearStr, n.classCode, n.name);
+      const currentOffenseLevel = rank[n.letter] || 0;
+      const actionLevel = actionRank[actionStatus] || 0;
+
+      // Show in badge if:
+      // 1. Action is Pending, OR
+      // 2. Current offense level is higher than action taken
+      return actionLevel === 0 || currentOffenseLevel > actionLevel;
+    });
+
+    const count = pendingNotifications.length;
     if (count > 0) {
       notificationBadge.textContent = count > 99 ? '99+' : String(count);
       notificationBadge.style.display = 'flex';
@@ -1664,16 +1758,40 @@ const db = firebase.database();
         <td style="text-align:center;"><strong>${n.totalPonteng}</strong></td>
         <td style="font-size:.8rem;padding:4px;">${jenisShort}</td>
         <td style="font-size:.8rem;"><span class="${n.letter === 'Buang Sekolah' ? 'status-tidak-bersebab' : 'status-bersebab'}" style="font-size:.75rem;padding:2px 6px;">${suratShort}</span></td>
+        <td style="padding:4px;">
+          <select class="action-status-dropdown" data-student="${n.name.replace(/"/g, '&quot;')}" data-class="${n.classCode}" style="font-size:.75rem;padding:4px;width:100%;">
+            <option value="Pending">Pending</option>
+            <option value="Surat Amaran Pertama">Surat Amaran Pertama</option>
+            <option value="Surat Amaran Kedua">Surat Amaran Kedua</option>
+            <option value="Surat Buang Sekolah">Surat Buang Sekolah</option>
+          </select>
+        </td>
         <td style="text-align:center;"><button class="btn btn-primary btn-sm manage-absence-btn" data-student="${n.name.replace(/"/g, '&quot;')}" data-class="${n.classCode}" style="font-size:.75rem;padding:4px 8px;">Urus</button></td>
       `;
       adminNotificationBody.appendChild(tr);
+
+      // Set the dropdown to the current action status
+      const dropdown = tr.querySelector('.action-status-dropdown');
+      const currentActionStatus = getActionStatus(yearStr, n.classCode, n.name);
+      dropdown.value = currentActionStatus;
+
+      // Add event listener for dropdown changes
+      dropdown.addEventListener('change', function() {
+        const newStatus = this.value;
+        setActionStatus(yearStr, n.classCode, n.name, newStatus).then(() => {
+          setStatus(`Tindakan untuk ${n.name} dikemaskini kepada: ${newStatus}`, 'success');
+        }).catch(err => {
+          console.error('Gagal menyimpan status tindakan:', err);
+          setStatus('Gagal menyimpan status tindakan.', 'error');
+        });
+      });
 
       // Create expandable row for absence dates (initially hidden)
       const expandRow = document.createElement('tr');
       expandRow.className = 'absence-expand-row';
       expandRow.style.display = 'none';
       expandRow.innerHTML = `
-        <td colspan="8" style="padding:12px 16px;background:#f9fafb;">
+        <td colspan="9" style="padding:12px 16px;background:#f9fafb;">
           <div class="absence-dates-container" data-student="${n.name.replace(/"/g, '&quot;')}" data-class="${n.classCode}">
             <div style="text-align:center;color:#6b7280;">⏳ Memuatkan...</div>
           </div>
@@ -1715,6 +1833,129 @@ const db = firebase.database();
 
     selectAllCheckbox.addEventListener('change', handler);
     selectAllCheckbox._selectAllHandler = handler;
+  }
+
+  // ============ Murid Ponteng Button & Modal for Teachers ============
+
+  // Check if class has truant students and show/hide button
+  function checkAndShowMuridPontengButton(kelas) {
+    const yearStr = String(currentYear);
+    const hasTruantStudents = notifications.some(n => n.classCode === kelas);
+
+    if (hasTruantStudents) {
+      btnMuridPonteng.style.display = 'inline-block';
+    } else {
+      btnMuridPonteng.style.display = 'none';
+    }
+  }
+
+  // Open modal and render truant students for selected class
+  function openMuridPontengModal() {
+    const kelas = classSelect.value;
+    if (!kelas) return;
+
+    const classInfo = summaryConfig.find(c => c.code === kelas);
+    const className = classInfo ? `${kelas} - ${classInfo.kelasLabel}` : kelas;
+    muridPontengClassName.textContent = className;
+
+    renderMuridPontengForClass(kelas);
+    muridPontengModal.style.display = 'flex';
+  }
+
+  // Close modal
+  function closeMuridPontengModal() {
+    muridPontengModal.style.display = 'none';
+  }
+
+  // Render truant students for selected class
+  function renderMuridPontengForClass(kelas) {
+    const yearStr = String(currentYear);
+    muridPontengModalBody.innerHTML = '';
+
+    // Filter notifications for this class
+    const classNotifications = notifications.filter(n => n.classCode === kelas);
+
+    if (!classNotifications.length) {
+      muridPontengModalBody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:16px;color:#6b7280;">Tiada murid ponteng dalam kelas ini.</td></tr>';
+      return;
+    }
+
+    // Sort by severity
+    const severityRank = { 'Amaran Pertama': 1, 'Amaran Kedua': 2, 'Amaran Terakhir': 3, 'Buang Sekolah': 4 };
+    classNotifications.sort((a, b) => {
+      if (severityRank[b.letter] !== severityRank[a.letter]) return severityRank[b.letter] - severityRank[a.letter];
+      return a.name.localeCompare(b.name);
+    });
+
+    classNotifications.forEach((n, idx) => {
+      const tr = document.createElement('tr');
+      tr.className = 'notification-row';
+      tr.style.fontSize = '.85rem';
+
+      // Simplify Jenis display
+      const jenisShort = n.mode === 'berturut-turut' ? `Berturut (${n.consecutiveMax})` : 'Berselang';
+
+      // Simplify Surat display
+      const suratShort = n.letter.replace('Amaran ', 'A.').replace('Buang Sekolah', 'B.Sekolah');
+
+      tr.innerHTML = `
+        <td style="text-align:center;">${idx + 1}</td>
+        <td style="padding:6px 8px;">${n.name}</td>
+        <td style="text-align:center;"><strong>${n.totalPonteng}</strong></td>
+        <td style="font-size:.8rem;padding:4px;">${jenisShort}</td>
+        <td style="font-size:.8rem;"><span class="${n.letter === 'Buang Sekolah' ? 'status-tidak-bersebab' : 'status-bersebab'}" style="font-size:.75rem;padding:2px 6px;">${suratShort}</span></td>
+        <td style="text-align:center;"><button class="btn btn-primary btn-sm manage-absence-btn-modal" data-student="${n.name.replace(/"/g, '&quot;')}" data-class="${n.classCode}" style="font-size:.75rem;padding:4px 8px;">Urus</button></td>
+      `;
+      muridPontengModalBody.appendChild(tr);
+
+      // Create expandable row for absence dates (initially hidden)
+      const expandRow = document.createElement('tr');
+      expandRow.className = 'absence-expand-row';
+      expandRow.style.display = 'none';
+      expandRow.innerHTML = `
+        <td colspan="6" style="padding:12px 16px;background:#f9fafb;">
+          <div class="absence-dates-container" data-student="${n.name.replace(/"/g, '&quot;')}" data-class="${n.classCode}">
+            <div style="text-align:center;color:#6b7280;">⏳ Memuatkan...</div>
+          </div>
+        </td>
+      `;
+      muridPontengModalBody.appendChild(expandRow);
+    });
+
+    // Attach manage button handlers
+    attachModalAbsenceManagementHandlers();
+  }
+
+  // Handle clicks on "Urus" buttons in modal
+  function attachModalAbsenceManagementHandlers() {
+    const buttons = muridPontengModalBody.querySelectorAll('.manage-absence-btn-modal');
+    buttons.forEach(btn => {
+      btn.addEventListener('click', function() {
+        const studentName = this.getAttribute('data-student');
+        const classCode = this.getAttribute('data-class');
+        const row = this.closest('tr');
+        const expandRow = row.nextElementSibling;
+
+        if (expandRow && expandRow.classList.contains('absence-expand-row')) {
+          if (expandRow.style.display === 'none') {
+            expandRow.style.display = 'table-row';
+            this.textContent = 'Tutup';
+            loadAbsenceDatesForStudent(studentName, classCode, expandRow);
+          } else {
+            expandRow.style.display = 'none';
+            this.textContent = 'Urus';
+          }
+        }
+      });
+    });
+  }
+
+  // Event listeners for modal
+  if (btnMuridPonteng) {
+    btnMuridPonteng.addEventListener('click', openMuridPontengModal);
+  }
+  if (muridPontengCloseBtn) {
+    muridPontengCloseBtn.addEventListener('click', closeMuridPontengModal);
   }
 
   // Handle clicks on "Urus Ketidakhadiran" buttons
@@ -2430,7 +2671,13 @@ const db = firebase.database();
   // Event handlers
   classSelect.addEventListener('change', () => {
     const kelas = classSelect.value;
-    if (!kelas) { studentsSection.style.display = 'none'; summaryBox.style.display = 'none'; clearStatus(); return; }
+    if (!kelas) {
+      studentsSection.style.display = 'none';
+      summaryBox.style.display = 'none';
+      btnMuridPonteng.style.display = 'none';
+      clearStatus();
+      return;
+    }
 
     // Check if today is a holiday and show warning
     if (isHoliday(todayKey)) {
@@ -2439,6 +2686,9 @@ const db = firebase.database();
 
     renderStudentsForClass(kelas);
     loadExistingAttendance(kelas);
+
+    // Check if this class has truant students and show/hide button
+    checkAndShowMuridPontengButton(kelas);
   });
 
   btnSave.addEventListener('click', saveAttendance);
@@ -2693,7 +2943,9 @@ const db = firebase.database();
       renderHolidayCalendar();
       ensureYearlyData().then(() => {
         loadAbsenceStatus().then(() => {
-          recomputeNotificationsForYear(String(currentYear));
+          loadActionStatus().then(() => {
+            recomputeNotificationsForYear(String(currentYear));
+          });
         });
       });
     });
